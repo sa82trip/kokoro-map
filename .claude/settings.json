@@ -1,0 +1,31 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"🔄 Checking project status before operation...\" && if [ -f ./CLAUDE.md ]; then echo \"✅ Found project guidelines\"; else echo \"ℹ️ No project guidelines found\"; fi",
+            "statusMessage": "Checking project status..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"📝 Updating status files...\" && if [ -f ./mindmap-app/handoff/current-status.md ]; then echo \"✅ Status files updated\"; else echo \"ℹ️ No status files to update\"; fi",
+            "statusMessage": "Updating status files..."
+          }
+        ]
+      }
+    ]
+  },
+  "autoMemoryEnabled": true,
+  "autoMemoryDirectory": "./memory",
+  "language": "korean"
+}

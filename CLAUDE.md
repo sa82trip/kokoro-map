@@ -12,11 +12,9 @@
 mindmap-app/
 ├── README.md              # 프로젝트 개요
 ├── dashboard.md           # 전체 대시보드 (실시간 업데이트)
+├── handoff.md             # 작업 인계 문서 (시작 전 확인, 종료 후 업데이트)
+├── CHANGELOG.md           # 변경 이력 (작업 완료 시 업데이트)
 ├── SPRINT-[N].md          # Sprint 계획서
-├── handoff/               # 진행 관리 폴더
-│   ├── README.md         # Handoff 관리 가이드
-│   ├── current-status.md # 현재 진행 상태
-│   └── sprint-N-HANDOFF.md # Sprint 완료 보고서
 └── sprints/              # 작업 공간
     ├── sprint-[N]/       # 각 스프린트
     │   ├── user-story-[M]/
@@ -28,13 +26,8 @@ mindmap-app/
 ### 2. 업데이트 규칙
 
 #### 매일 업데이트 필수 항목
-1. **handoff/current-status.md**
-   - 현재 진행 중인 스토리 상태 업데이트
-   - 완료된 태스크 체크
-   - 새로운 리스크 추가
-   - 차단 요소 상태 변경
 
-2. **dashboard.md**
+1. **dashboard.md**
    - 주간 진행률 업데이트
    - 팀 생산성 지표 갱신
    - 다일 목표 체크
@@ -73,17 +66,18 @@ mindmap-app/
 #### Sprint 시작 시
 1. `dashboard.md`에 Sprint 목표 입력
 2. `SPRINT-[N].md` 작성
-3. `handoff/current-status.md` 업데이트
+3. `handoff.md` 업데이트
 
 #### 일일 작업
-1. 데일리 스탠딩 전에 `current-status.md` 확인
+1. 작업 시작 전 `handoff.md` 확인
 2. 작업 시작 시 태스크 상태 "개발 중"으로 변경
 3. 작업 완료 시 상태 업데이트
 
 #### Sprint 완료 시
-1. `sprint-N-HANDOFF.md` 작성
-2. `dashboard.md` 전체 진행률 업데이트
-3. 다음 Sprint 계획 수립
+1. `handoff.md` 최신 상태로 업데이트
+2. `CHANGELOG.md`에 변경 사항 기록
+3. `dashboard.md` 전체 진행률 업데이트
+4. 다음 Sprint 계획 수립
 
 ### 5. 진행 모니터링
 
@@ -101,13 +95,13 @@ mindmap-app/
 ### 6. 주요 리스크 관리
 
 #### 리스크 등록 방법
-1. `handoff/current-status.md`의 리스크 항목에 추가
+1. `handoff.md`의 알려진 이슈 항목에 추가
 2. 영향도와 긴급도 평가
 3. 담당자 지정
 4. 해결 계획 수립
 
 #### 차단 요소(Blockers) 처리
-1. 즉시 `current-status.md`에 등록
+1. 즉시 `handoff.md`에 등록
 2. 데일리 스탠딩에서 논의
 3. 24시간 내 해결책 마련
 
@@ -140,6 +134,7 @@ mindmap-app/
 ### 9. 작업 시작 체크리스트
 
 #### 새 작업 시작 전
+- [ ] `sprints/` 폴더에서 현재 스프린트의 사용자 스토리 및 태스크 파일 확인
 - [ ] 관련 스토리 README.md 확인
 - [ ] 태스크 상세 내용 파악
 - [ ] 의존성 태스크 확인
@@ -154,5 +149,5 @@ mindmap-app/
 
 ---
 
-**최종 업데이트**: 2026-03-29
+**최종 업데이트**: 2026-03-30
 **다음 업데이트**: 작업 시작 시
