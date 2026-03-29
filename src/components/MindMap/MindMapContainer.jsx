@@ -39,7 +39,7 @@ const renderConnections = (node) => {
 };
 
 const MindMapContainer = ({ data }) => {
-  const { addNode } = useMindMapStore();
+  const { addNode, deleteNode } = useMindMapStore();
   const [selectedNodeId, setSelectedNodeId] = useState(null);
 
   if (!data) {
@@ -59,6 +59,14 @@ const MindMapContainer = ({ data }) => {
     }
   };
 
+  // 노드 삭제 핸들러
+  const handleDeleteNode = (nodeId) => {
+    deleteNode(nodeId);
+    if (selectedNodeId === nodeId) {
+      setSelectedNodeId(null);
+    }
+  };
+
   // 노드 렌더링 (재귀)
   const renderNodes = (node) => {
     if (!node) return null;
@@ -69,6 +77,7 @@ const MindMapContainer = ({ data }) => {
           node={node}
           position={node.position || { x: window.innerWidth / 2 - 100, y: window.innerHeight / 2 - 40 }}
           onAddChild={handleAddChild}
+          onDelete={handleDeleteNode}
           isSelected={selectedNodeId === node.id}
         />
         {node.children && node.children.map(child => renderNodes(child))}

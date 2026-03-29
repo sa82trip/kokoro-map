@@ -1,13 +1,15 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import useMindMapStore from '../../store/MindMapStore';
 import { createChildNode } from '../../types/NodeTypes';
+import DeleteConfirmDialog from './DeleteConfirmDialog';
 
-const Node = ({ node, position: initialPosition, onAddChild, isSelected }) => {
+const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelected }) => {
   const { updateNodeText, updateNodePosition } = useMindMapStore();
   const [isEditing, setIsEditing] = useState(false);
   const [text, setText] = useState(node.text || 'New Node');
   const [position, setPosition] = useState(initialPosition || { x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
   const inputRef = useRef(null);
 
@@ -82,6 +84,32 @@ const Node = ({ node, position: initialPosition, onAddChild, isSelected }) => {
     if (onAddChild) {
       onAddChild(node.id, childNode);
     }
+  };
+
+  // 자식 노드 수 계산 (재귀)
+  const countDescendants = (n) => {
+    if (!n.children || n.children.length === 0) return 0;
+    return n.children.reduce((sum, child) => sum + 1 + countDescendants(child), 0);
+  };
+
+  // 삭제 버튼 클릭
+  const handleDeleteClick = (e) => {
+    e.stopPropagation();
+    if (node.isRoot) return;
+    setShowDeleteConfirm(true);
+  };
+
+  // 삭제 확인
+  const handleDeleteConfirm = () => {
+    setShowDeleteConfirm(false);
+    if (onDelete) {
+      onDelete(node.id);
+    }
+  };
+
+  // 삭제 취소
+  const handleDeleteCancel = () => {
+    setShowDeleteConfirm(false);
   };
 
   // 노드 기본 스타일
@@ -185,6 +213,46 @@ const Node = ({ node, position: initialPosition, onAddChild, isSelected }) => {
       >
         +
       </div>
+
+      {!node.isRoot && (
+        <div
+          data-testid="delete-button"
+          style={{
+            position: 'absolute',
+            left: -12,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: 24,
+            height: 24,
+            backgroundColor: '#e74c3c',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+            transition: 'all 0.2s ease',
+            fontSize: '16px',
+            color: 'white',
+            fontWeight: 'bold',
+            lineHeight: 1,
+            border: '2px solid white'
+          }}
+          onClick={handleDeleteClick}
+          onMouseDown={(e) => e.stopPropagation()}
+          title="노드 삭제"
+        >
+          ×
+        </div>
+      )}
+
+      {showDeleteConfirm && (
+        <DeleteConfirmDialog
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+          childCount={countDescendants(node)}
+        />
+      )}
     </div>
   );
 };

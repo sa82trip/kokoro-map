@@ -4,6 +4,17 @@ import Node from './Node';
 import useMindMapStore from '../../store/MindMapStore';
 
 jest.mock('../../store/MindMapStore');
+jest.mock('./DeleteConfirmDialog', () => {
+  return function MockDialog({ onConfirm, onCancel, childCount }) {
+    return (
+      <div data-testid="delete-dialog">
+        <span data-testid="child-count">{childCount}</span>
+        <button data-testid="dialog-confirm" onClick={onConfirm}>삭제</button>
+        <button data-testid="dialog-cancel" onClick={onCancel}>취소</button>
+      </div>
+    );
+  };
+});
 const mockUseMindMapStore = useMindMapStore;
 
 Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
@@ -107,6 +118,65 @@ describe('Node Component', () => {
 
       // 드래그 중에는 transition이 none이어야 함
       expect(nodeElement.style.transition).toBe('none');
+    });
+  });
+
+  // === 삭제 버튼 테스트 ===
+  describe('삭제 기능', () => {
+    test('루트 노드가 아니면 삭제 버튼이 렌더링된다', () => {
+      render(<Node node={mockNode} position={mockNode.position} />);
+      expect(screen.getByTestId('delete-button')).toBeInTheDocument();
+    });
+
+    test('루트 노드는 삭제 버튼이 없다', () => {
+      const rootNode = { ...mockNode, isRoot: true };
+      render(<Node node={rootNode} position={rootNode.position} />);
+      expect(screen.queryByTestId('delete-button')).not.toBeInTheDocument();
+    });
+
+    test('삭제 버튼 클릭 시 확인 다이얼로그가 나타난다', () => {
+      render(<Node node={mockNode} position={mockNode.position} />);
+
+      fireEvent.click(screen.getByTestId('delete-button'));
+      expect(screen.getByTestId('delete-dialog')).toBeInTheDocument();
+    });
+
+    test('다이얼로그에서 삭제 확인 시 onDelete가 호출된다', () => {
+      const mockOnDelete = jest.fn();
+      render(<Node node={mockNode} position={mockNode.position} onDelete={mockOnDelete} />);
+
+      fireEvent.click(screen.getByTestId('delete-button'));
+      fireEvent.click(screen.getByTestId('dialog-confirm'));
+
+      expect(mockOnDelete).toHaveBeenCalledWith('node-1');
+    });
+
+    test('다이얼로그에서 취소 시 onDelete가 호출되지 않는다', () => {
+      const mockOnDelete = jest.fn();
+      render(<Node node={mockNode} position={mockNode.position} onDelete={mockOnDelete} />);
+
+      fireEvent.click(screen.getByTestId('delete-button'));
+      fireEvent.click(screen.getByTestId('dialog-cancel'));
+
+      expect(mockOnDelete).not.toHaveBeenCalled();
+    });
+
+    test('자식 노드가 있으면 하위 노드 수가 다이얼로그에 전달된다', () => {
+      const nodeWithChildren = {
+        ...mockNode,
+        children: [
+          { id: 'c1', text: '자식1', children: [], isRoot: false },
+          { id: 'c2', text: '자식2', children: [
+            { id: 'gc1', text: '손자1', children: [], isRoot: false }
+          ], isRoot: false }
+        ]
+      };
+
+      render(<Node node={nodeWithChildren} position={nodeWithChildren.position} />);
+
+      fireEvent.click(screen.getByTestId('delete-button'));
+      // 자식 2 + 손자 1 = 3
+      expect(screen.getByTestId('child-count')).toHaveTextContent('3');
     });
   });
 });

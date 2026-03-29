@@ -79,6 +79,7 @@ const CHILD_COLORS = [
 ];
 
 let colorIndex = 0;
+let nodeIdCounter = 0;
 
 // 부모 색상 기반으로 자식 색상 생성
 export const getChildNodeColor = (parentColor) => {
@@ -102,7 +103,7 @@ export const createRootNode = (text = '마인드맵') => ({
 });
 
 export const createChildNode = (parentId, text = '새 노드', parentColor = '#4A90E2') => ({
-  id: `node-${Date.now()}`,
+  id: `node-${Date.now()}-${++nodeIdCounter}`,
   text,
   color: getChildNodeColor(parentColor),
   position: { x: 0, y: 0 },
