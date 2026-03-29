@@ -1,17 +1,26 @@
 import React, { useState, useRef, useEffect } from 'react';
 import useMindMapStore from '../../store/MindMapStore';
+import { COLOR_PALETTE } from '../../types/NodeTypes';
 
 const Toolbar = () => {
   const {
     mindMapData,
     createNewMindMap,
     updateMindMapTitle,
-    applyAutoLayout
+    applyAutoLayout,
+    resetLayout,
+    connectionStyle,
+    setConnectionStyle,
+    connectionColor,
+    setConnectionColor,
+    layoutConfig,
+    setLayoutConfig
   } = useMindMapStore();
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [titleText, setTitleText] = useState('');
   const [showNewConfirm, setShowNewConfirm] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const titleInputRef = useRef(null);
 
   const title = mindMapData?.text || '마인드맵';
@@ -132,6 +141,18 @@ const Toolbar = () => {
         <button
           style={{
             ...buttonBase,
+            background: showSettings ? '#dde5f7' : '#f0f4ff',
+            color: '#4A90E2'
+          }}
+          onClick={() => setShowSettings(!showSettings)}
+          title="설정"
+          data-testid="btn-settings"
+        >
+          &#9881; 설정
+        </button>
+        <button
+          style={{
+            ...buttonBase,
             background: '#f0f4ff',
             color: '#4A90E2'
           }}
@@ -142,6 +163,20 @@ const Toolbar = () => {
           onMouseLeave={(e) => e.target.style.background = '#f0f4ff'}
         >
           &#9878; 자동 정렬
+        </button>
+        <button
+          style={{
+            ...buttonBase,
+            background: '#f0f4ff',
+            color: '#4A90E2'
+          }}
+          onClick={resetLayout}
+          title="레이아웃 재조정"
+          data-testid="btn-reset-layout"
+          onMouseEnter={(e) => e.target.style.background = '#dde5f7'}
+          onMouseLeave={(e) => e.target.style.background = '#f0f4ff'}
+        >
+          &#8634; 재조정
         </button>
         <button
           style={{
@@ -158,6 +193,108 @@ const Toolbar = () => {
           + 새 마인드맵
         </button>
       </div>
+
+      {showSettings && (
+        <div
+          data-testid="settings-panel"
+          style={{
+            position: 'absolute',
+            top: 52,
+            right: 20,
+            background: '#fff',
+            borderRadius: 10,
+            padding: 16,
+            minWidth: 260,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+            border: '1px solid #e0e4ea',
+            zIndex: 200
+          }}
+        >
+          <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: '#1a1a2e' }}>설정</div>
+
+          {/* 연결선 스타일 */}
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>연결선 스타일</div>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button
+                data-testid="btn-connection-bezier"
+                onClick={() => setConnectionStyle('bezier')}
+                style={{
+                  ...buttonBase,
+                  fontSize: 12,
+                  padding: '4px 10px',
+                  background: connectionStyle === 'bezier' ? '#4A90E2' : '#f0f0f0',
+                  color: connectionStyle === 'bezier' ? '#fff' : '#333'
+                }}
+              >
+                곡선
+              </button>
+              <button
+                data-testid="btn-connection-straight"
+                onClick={() => setConnectionStyle('straight')}
+                style={{
+                  ...buttonBase,
+                  fontSize: 12,
+                  padding: '4px 10px',
+                  background: connectionStyle === 'straight' ? '#4A90E2' : '#f0f0f0',
+                  color: connectionStyle === 'straight' ? '#fff' : '#333'
+                }}
+              >
+                직선
+              </button>
+            </div>
+          </div>
+
+          {/* 연결선 색상 */}
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>연결선 색상</div>
+            <div style={{ display: 'flex', gap: 2, flexWrap: 'wrap', maxWidth: 220 }}>
+              {COLOR_PALETTE.slice(0, 16).map((color) => (
+                <div
+                  key={color}
+                  data-testid={`conn-color-${color.replace('#', '')}`}
+                  onClick={() => setConnectionColor(color)}
+                  style={{
+                    width: 16, height: 16, borderRadius: '50%', cursor: 'pointer',
+                    background: color,
+                    border: connectionColor === color ? '2px solid #1890ff' : '1px solid #ccc',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* 수평 간격 */}
+          <div style={{ marginBottom: 8 }}>
+            <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>
+              수평 간격: {layoutConfig.horizontalGap}px
+            </div>
+            <input
+              data-testid="hgap-slider"
+              type="range"
+              min={20} max={500}
+              value={layoutConfig.horizontalGap}
+              onChange={(e) => setLayoutConfig({ horizontalGap: Number(e.target.value) })}
+              style={{ width: '100%' }}
+            />
+          </div>
+
+          {/* 수직 간격 */}
+          <div>
+            <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>
+              수직 간격: {layoutConfig.verticalGap}px
+            </div>
+            <input
+              data-testid="vgap-slider"
+              type="range"
+              min={20} max={500}
+              value={layoutConfig.verticalGap}
+              onChange={(e) => setLayoutConfig({ verticalGap: Number(e.target.value) })}
+              style={{ width: '100%' }}
+            />
+          </div>
+        </div>
+      )}
 
       {showNewConfirm && (
         <div style={{

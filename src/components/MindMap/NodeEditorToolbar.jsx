@@ -1,14 +1,18 @@
 import React, { useCallback } from 'react';
+import { COLOR_PALETTE } from '../../types/NodeTypes';
 
 const FONT_SIZE_MIN = 10;
 const FONT_SIZE_MAX = 48;
 
-// 간단한 색상 팔레트
+// 텍스트 색상용 (가독성 높은 색상)
 const TEXT_COLORS = [
   '#FFFFFF', '#000000', '#333333', '#666666',
-  '#E74C3C', '#E67E22', '#F1C40F', '#2ECC71',
+  '#E74C3C', '#E67E22', '#F39C12', '#2ECC71',
   '#3498DB', '#9B59B6', '#1ABC9C', '#E91E63',
 ];
+
+// 배경색용 (첫 16색)
+const BG_COLORS = COLOR_PALETTE.slice(0, 16);
 
 const NodeEditorToolbar = ({ style, onStyleChange }) => {
   const currentStyle = style || {};
@@ -107,6 +111,26 @@ const NodeEditorToolbar = ({ style, onStyleChange }) => {
               width: 14, height: 14, borderRadius: '50%', cursor: 'pointer',
               background: color,
               border: currentStyle.textColor === color ? '2px solid #1890ff' : '1px solid #ccc',
+            }}
+            title={color}
+          />
+        ))}
+      </div>
+
+      {/* 구분선 */}
+      <div style={{ width: 1, height: 20, background: '#ddd' }} />
+
+      {/* 배경색 */}
+      <div style={{ display: 'flex', gap: 2, flexWrap: 'wrap', maxWidth: 130 }}>
+        {BG_COLORS.map((color) => (
+          <div
+            key={color}
+            data-testid={`bg-color-${color.replace('#', '')}`}
+            onClick={() => handleChange('backgroundColor', color)}
+            style={{
+              width: 14, height: 14, borderRadius: '50%', cursor: 'pointer',
+              background: color,
+              border: currentStyle.backgroundColor === color ? '2px solid #1890ff' : '1px solid #ccc',
             }}
             title={color}
           />

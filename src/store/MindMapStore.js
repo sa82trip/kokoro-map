@@ -41,6 +41,9 @@ const useMindMapStore = create((set, get) => ({
   loading: false,
   error: null,
   validationErrors: [],
+  layoutConfig: { horizontalGap: 100, verticalGap: 30 },
+  connectionStyle: 'bezier',
+  connectionColor: '#b0b8c8',
 
   // 로딩 상태 설정
   setLoading: (isLoading) => set({ loading: isLoading }),
@@ -109,10 +112,10 @@ const useMindMapStore = create((set, get) => ({
 
   // 자동 레이아웃 적용
   applyAutoLayout: () => {
-    const { mindMapData } = get();
+    const { mindMapData, layoutConfig } = get();
     if (!mindMapData) return;
 
-    const layouted = calculateAutoLayout(mindMapData);
+    const layouted = calculateAutoLayout(mindMapData, layoutConfig);
     if (layouted) {
       set({ mindMapData: layouted });
       storage.save(layouted);
@@ -228,7 +231,7 @@ const useMindMapStore = create((set, get) => ({
     const validFontStyles = (v) => VALID_STYLES.indexOf(v) !== -1;
     const validColor = (v) => typeof v === 'string' && /^#[0-9A-Fa-f]{6}$/.test(v);
 
-    const allowedKeys = { fontSize: validFontSizes, textColor: validColor, fontWeight: validFontWeights, fontStyle: validFontStyles };
+    const allowedKeys = { fontSize: validFontSizes, textColor: validColor, fontWeight: validFontWeights, fontStyle: validFontStyles, backgroundColor: validColor };
     const filtered = {};
     for (const [key, value] of Object.entries(styleProps)) {
       if (allowedKeys[key] && allowedKeys[key](value)) {
@@ -335,12 +338,53 @@ const useMindMapStore = create((set, get) => ({
     };
   }),
 
+  // 연결선 스타일 변경
+  setConnectionStyle: (style) => {
+    if (style !== 'bezier' && style !== 'straight') return;
+    set({ connectionStyle: style });
+  },
+
+  // 연결선 색상 변경
+  setConnectionColor: (color) => {
+    if (typeof color !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(color)) return;
+    set({ connectionColor: color });
+  },
+
+  // 전체 레이아웃 재조정
+  resetLayout: () => {
+    const { mindMapData, layoutConfig } = get();
+    if (!mindMapData) return;
+    const layouted = calculateAutoLayout(mindMapData, layoutConfig);
+    if (layouted) {
+      set({ mindMapData: layouted, error: null });
+      storage.save(layouted);
+    }
+  },
+
+  // 레이아웃 설정 변경
+  setLayoutConfig: (config) => set((state) => {
+    const current = state.layoutConfig || { horizontalGap: 100, verticalGap: 30 };
+    const newConfig = Object.assign({}, current);
+
+    if (config.horizontalGap !== undefined) {
+      newConfig.horizontalGap = Math.min(500, Math.max(20, config.horizontalGap));
+    }
+    if (config.verticalGap !== undefined) {
+      newConfig.verticalGap = Math.min(500, Math.max(20, config.verticalGap));
+    }
+
+    return { layoutConfig: newConfig };
+  }),
+
   // 초기화
   reset: () => set({
     mindMapData: null,
     loading: false,
     error: null,
-    validationErrors: []
+    validationErrors: [],
+    layoutConfig: { horizontalGap: 100, verticalGap: 30 },
+    connectionStyle: 'bezier',
+    connectionColor: '#b0b8c8'
   })
 }));
 

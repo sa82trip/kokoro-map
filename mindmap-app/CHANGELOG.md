@@ -4,6 +4,106 @@
 
 ---
 
+## [US-4: 시각적 기본 기능] - 2026-03-30
+
+**Branch**: `main`
+
+### Added
+- **NodeTypes** (`src/types/`)
+  - `COLOR_PALETTE` — 50색 배열 (기존 8 + 파스텔 12 + 비비드 12 + 다크 10 + 뉴트럴 8)
+- **LayoutEngine** (`src/utils/`)
+  - `DEFAULT_OPTIONS` — 동적 gap 설정 (horizontalGap, verticalGap)
+  - 모든 함수에 `options` 파라미터 추가 (하위 호환)
+- **MindMapStore** (`src/store/`)
+  - `layoutConfig` 상태 — { horizontalGap: 100, verticalGap: 30 }
+  - `connectionStyle` 상태 — 'bezier' | 'straight'
+  - `connectionColor` 상태 — 연결선 색상
+  - `setLayoutConfig(config)` — gap 값 변경 (범위 20~500)
+  - `setConnectionStyle(style)` — 연결선 스타일 토글
+  - `setConnectionColor(color)` — 연결선 색상 변경
+  - `resetLayout()` — 전체 레이아웃 재조정
+  - `updateNodeStyle()`에 `backgroundColor` 검증 추가
+- **Toolbar** (`src/components/MindMap/`)
+  - 설정 패널 (연결선 스타일/색상, 수평/수직 간격 슬라이더)
+  - 레이아웃 재조정 버튼
+- **NodeEditorToolbar** (`src/components/MindMap/`)
+  - 배경색 선택 (16색)
+- **MindMapContainer** (`src/components/MindMap/`)
+  - 동적 연결선 스타일 (곡선/직선)
+  - 동적 연결선 색상
+
+### Changed
+- `NodeEditorToolbar.jsx` — TEXT_COLORS를 명시적 12색으로 정의, BG_COLORS(16색) 추가
+- `MindMapContainer.jsx` — `renderConnections`에 connectionStyle, connectionColor 파라미터 추가
+- `Toolbar.jsx` — store에서 설정 관련 상태/액션 import, 설정 패널 UI 추가
+
+### Tests
+- `NodeTypes.test.js` — 11 tests (COLOR_PALETTE 4개 추가)
+- `LayoutEngine.test.js` — 7 tests (신규)
+- `MindMapStore.test.js` — 26 tests (connectionStyle 4, layoutConfig 5, backgroundColor 2, connectionColor 3, resetLayout 1 추가)
+- Total: 124 tests passing (9 suites)
+
+### Technical Notes
+- TDD 방식으로 모든 태스크 구현 (Red → Green)
+- 하위 호환 유지: LayoutEngine options 기본값 = {}
+- Task 4-1, 4-3, 4-5 병렬 구현 후 4-2, 4-4, 4-6 순차 구현
+
+---
+
+## [Task 4-5: 노드 간 거리 조절 기능] - 2026-03-30
+
+**Branch**: `main`
+
+### Added
+- **LayoutEngine** (`src/utils/`)
+  - `DEFAULT_OPTIONS` — 기본 gap 설정 객체 (horizontalGap: 100, verticalGap: 30)
+  - `calculateAutoLayout(rootNode, options)` — options 파라미터로 사용자 정의 gap 지원
+  - `calculateNewChildPosition(parentPosition, existingChildrenCount, options)` — options 파라미터로 사용자 정의 gap 지원
+- **MindMapStore** (`src/store/`)
+  - `layoutConfig` 상태 — { horizontalGap: 100, verticalGap: 30 }
+  - `setLayoutConfig(config)` — gap 값 변경 액션 (범위 제한 20~500, 부분 업데이트 지원)
+- **Tests** (`src/utils/`)
+  - `LayoutEngine.test.js` — 7개 신규 테스트 (위치 할당, 자식 배치, null 처리, 사용자 정의 gap)
+- **Tests** (`src/store/`)
+  - `MindMapStore.test.js` — layoutConfig 5개 신규 테스트 (기본값, 변경, 최소/최대, 부분 업데이트)
+
+### Changed
+- `LayoutEngine.js` — `getSubtreeHeight`, `layoutNode` 내부 함수에 options 파라미터 전달
+- `MindMapStore.js` — `applyAutoLayout`가 `layoutConfig`를 `calculateAutoLayout`에 전달
+- `MindMapStore.js` — `reset`에 `layoutConfig` 초기화 추가
+
+### Technical Notes
+- TDD 방식: Red(12개 테스트 실패) → Green(구현) → 모든 테스트 통과
+- 하위 호환 유지: options 기본값 = {}로 기존 호출 방식 그대로 동작
+- gap 값 범위: 20~500 (Math.min/Math.max로 제한)
+- 총 12개 신규 테스트, 전체 416 tests (3개 connectionStyle 실패는 별도 Task 범위)
+
+---
+
+## [Task 4-1: 색상 팔레트 50가지] - 2026-03-30
+
+**Branch**: `main`
+
+### Added
+- **NodeTypes** (`src/types/`)
+  - `COLOR_PALETTE` — 50색 배열 named export (기존 8색 + 파스텔 12 + 비비드 12 + 다크 10 + 뉴트럴 8)
+- **Tests** (`src/types/`)
+  - `NodeTypes.test.js` — COLOR_PALETTE 테스트 4개 추가 (길이, 형식, 중복, 기존 색상 포함)
+
+### Changed
+- `NodeTypes.js` — `CHILD_COLORS`를 `COLOR_PALETTE.slice(0, 8)`로 변경 (하위 호환 유지)
+- `NodeTypes.test.js` — `COLOR_PALETTE` import 추가
+
+### Tests
+- `NodeTypes.test.js` — 11 tests (기존 7 + 신규 4)
+- Total: 11/11 passing
+
+### Technical Notes
+- TDD 방식: Red(테스트 4개 실패) → Green(COLOR_PALETTE 구현) → 모든 테스트 통과
+- 기존 `getChildNodeColor`, `createChildNode` 동작은 변경 없음 (하위 호환)
+
+---
+
 ## [0.3.0] - 2026-03-29
 
 **Branch**: `main`

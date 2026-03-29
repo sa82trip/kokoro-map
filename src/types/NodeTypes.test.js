@@ -1,4 +1,4 @@
-import { createChildNode, createRootNode, getChildNodeColor } from './NodeTypes';
+import { createChildNode, createRootNode, getChildNodeColor, COLOR_PALETTE } from './NodeTypes';
 
 // window 모킹
 Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
@@ -62,6 +62,34 @@ describe('NodeTypes', () => {
     test('자식 노드 색상이 부모와 다르다', () => {
       const node = createChildNode('root', '새 노드', '#4A90E2');
       expect(node.color).not.toBe('#4A90E2');
+    });
+  });
+
+  describe('COLOR_PALETTE', () => {
+    test('50가지 색상이 정의되어 있다', () => {
+      expect(COLOR_PALETTE).toBeDefined();
+      expect(COLOR_PALETTE).toHaveLength(50);
+    });
+
+    test('모든 색상이 #RRGGBB 형식이다', () => {
+      COLOR_PALETTE.forEach((color) => {
+        expect(color).toMatch(/^#[0-9A-Fa-f]{6}$/);
+      });
+    });
+
+    test('중복 색상이 없다', () => {
+      const unique = new Set(COLOR_PALETTE);
+      expect(unique.size).toBe(50);
+    });
+
+    test('기존 CHILD_COLORS 색상들이 포함되어 있다', () => {
+      const CHILD_COLORS = [
+        '#E67E22', '#9B59B6', '#1ABC9C', '#E74C3C',
+        '#F39C12', '#2ECC71', '#3498DB', '#E91E63',
+      ];
+      CHILD_COLORS.forEach(color => {
+        expect(COLOR_PALETTE).toContain(color);
+      });
     });
   });
 });

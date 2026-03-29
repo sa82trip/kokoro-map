@@ -98,17 +98,30 @@ export const validateNode = (node) => {
   return required.every(field => node.hasOwnProperty(field));
 };
 
-// 자식 노드용 색상 팔레트
-const CHILD_COLORS = [
-  '#E67E22', // 주황
-  '#9B59B6', // 보라
-  '#1ABC9C', // 청록
-  '#E74C3C', // 빨강
-  '#F39C12', // 금색
-  '#2ECC71', // 초록
-  '#3498DB', // 파랑
-  '#E91E63', // 분홍
+// 50가지 색상 팔레트
+export const COLOR_PALETTE = [
+  // 기존 8색
+  '#E67E22', '#9B59B6', '#1ABC9C', '#E74C3C',
+  '#F39C12', '#2ECC71', '#3498DB', '#E91E63',
+  // 파스텔 계열 (12색)
+  '#FFB3BA', '#FFDFBA', '#FFFFBA', '#BAFFC9',
+  '#BAE1FF', '#E8BAFF', '#FFC9DE', '#C9FFE5',
+  '#C9E5FF', '#E5C9FF', '#FFE5C9', '#C9FFEE',
+  // 비비드 계열 (12색)
+  '#FF6B6B', '#FFA07A', '#FFD700', '#98FB98',
+  '#87CEEB', '#DDA0DD', '#FF69B4', '#00CED1',
+  '#7B68EE', '#FF8C00', '#00FA9A', '#DC143C',
+  // 다크/딥 계열 (10색)
+  '#8B0000', '#006400', '#00008B', '#4B0082',
+  '#2F4F4F', '#800080', '#191970', '#556B2F',
+  '#8B4513', '#2E8B57',
+  // 뉴트럴/그레이 계열 (8색)
+  '#FFFFFF', '#F5F5F5', '#D3D3D3', '#A9A9A9',
+  '#808080', '#696969', '#333333', '#000000',
 ];
+
+// 자식 노드용 색상 팔레트 (COLOR_PALETTE의 처음 8색)
+const CHILD_COLORS = COLOR_PALETTE.slice(0, 8);
 
 let colorIndex = 0;
 let nodeIdCounter = 0;

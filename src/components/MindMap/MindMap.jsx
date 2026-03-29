@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import MindMapContainer from './MindMapContainer';
+import Toolbar from './Toolbar';
 import useMindMapStore from '../../store/MindMapStore';
 import '../../styles/MindMap.css';
 
@@ -9,16 +10,17 @@ const MindMap = ({ initialData = null }) => {
     loading,
     error,
     setMindMapData,
-    setLoading,
-    setError
+    loadFromStorage,
+    createNewMindMap
   } = useMindMapStore();
 
-  // 초기 데이터 설정
+  // 초기 데이터 설정: localStorage 우선, 없으면 initialData
   useEffect(() => {
-    if (initialData) {
+    const loaded = loadFromStorage();
+    if (!loaded && initialData) {
       setMindMapData(initialData);
     }
-  }, [initialData, setMindMapData]);
+  }, []);
 
   // 데이터 로딩 상태 처리
   if (loading) {
@@ -41,6 +43,7 @@ const MindMap = ({ initialData = null }) => {
 
   return (
     <div className="mindmap-wrapper">
+      <Toolbar />
       <MindMapContainer data={mindMapData} />
     </div>
   );

@@ -4,6 +4,39 @@ import { createRootNode, createChildNode } from '../types/NodeTypes';
 Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
 Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 768 });
 
+describe('MindMapStore - connectionStyle', () => {
+  beforeEach(() => {
+    useMindMapStore.setState({
+      mindMapData: null,
+      loading: false,
+      error: null,
+      validationErrors: [],
+      connectionStyle: 'bezier'
+    });
+  });
+
+  test('기본 연결선 스타일은 bezier이다', () => {
+    const state = useMindMapStore.getState();
+    expect(state.connectionStyle).toBe('bezier');
+  });
+
+  test('연결선 스타일을 straight로 변경할 수 있다', () => {
+    useMindMapStore.getState().setConnectionStyle('straight');
+    expect(useMindMapStore.getState().connectionStyle).toBe('straight');
+  });
+
+  test('연결선 스타일을 bezier로 변경할 수 있다', () => {
+    useMindMapStore.getState().setConnectionStyle('straight');
+    useMindMapStore.getState().setConnectionStyle('bezier');
+    expect(useMindMapStore.getState().connectionStyle).toBe('bezier');
+  });
+
+  test('유효하지 않은 스타일은 무시된다', () => {
+    useMindMapStore.getState().setConnectionStyle('invalid');
+    expect(useMindMapStore.getState().connectionStyle).toBe('bezier');
+  });
+});
+
 describe('MindMapStore - deleteNode', () => {
   beforeEach(() => {
     // 스토어 초기화
@@ -87,5 +120,112 @@ describe('MindMapStore - deleteNode', () => {
     const state = useMindMapStore.getState();
     expect(state.mindMapData).toBeNull();
     expect(state.error).toBeNull();
+  });
+});
+
+describe('MindMapStore - layoutConfig', () => {
+  beforeEach(() => {
+    useMindMapStore.setState({
+      mindMapData: null,
+      loading: false,
+      error: null,
+      validationErrors: [],
+      layoutConfig: { horizontalGap: 100, verticalGap: 30 }
+    });
+  });
+
+  test('기본 레이아웃 설정은 horizontalGap 100, verticalGap 30이다', () => {
+    const state = useMindMapStore.getState();
+    expect(state.layoutConfig).toEqual({ horizontalGap: 100, verticalGap: 30 });
+  });
+
+  test('레이아웃 설정을 변경할 수 있다', () => {
+    useMindMapStore.getState().setLayoutConfig({ horizontalGap: 200, verticalGap: 60 });
+    expect(useMindMapStore.getState().layoutConfig).toEqual({ horizontalGap: 200, verticalGap: 60 });
+  });
+
+  test('gap 값은 최소 20이어야 한다', () => {
+    useMindMapStore.getState().setLayoutConfig({ horizontalGap: 10, verticalGap: 10 });
+    expect(useMindMapStore.getState().layoutConfig.horizontalGap).toBe(20);
+    expect(useMindMapStore.getState().layoutConfig.verticalGap).toBe(20);
+  });
+
+  test('gap 값은 최대 500이어야 한다', () => {
+    useMindMapStore.getState().setLayoutConfig({ horizontalGap: 600, verticalGap: 600 });
+    expect(useMindMapStore.getState().layoutConfig.horizontalGap).toBe(500);
+    expect(useMindMapStore.getState().layoutConfig.verticalGap).toBe(500);
+  });
+
+  test('부분 업데이트가 가능하다', () => {
+    useMindMapStore.getState().setLayoutConfig({ horizontalGap: 150 });
+    const state = useMindMapStore.getState();
+    expect(state.layoutConfig.horizontalGap).toBe(150);
+    expect(state.layoutConfig.verticalGap).toBe(30);
+  });
+});
+
+describe('MindMapStore - backgroundColor', () => {
+  beforeEach(() => {
+    const root = createRootNode('루트');
+    useMindMapStore.setState({
+      mindMapData: root,
+      loading: false,
+      error: null,
+      validationErrors: []
+    });
+  });
+
+  test('노드 배경색을 업데이트할 수 있다', () => {
+    useMindMapStore.getState().updateNodeStyle('root', { backgroundColor: '#FF0000' });
+    const state = useMindMapStore.getState();
+    expect(state.mindMapData.style.backgroundColor).toBe('#FF0000');
+  });
+
+  test('유효하지 않은 배경색은 무시된다', () => {
+    useMindMapStore.getState().updateNodeStyle('root', { backgroundColor: 'invalid' });
+    const state = useMindMapStore.getState();
+    expect(state.mindMapData.style.backgroundColor).toBeUndefined();
+  });
+});
+
+describe('MindMapStore - connectionColor', () => {
+  beforeEach(() => {
+    useMindMapStore.setState({
+      mindMapData: null,
+      loading: false,
+      error: null,
+      validationErrors: [],
+      connectionColor: '#b0b8c8'
+    });
+  });
+
+  test('기본 연결선 색상은 #b0b8c8이다', () => {
+    expect(useMindMapStore.getState().connectionColor).toBe('#b0b8c8');
+  });
+
+  test('연결선 색상을 변경할 수 있다', () => {
+    useMindMapStore.getState().setConnectionColor('#FF0000');
+    expect(useMindMapStore.getState().connectionColor).toBe('#FF0000');
+  });
+
+  test('유효하지 않은 색상은 무시된다', () => {
+    useMindMapStore.getState().setConnectionColor('invalid');
+    expect(useMindMapStore.getState().connectionColor).toBe('#b0b8c8');
+  });
+});
+
+describe('MindMapStore - resetLayout', () => {
+  test('resetLayout이 전체 노드 위치를 재계산한다', () => {
+    const root = createRootNode('루트');
+    const child = createChildNode('root', '자식', root.color);
+    child.position = { x: 0, y: 0 };
+    root.children = [child];
+
+    useMindMapStore.setState({ mindMapData: root, error: null });
+    useMindMapStore.getState().resetLayout();
+
+    const state = useMindMapStore.getState();
+    expect(state.error).toBeNull();
+    expect(state.mindMapData.children[0].position.x).toBeGreaterThan(0);
   });
 });

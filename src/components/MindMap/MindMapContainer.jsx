@@ -17,7 +17,7 @@ const getNodeSize = (node) => {
 };
 
 // 부모-자식 연결선 렌더링
-const renderConnections = (node) => {
+const renderConnections = (node, connectionStyle = 'bezier', connectionColor = '#b0b8c8') => {
   if (!node || !node.children || node.children.length === 0) return [];
 
   const lines = [];
@@ -34,18 +34,22 @@ const renderConnections = (node) => {
 
     const midX = (x1 + x2) / 2;
 
+    const pathD = connectionStyle === 'straight'
+      ? `M ${x1} ${y1} L ${x2} ${y2}`
+      : `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
+
     lines.push(
       <path
         key={`line-${node.id}-${child.id}`}
-        d={`M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`}
+        d={pathD}
         fill="none"
-        stroke="#b0b8c8"
+        stroke={connectionColor}
         strokeWidth={2}
         strokeLinecap="round"
       />
     );
 
-    lines.push(...renderConnections(child));
+    lines.push(...renderConnections(child, connectionStyle, connectionColor));
   });
 
   return lines;
@@ -53,6 +57,8 @@ const renderConnections = (node) => {
 
 const MindMapContainer = ({ data }) => {
   const { addNode, deleteNode } = useMindMapStore();
+  const connectionStyle = useMindMapStore((state) => state.connectionStyle);
+  const connectionColor = useMindMapStore((state) => state.connectionColor);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
 
   // document 클릭으로 노드 선택 해제 — 모든 hooks는 early return 전에 호출
@@ -109,7 +115,7 @@ const MindMapContainer = ({ data }) => {
     );
   };
 
-  const connections = renderConnections(data);
+  const connections = renderConnections(data, connectionStyle, connectionColor);
 
   return (
     <div
