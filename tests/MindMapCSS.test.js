@@ -7,15 +7,19 @@ import MindMapContainer from '../src/components/MindMap/MindMapContainer';
 import useMindMapStore from '../src/store/MindMapStore';
 
 jest.mock('../src/store/MindMapStore');
+jest.mock('../src/utils/TextMeasurer', () => ({
+  measureText: jest.fn(() => ({ width: 200, height: 80 }))
+}));
 
 Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
 Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 768 });
 
 describe('MindMap CSS Styles', () => {
   const mockAddNode = jest.fn();
+  const mockDeleteNode = jest.fn();
 
   beforeEach(() => {
-    useMindMapStore.mockReturnValue({ addNode: mockAddNode });
+    useMindMapStore.mockReturnValue({ addNode: mockAddNode, deleteNode: mockDeleteNode });
   });
 
   afterEach(() => {

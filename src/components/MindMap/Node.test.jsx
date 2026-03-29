@@ -4,6 +4,9 @@ import Node from './Node';
 import useMindMapStore from '../../store/MindMapStore';
 
 jest.mock('../../store/MindMapStore');
+jest.mock('../../utils/TextMeasurer', () => ({
+  measureText: jest.fn(() => ({ width: 200, height: 80 }))
+}));
 jest.mock('./DeleteConfirmDialog', () => {
   return function MockDialog({ onConfirm, onCancel, childCount }) {
     return (
@@ -32,35 +35,42 @@ describe('Node Component', () => {
 
   const mockUpdateNodeText = jest.fn();
   const mockUpdateNodePosition = jest.fn();
+  const mockUpdateNodeStyle = jest.fn();
 
   beforeEach(() => {
+    jest.useFakeTimers();
     mockUseMindMapStore.mockReturnValue({
       updateNodeText: mockUpdateNodeText,
-      updateNodePosition: mockUpdateNodePosition
+      updateNodePosition: mockUpdateNodePosition,
+      updateNodeStyle: mockUpdateNodeStyle
     });
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     jest.clearAllMocks();
   });
 
-  // 기존 테스트
   test('텍스트와 함께 노드를 렌더링한다', () => {
     render(<Node node={mockNode} position={mockNode.position} />);
     expect(screen.getByText('Test Node')).toBeInTheDocument();
   });
 
-  test('텍스트 클릭 시 편집 모드로 전환한다', () => {
+  test('더블클릭 시 편집 모드로 전환한다', () => {
     render(<Node node={mockNode} position={mockNode.position} />);
-    fireEvent.click(screen.getByText('Test Node'));
+    const nodeElement = screen.getByTestId('node-container');
+    fireEvent.dblClick(nodeElement);
     expect(screen.getByDisplayValue('Test Node')).toBeInTheDocument();
   });
 
-  test('입력 변경 시 텍스트를 업데이트한다', () => {
+  test('텍스트 변경 시 디바운스 업데이트된다', () => {
     render(<Node node={mockNode} position={mockNode.position} />);
-    fireEvent.click(screen.getByText('Test Node'));
+    const nodeElement = screen.getByTestId('node-container');
+    fireEvent.dblClick(nodeElement);
     const input = screen.getByDisplayValue('Test Node');
     fireEvent.change(input, { target: { value: 'Updated Text' } });
+
+    act(() => { jest.advanceTimersByTime(300); });
     expect(mockUpdateNodeText).toHaveBeenCalledWith('node-1', 'Updated Text');
   });
 
@@ -82,12 +92,7 @@ describe('Node Component', () => {
       render(<Node node={mockNode} position={mockNode.position} />);
 
       const nodeElement = screen.getByTestId('node-container');
-
-      // 노드에서 마우스 다운 (offset: clientX - position.x = 200 - 100 = 100)
       fireEvent.mouseDown(nodeElement, { clientX: 200, clientY: 150 });
-
-      // document 레벨에서 마우스 이동 (노드 밖)
-      // 새 위치 = clientX - offset = clientX - 100
       fireEvent.mouseMove(document, { clientX: 300, clientY: 250 });
       fireEvent.mouseMove(document, { clientX: 400, clientY: 350 });
 
@@ -100,11 +105,8 @@ describe('Node Component', () => {
 
       const nodeElement = screen.getByTestId('node-container');
       fireEvent.mouseDown(nodeElement, { clientX: 200, clientY: 150 });
-
-      // document에서 mouseup
       fireEvent.mouseUp(document);
 
-      // 이후 마우스 이동은 위치 업데이트하지 않음
       mockUpdateNodePosition.mockClear();
       fireEvent.mouseMove(document, { clientX: 500, clientY: 500 });
       expect(mockUpdateNodePosition).not.toHaveBeenCalled();
@@ -115,8 +117,6 @@ describe('Node Component', () => {
 
       const nodeElement = screen.getByTestId('node-container');
       fireEvent.mouseDown(nodeElement, { clientX: 200, clientY: 150 });
-
-      // 드래그 중에는 transition이 none이어야 함
       expect(nodeElement.style.transition).toBe('none');
     });
   });
@@ -136,7 +136,6 @@ describe('Node Component', () => {
 
     test('삭제 버튼 클릭 시 확인 다이얼로그가 나타난다', () => {
       render(<Node node={mockNode} position={mockNode.position} />);
-
       fireEvent.click(screen.getByTestId('delete-button'));
       expect(screen.getByTestId('delete-dialog')).toBeInTheDocument();
     });
@@ -144,20 +143,16 @@ describe('Node Component', () => {
     test('다이얼로그에서 삭제 확인 시 onDelete가 호출된다', () => {
       const mockOnDelete = jest.fn();
       render(<Node node={mockNode} position={mockNode.position} onDelete={mockOnDelete} />);
-
       fireEvent.click(screen.getByTestId('delete-button'));
       fireEvent.click(screen.getByTestId('dialog-confirm'));
-
       expect(mockOnDelete).toHaveBeenCalledWith('node-1');
     });
 
     test('다이얼로그에서 취소 시 onDelete가 호출되지 않는다', () => {
       const mockOnDelete = jest.fn();
       render(<Node node={mockNode} position={mockNode.position} onDelete={mockOnDelete} />);
-
       fireEvent.click(screen.getByTestId('delete-button'));
       fireEvent.click(screen.getByTestId('dialog-cancel'));
-
       expect(mockOnDelete).not.toHaveBeenCalled();
     });
 
@@ -173,10 +168,45 @@ describe('Node Component', () => {
       };
 
       render(<Node node={nodeWithChildren} position={nodeWithChildren.position} />);
-
       fireEvent.click(screen.getByTestId('delete-button'));
-      // 자식 2 + 손자 1 = 3
       expect(screen.getByTestId('child-count')).toHaveTextContent('3');
+    });
+  });
+
+  // === US-3: 편집 툴바 테스트 ===
+  describe('US-3: 편집 툴바', () => {
+    test('isSelected=true 시 툴바가 표시된다', () => {
+      render(<Node node={mockNode} position={mockNode.position} isSelected={true} />);
+      expect(screen.getByTestId('node-editor-toolbar')).toBeInTheDocument();
+    });
+
+    test('isSelected=false 시 툴바가 표시되지 않는다', () => {
+      render(<Node node={mockNode} position={mockNode.position} isSelected={false} />);
+      expect(screen.queryByTestId('node-editor-toolbar')).not.toBeInTheDocument();
+    });
+
+    test('Bold 버튼 클릭 시 updateNodeStyle이 호출된다', () => {
+      render(<Node node={mockNode} position={mockNode.position} isSelected={true} />);
+      fireEvent.click(screen.getByTestId('bold-button'));
+      expect(mockUpdateNodeStyle).toHaveBeenCalledWith('node-1', { fontWeight: 'bold' });
+    });
+
+    test('Italic 버튼 클릭 시 updateNodeStyle이 호출된다', () => {
+      render(<Node node={mockNode} position={mockNode.position} isSelected={true} />);
+      fireEvent.click(screen.getByTestId('italic-button'));
+      expect(mockUpdateNodeStyle).toHaveBeenCalledWith('node-1', { fontStyle: 'italic' });
+    });
+
+    test('폰트 크기 슬라이더로 크기를 변경할 수 있다', () => {
+      render(<Node node={mockNode} position={mockNode.position} isSelected={true} />);
+      fireEvent.change(screen.getByTestId('font-size-slider'), { target: { value: 24 } });
+      expect(mockUpdateNodeStyle).toHaveBeenCalledWith('node-1', { fontSize: 24 });
+    });
+
+    test('텍스트 색상을 변경할 수 있다', () => {
+      render(<Node node={mockNode} position={mockNode.position} isSelected={true} />);
+      fireEvent.click(screen.getByTestId('color-000000'));
+      expect(mockUpdateNodeStyle).toHaveBeenCalledWith('node-1', { textColor: '#000000' });
     });
   });
 });

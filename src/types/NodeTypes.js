@@ -1,4 +1,12 @@
 // 노드 데이터 구조 인터페이스
+// 노드 텍스트 스타일 기본값
+export const DEFAULT_NODE_STYLE = {
+  fontSize: 16,
+  textColor: '#FFFFFF',
+  fontWeight: '500',
+  fontStyle: 'normal'
+};
+
 export const ITreeNode = {
   id: 'string',
   text: 'string',
@@ -8,7 +16,13 @@ export const ITreeNode = {
     y: 'number'
   },
   children: 'array',
-  isRoot: 'boolean'
+  isRoot: 'boolean',
+  style: {
+    fontSize: 'number',
+    textColor: 'string',
+    fontWeight: 'string',
+    fontStyle: 'string'
+  }
 };
 
 // 실제 타입 정의
@@ -33,7 +47,16 @@ export const NodeSchema = {
       type: 'array',
       items: { $ref: '#/definitions/Node' }
     },
-    isRoot: { type: 'boolean' }
+    isRoot: { type: 'boolean' },
+    style: {
+      type: 'object',
+      properties: {
+        fontSize: { type: 'number', minimum: 8, maximum: 72 },
+        textColor: { type: 'string' },
+        fontWeight: { type: 'string' },
+        fontStyle: { type: 'string' }
+      }
+    }
   },
   required: ['id', 'text', 'position', 'isRoot'],
   definitions: {
@@ -54,7 +77,16 @@ export const NodeSchema = {
           type: 'array',
           items: { $ref: '#/definitions/Node' }
         },
-        isRoot: { type: 'boolean' }
+        isRoot: { type: 'boolean' },
+        style: {
+          type: 'object',
+          properties: {
+            fontSize: { type: 'number' },
+            textColor: { type: 'string' },
+            fontWeight: { type: 'string' },
+            fontStyle: { type: 'string' }
+          }
+        }
       }
     }
   }
@@ -99,7 +131,8 @@ export const createRootNode = (text = '마인드맵') => ({
     y: window.innerHeight / 2 - 40
   },
   children: [],
-  isRoot: true
+  isRoot: true,
+  style: { ...DEFAULT_NODE_STYLE }
 });
 
 export const createChildNode = (parentId, text = '새 노드', parentColor = '#4A90E2') => ({
@@ -109,5 +142,6 @@ export const createChildNode = (parentId, text = '새 노드', parentColor = '#4
   position: { x: 0, y: 0 },
   children: [],
   isRoot: false,
-  parentId
+  parentId,
+  style: { ...DEFAULT_NODE_STYLE }
 });

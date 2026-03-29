@@ -1,10 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import useMindMapStore from '../../store/MindMapStore';
-import { createChildNode } from '../../types/NodeTypes';
+import { createChildNode, DEFAULT_NODE_STYLE } from '../../types/NodeTypes';
+import { calculateNewChildPosition } from '../../utils/LayoutEngine';
+import { measureText } from '../../utils/TextMeasurer';
 import DeleteConfirmDialog from './DeleteConfirmDialog';
+import NodeEditorToolbar from './NodeEditorToolbar';
 
-const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelected }) => {
-  const { updateNodeText, updateNodePosition } = useMindMapStore();
+const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelected, onSelect }) => {
+  const { updateNodeText, updateNodePosition, updateNodeStyle } = useMindMapStore();
   const [isEditing, setIsEditing] = useState(false);
   const [text, setText] = useState(node.text || 'New Node');
   const [position, setPosition] = useState(initialPosition || { x: 0, y: 0 });
@@ -12,15 +15,30 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
   const inputRef = useRef(null);
+  const saveTimerRef = useRef(null);
+
+  const nodeStyle = node.style || { ...DEFAULT_NODE_STYLE };
+  const { fontSize, textColor, fontWeight, fontStyle } = nodeStyle;
+
+  // 노드 박스 자동 크기 계산
+  const measured = measureText(text, fontSize, fontWeight, fontStyle);
+  const nodeWidth = Math.max(120, measured.width);
+  const nodeHeight = measured.height;
 
   // 편집 모드에서 자동 포커스
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
+      inputRef.current.select();
     }
   }, [isEditing]);
 
-  // document 레벨 마우스 이벤트로 드래그 자연스럽게
+  // node.text 외부 변경 동기화
+  useEffect(() => {
+    setText(node.text || 'New Node');
+  }, [node.text]);
+
+  // document 레벨 마우스 이벤트로 드래그
   useEffect(() => {
     if (!isDragging) return;
 
@@ -46,20 +64,48 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
     };
   }, [isDragging, node.id, updateNodePosition]);
 
-  // 텍스트 변경 시 스토어 업데이트
+  // 디바운스 자동 저장 (300ms)
+  const debouncedSave = useCallback((newText) => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      updateNodeText(node.id, newText);
+    }, 300);
+  }, [node.id, updateNodeText]);
+
+  // 컴포넌트 언마운트 시 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, []);
+
+  // 텍스트 변경 (디바운스 저장)
   const handleTextChange = (e) => {
-    setText(e.target.value);
-    updateNodeText(node.id, e.target.value);
+    const newText = e.target.value;
+    setText(newText);
+    debouncedSave(newText);
   };
 
-  // 텍스트 편집 핸들러
+  // 편집 완료
   const handleTextSubmit = () => {
     setIsEditing(false);
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+    }
+    updateNodeText(node.id, text);
+  };
+
+  // 더블클릭으로 편집 모드 진입
+  const handleDoubleClick = (e) => {
+    e.stopPropagation();
+    setIsEditing(true);
   };
 
   // 드래그 시작
   const handleMouseDown = (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (isEditing) return;
 
     setIsDragging(true);
     dragOffsetRef.current = {
@@ -69,56 +115,55 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
     e.preventDefault();
   };
 
-  // 자식 노드 추가 핸들러
+  // 노드 클릭 → 선택만 (툴바는 isSelected로 제어)
+  const handleClick = (e) => {
+    e.stopPropagation();
+    if (onSelect) onSelect(node.id);
+  };
+
+  // 자식 노드 추가
   const handleAddChild = (e) => {
     e.stopPropagation();
     const childNode = createChildNode(node.id, '새 노드', node.color);
-
-    const childPosition = {
-      x: position.x + 250,
-      y: position.y
-    };
-
-    childNode.position = childPosition;
-
-    if (onAddChild) {
-      onAddChild(node.id, childNode);
-    }
+    const existingCount = node.children ? node.children.length : 0;
+    childNode.position = calculateNewChildPosition(position, existingCount);
+    if (onAddChild) onAddChild(node.id, childNode);
   };
 
-  // 자식 노드 수 계산 (재귀)
+  // 자식 수 계산
   const countDescendants = (n) => {
     if (!n.children || n.children.length === 0) return 0;
     return n.children.reduce((sum, child) => sum + 1 + countDescendants(child), 0);
   };
 
-  // 삭제 버튼 클릭
+  // 삭제
   const handleDeleteClick = (e) => {
     e.stopPropagation();
     if (node.isRoot) return;
     setShowDeleteConfirm(true);
   };
 
-  // 삭제 확인
   const handleDeleteConfirm = () => {
     setShowDeleteConfirm(false);
-    if (onDelete) {
-      onDelete(node.id);
-    }
+    if (onDelete) onDelete(node.id);
   };
 
-  // 삭제 취소
   const handleDeleteCancel = () => {
     setShowDeleteConfirm(false);
   };
 
-  // 노드 기본 스타일
-  const nodeStyle = {
+  // 스타일 변경 핸들러
+  const handleStyleChange = useCallback((styleProps) => {
+    updateNodeStyle(node.id, styleProps);
+  }, [node.id, updateNodeStyle]);
+
+  // 노드 스타일
+  const containerStyle = {
     position: 'absolute',
     left: `${position.x}px`,
     top: `${position.y}px`,
-    width: 200,
-    height: 80,
+    width: nodeWidth,
+    height: nodeHeight,
     backgroundColor: node.color || '#4A90E2',
     borderRadius: 16,
     display: 'flex',
@@ -126,7 +171,7 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
     justifyContent: 'center',
     cursor: isEditing ? 'text' : 'move',
     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-    transition: isDragging ? 'none' : 'all 0.3s ease',
+    transition: isDragging ? 'none' : 'width 0.2s ease, height 0.2s ease, background-color 0.3s ease',
     userSelect: 'none',
     border: isSelected ? '3px solid #1890ff' : 'none',
     ...(isDragging && {
@@ -136,15 +181,19 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
     })
   };
 
-  // 추가 버튼 스타일
-  const addButtonStyle = {
+  const textStyle = {
+    color: textColor || '#FFFFFF',
+    fontSize: `${fontSize || 16}px`,
+    fontWeight: fontWeight || '500',
+    fontStyle: fontStyle || 'normal',
+    textAlign: 'center',
+    lineHeight: 1.2,
+  };
+
+  const actionBtnBase = {
     position: 'absolute',
-    right: -12,
-    top: '50%',
-    transform: 'translateY(-50%)',
     width: 24,
     height: 24,
-    backgroundColor: '#52c41a',
     borderRadius: '50%',
     display: 'flex',
     alignItems: 'center',
@@ -162,9 +211,19 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
   return (
     <div
       data-testid="node-container"
-      style={nodeStyle}
+      style={containerStyle}
       onMouseDown={handleMouseDown}
+      onClick={handleClick}
+      onDoubleClick={handleDoubleClick}
     >
+      {/* 편집 툴바 — isSelected로만 제어 */}
+      {isSelected && !isDragging && !isEditing && (
+        <NodeEditorToolbar
+          style={nodeStyle}
+          onStyleChange={handleStyleChange}
+        />
+      )}
+
       {isEditing ? (
         <input
           ref={inputRef}
@@ -180,33 +239,22 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
             }
           }}
           style={{
+            ...textStyle,
             border: 'none',
             background: 'transparent',
-            color: '#FFFFFF',
-            fontSize: '16px',
-            fontWeight: '500',
-            textAlign: 'center',
             outline: 'none',
-            width: '90%'
+            width: '90%',
+            cursor: 'text',
           }}
         />
       ) : (
-        <div
-          onClick={() => setIsEditing(true)}
-          style={{
-            color: '#FFFFFF',
-            fontSize: '16px',
-            fontWeight: '500',
-            textAlign: 'center',
-            cursor: 'pointer'
-          }}
-        >
+        <div style={{ ...textStyle, cursor: 'pointer', padding: '0 8px' }}>
           {text}
         </div>
       )}
 
       <div
-        style={addButtonStyle}
+        style={{ ...actionBtnBase, right: -12, top: '50%', transform: 'translateY(-50%)', backgroundColor: '#52c41a' }}
         onClick={handleAddChild}
         onMouseDown={(e) => e.stopPropagation()}
         title="자식 노드 추가"
@@ -217,27 +265,7 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
       {!node.isRoot && (
         <div
           data-testid="delete-button"
-          style={{
-            position: 'absolute',
-            left: -12,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            width: 24,
-            height: 24,
-            backgroundColor: '#e74c3c',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
-            transition: 'all 0.2s ease',
-            fontSize: '16px',
-            color: 'white',
-            fontWeight: 'bold',
-            lineHeight: 1,
-            border: '2px solid white'
-          }}
+          style={{ ...actionBtnBase, left: -12, top: '50%', transform: 'translateY(-50%)', backgroundColor: '#e74c3c' }}
           onClick={handleDeleteClick}
           onMouseDown={(e) => e.stopPropagation()}
           title="노드 삭제"

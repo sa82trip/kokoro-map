@@ -1,23 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Node from './Node';
 import useMindMapStore from '../../store/MindMapStore';
+import { measureText } from '../../utils/TextMeasurer';
+import { DEFAULT_NODE_STYLE } from '../../types/NodeTypes';
 
-const NODE_WIDTH = 200;
+import { calculateAutoLayout } from '../../utils/LayoutEngine';
+
 const NODE_HEIGHT = 80;
+
+// 노드 크기 측정하여 연결선 위치 계산
+const getNodeSize = (node) => {
+  if (!node) return { width: 200, height: 80 };
+  const nodeStyle = node.style || {};
+  const measured = measureText(node.text, nodeStyle?.fontSize || 16, nodeStyle?.fontWeight, nodeStyle?.fontStyle);
+  return { width: Math.max(120, measured.width), height: Math.max(40, measured.height) };
+};
 
 // 부모-자식 연결선 렌더링
 const renderConnections = (node) => {
   if (!node || !node.children || node.children.length === 0) return [];
 
   const lines = [];
-  const x1 = node.position.x + NODE_WIDTH;
-  const y1 = node.position.y + NODE_HEIGHT / 2;
+  const pos = node.position || { x: 0, y: 0 };
+  const size = getNodeSize(node);
+  const x1 = pos.x + size.width;
+  const y1 = pos.y + size.height / 2;
 
   node.children.forEach((child) => {
-    const x2 = child.position.x;
-    const y2 = child.position.y + NODE_HEIGHT / 2;
+    const childPos = child.position || { x: 0, y: 0 };
+    const childSize = getNodeSize(child);
+    const x2 = childPos.x;
+    const y2 = childPos.y + childSize.height / 2;
 
-    // 베지어 곡선 제어점
     const midX = (x1 + x2) / 2;
 
     lines.push(
@@ -31,7 +45,6 @@ const renderConnections = (node) => {
       />
     );
 
-    // 재귀적으로 자식의 자식도 렌더링
     lines.push(...renderConnections(child));
   });
 
@@ -42,24 +55,36 @@ const MindMapContainer = ({ data }) => {
   const { addNode, deleteNode } = useMindMapStore();
   const [selectedNodeId, setSelectedNodeId] = useState(null);
 
-  if (!data) {
-    return null;
-  }
+  // document 클릭으로 노드 선택 해제 — 모든 hooks는 early return 전에 호출
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      const target = e.target;
+      if (!target.closest('[data-testid="node-container"]') &&
+          !target.closest('[data-testid="node-editor-toolbar"]')) {
+        setSelectedNodeId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-  // 자식 노드 추가 핸들러
+  if (!data) return null;
+
+  const handleNodeSelect = (nodeId) => {
+    setSelectedNodeId(nodeId);
+  };
+
   const handleAddChild = (parentId, childNode) => {
     addNode(parentId, childNode);
     setSelectedNodeId(parentId);
   };
 
-  // 컨테이너 클릭 시 선택 해제
   const handleContainerClick = (e) => {
     if (e.target.classList.contains('mindmap-container')) {
       setSelectedNodeId(null);
     }
   };
 
-  // 노드 삭제 핸들러
   const handleDeleteNode = (nodeId) => {
     deleteNode(nodeId);
     if (selectedNodeId === nodeId) {
@@ -67,10 +92,8 @@ const MindMapContainer = ({ data }) => {
     }
   };
 
-  // 노드 렌더링 (재귀)
   const renderNodes = (node) => {
     if (!node) return null;
-
     return (
       <React.Fragment key={node.id}>
         <Node
@@ -79,6 +102,7 @@ const MindMapContainer = ({ data }) => {
           onAddChild={handleAddChild}
           onDelete={handleDeleteNode}
           isSelected={selectedNodeId === node.id}
+          onSelect={handleNodeSelect}
         />
         {node.children && node.children.map(child => renderNodes(child))}
       </React.Fragment>
@@ -95,7 +119,8 @@ const MindMapContainer = ({ data }) => {
         width: '100vw',
         height: '100vh',
         overflow: 'hidden',
-        background: 'linear-gradient(to bottom right, #f5f7fa, #c3cfe2)'
+        background: 'linear-gradient(to bottom right, #f5f7fa, #c3cfe2)',
+        paddingTop: 52
       }}
       onClick={handleContainerClick}
     >

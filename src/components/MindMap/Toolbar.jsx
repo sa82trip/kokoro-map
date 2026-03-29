@@ -1,0 +1,206 @@
+import React, { useState, useRef, useEffect } from 'react';
+import useMindMapStore from '../../store/MindMapStore';
+
+const Toolbar = () => {
+  const {
+    mindMapData,
+    createNewMindMap,
+    updateMindMapTitle,
+    applyAutoLayout
+  } = useMindMapStore();
+
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleText, setTitleText] = useState('');
+  const [showNewConfirm, setShowNewConfirm] = useState(false);
+  const titleInputRef = useRef(null);
+
+  const title = mindMapData?.text || '마인드맵';
+
+  useEffect(() => {
+    if (isEditingTitle && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.select();
+    }
+  }, [isEditingTitle]);
+
+  const handleTitleClick = () => {
+    setTitleText(title);
+    setIsEditingTitle(true);
+  };
+
+  const handleTitleSubmit = () => {
+    const trimmed = titleText.trim();
+    if (trimmed) {
+      updateMindMapTitle(trimmed);
+    }
+    setIsEditingTitle(false);
+  };
+
+  const handleTitleKeyDown = (e) => {
+    if (e.key === 'Enter') handleTitleSubmit();
+    if (e.key === 'Escape') {
+      setIsEditingTitle(false);
+    }
+  };
+
+  const handleNewMindMap = () => {
+    if (mindMapData?.children?.length > 0) {
+      setShowNewConfirm(true);
+    } else {
+      createNewMindMap();
+    }
+  };
+
+  const confirmNewMindMap = () => {
+    createNewMindMap();
+    setShowNewConfirm(false);
+  };
+
+  const toolbarStyle = {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 52,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0 20px',
+    background: 'rgba(255, 255, 255, 0.95)',
+    borderBottom: '1px solid #e0e4ea',
+    zIndex: 100,
+    backdropFilter: 'blur(8px)',
+    boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)'
+  };
+
+  const titleStyle = {
+    fontSize: 18,
+    fontWeight: 600,
+    color: '#1a1a2e',
+    cursor: 'pointer',
+    padding: '4px 12px',
+    borderRadius: 6,
+    border: isEditingTitle ? '2px solid #4A90E2' : '2px solid transparent',
+    outline: 'none',
+    background: isEditingTitle ? '#fff' : 'transparent',
+    minWidth: 120,
+    maxWidth: 400,
+    transition: 'border-color 0.2s ease'
+  };
+
+  const buttonBase = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    padding: '6px 14px',
+    borderRadius: 8,
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: 13,
+    fontWeight: 500,
+    transition: 'all 0.2s ease'
+  };
+
+  return (
+    <div style={toolbarStyle} data-testid="toolbar">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ fontSize: 22, marginRight: 4 }}>&#129504;</div>
+        {isEditingTitle ? (
+          <input
+            ref={titleInputRef}
+            type="text"
+            value={titleText}
+            onChange={(e) => setTitleText(e.target.value)}
+            onBlur={handleTitleSubmit}
+            onKeyDown={handleTitleKeyDown}
+            style={titleStyle}
+            maxLength={200}
+          />
+        ) : (
+          <span
+            style={titleStyle}
+            onClick={handleTitleClick}
+            title="클릭하여 제목 편집"
+            data-testid="toolbar-title"
+          >
+            {title}
+          </span>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button
+          style={{
+            ...buttonBase,
+            background: '#f0f4ff',
+            color: '#4A90E2'
+          }}
+          onClick={applyAutoLayout}
+          title="자동 레이아웃"
+          data-testid="btn-auto-layout"
+          onMouseEnter={(e) => e.target.style.background = '#dde5f7'}
+          onMouseLeave={(e) => e.target.style.background = '#f0f4ff'}
+        >
+          &#9878; 자동 정렬
+        </button>
+        <button
+          style={{
+            ...buttonBase,
+            background: '#4A90E2',
+            color: '#fff'
+          }}
+          onClick={handleNewMindMap}
+          title="새 마인드맵"
+          data-testid="btn-new-mindmap"
+          onMouseEnter={(e) => e.target.style.background = '#357abd'}
+          onMouseLeave={(e) => e.target.style.background = '#4A90E2'}
+        >
+          + 새 마인드맵
+        </button>
+      </div>
+
+      {showNewConfirm && (
+        <div style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 200
+        }}>
+          <div style={{
+            background: '#fff',
+            borderRadius: 12,
+            padding: 24,
+            maxWidth: 360,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.15)'
+          }}>
+            <h3 style={{ margin: '0 0 12px', fontSize: 16, color: '#1a1a2e' }}>
+              새 마인드맵을 생성하시겠습니까?
+            </h3>
+            <p style={{ margin: '0 0 20px', fontSize: 14, color: '#666' }}>
+              현재 마인드맵의 모든 내용이 삭제됩니다.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button
+                style={{ ...buttonBase, background: '#f0f0f0', color: '#333' }}
+                onClick={() => setShowNewConfirm(false)}
+              >
+                취소
+              </button>
+              <button
+                style={{ ...buttonBase, background: '#e74c3c', color: '#fff' }}
+                onClick={confirmNewMindMap}
+              >
+                생성
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Toolbar;

@@ -4,15 +4,19 @@ import MindMapContainer from './MindMapContainer';
 import useMindMapStore from '../../store/MindMapStore';
 
 jest.mock('../../store/MindMapStore');
+jest.mock('../../utils/TextMeasurer', () => ({
+  measureText: jest.fn(() => ({ width: 200, height: 80 }))
+}));
 
 Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
 Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 768 });
 
 describe('MindMapContainer', () => {
   const mockAddNode = jest.fn();
+  const mockDeleteNode = jest.fn();
 
   beforeEach(() => {
-    useMindMapStore.mockReturnValue({ addNode: mockAddNode });
+    useMindMapStore.mockReturnValue({ addNode: mockAddNode, deleteNode: mockDeleteNode });
   });
 
   afterEach(() => {
