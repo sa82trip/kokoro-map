@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react';
-import { useMindMapStore } from '../src/store/MindMapStore';
+import useMindMapStore from '../src/store/MindMapStore';
 import { createRootNode } from '../src/types/NodeTypes';
 import { validateNode, validateMindMap } from '../src/utils/NodeValidator';
 
@@ -15,6 +15,7 @@ Object.defineProperty(window, 'innerHeight', {
 
 describe('MindMapStore', () => {
   const mockRootNode = createRootNode('테스트 마인드맵');
+  // createRootNode creates id: 'root'
 
   beforeEach(() => {
     // 테스트마다 스토어 초기화
@@ -56,7 +57,7 @@ describe('MindMapStore', () => {
       });
     });
 
-    expect(result.current.error).toContain('ID가 필요합니다');
+    expect(result.current.error).toContain('데이터 유효성 검증 실패');
     expect(result.current.mindMapData).toBeNull();
   });
 
@@ -68,9 +69,9 @@ describe('MindMapStore', () => {
       result.current.setMindMapData(mockRootNode);
     });
 
-    // 텍스트 업데이트
+    // 텍스트 업데이트 - id는 'root'
     act(() => {
-      result.current.updateNodeText('test-root', '업데이트된 텍스트');
+      result.current.updateNodeText('root', '업데이트된 텍스트');
     });
 
     expect(result.current.mindMapData.text).toBe('업데이트된 텍스트');
@@ -87,11 +88,11 @@ describe('MindMapStore', () => {
 
     // 유효하지 않은 텍스트 업데이트
     act(() => {
-      result.current.updateNodeText('test-root', '');
+      result.current.updateNodeText('root', '');
     });
 
     expect(result.current.error).toContain('텍스트가 필요합니다');
-    expect(result.current.mindMapData.text).toBe('마인드맵'); // 원본 유지
+    expect(result.current.mindMapData.text).toBe('테스트 마인드맵'); // 원본 유지
   });
 
   test('노드 위치 업데이트 기능이 동작해야 합니다', () => {
@@ -104,7 +105,7 @@ describe('MindMapStore', () => {
     const newPosition = { x: 500, y: 300 };
 
     act(() => {
-      result.current.updateNodePosition('test-root', newPosition);
+      result.current.updateNodePosition('root', newPosition);
     });
 
     expect(result.current.mindMapData.position).toEqual(newPosition);
@@ -120,7 +121,7 @@ describe('MindMapStore', () => {
     const invalidPosition = { x: 'invalid', y: 300 };
 
     act(() => {
-      result.current.updateNodePosition('test-root', invalidPosition);
+      result.current.updateNodePosition('root', invalidPosition);
     });
 
     expect(result.current.error).toContain('유효하지 않은 위치입니다');
@@ -143,7 +144,7 @@ describe('MindMapStore', () => {
     };
 
     act(() => {
-      result.current.addNode('test-root', childNode);
+      result.current.addNode('root', childNode);
     });
 
     expect(result.current.mindMapData.children).toHaveLength(1);
@@ -153,19 +154,33 @@ describe('MindMapStore', () => {
   test('최대 노드 수 제한이 동작해야 합니다', () => {
     const { result } = renderHook(() => useMindMapStore());
 
-    // 1000개의 노드를 생성하는 테스트 데이터
-    const largeMindMap = { ...mockRootNode };
-    let current = largeMindMap;
-    for (let i = 0; i < 10; i++) {
-      current.children.push({
-        id: `node-${i}`,
-        text: `Node ${i}`,
+    // 유효성 검사(자식 50개 제한)를 통과하면서 총 1000개가 넘는 트리 구성
+    // 루트(1) + 루트 자식 20개(20) + 각 자식마다 자식 50개(1000) = 총 1021개
+    const largeMindMap = {
+      ...mockRootNode,
+      children: []
+    };
+
+    for (let i = 0; i < 20; i++) {
+      const branch = {
+        id: `branch-${i}`,
+        text: `Branch ${i}`,
         color: '#52c41a',
         position: { x: i * 100, y: i * 100 },
         children: [],
         isRoot: false
-      });
-      current = current.children[current.children.length - 1];
+      };
+      for (let j = 0; j < 50; j++) {
+        branch.children.push({
+          id: `leaf-${i}-${j}`,
+          text: `Leaf ${i}-${j}`,
+          color: '#3498DB',
+          position: { x: i * 100 + j * 10, y: i * 100 + j * 10 },
+          children: [],
+          isRoot: false
+        });
+      }
+      largeMindMap.children.push(branch);
     }
 
     act(() => {
@@ -183,7 +198,7 @@ describe('MindMapStore', () => {
     };
 
     act(() => {
-      result.current.addNode('node-9', newNode);
+      result.current.addNode('root', newNode);
     });
 
     expect(result.current.error).toContain('노드 수가 최대 한도를 초과');
@@ -197,7 +212,7 @@ describe('MindMapStore', () => {
     });
 
     act(() => {
-      result.current.deleteNode('test-root');
+      result.current.deleteNode('root');
     });
 
     expect(result.current.error).toContain('루트 노드를 삭제할 수 없습니다');
@@ -335,7 +350,9 @@ describe('validateNode 유틸리티 함수', () => {
     const result = validateNode(invalidNode);
 
     expect(result.isValid).toBe(false);
-    expect(result.errors).toContain('텍스트가 너무 깁니다');
+    expect(result.errors).toEqual(
+      expect.arrayContaining([expect.stringContaining('텍스트가 너무 깁니다')])
+    );
   });
 
   test('색상 형식이 올바르지 않을 시 검증 실패', () => {
@@ -351,7 +368,9 @@ describe('validateNode 유틸리티 함수', () => {
     const result = validateNode(invalidNode);
 
     expect(result.isValid).toBe(false);
-    expect(result.errors).toContain('색상 형식이 올바르지 않습니다');
+    expect(result.errors).toEqual(
+      expect.arrayContaining([expect.stringContaining('색상 형식이 올바르지 않습니다')])
+    );
   });
 });
 

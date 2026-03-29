@@ -48,8 +48,7 @@ const useMindMapStore = create((set, get) => ({
     const validation = validateNode(updatedNode);
 
     if (!validation.isValid) {
-      set({ error: validation.errors.join(', ') });
-      return state;
+      return { ...state, error: validation.errors.join(', ') };
     }
 
     const updateNode = (node) => {
@@ -70,8 +69,7 @@ const useMindMapStore = create((set, get) => ({
     // 전체 유효성 검증
     const totalValidation = validateMindMap(updatedMindMap);
     if (!totalValidation.isValid) {
-      set({ error: totalValidation.errors.map(e => e.errors.join(', ')).join('; ') });
-      return state;
+      return { ...state, error: totalValidation.errors.map(e => e.errors.join(', ')).join('; ') };
     }
 
     return {
@@ -86,8 +84,7 @@ const useMindMapStore = create((set, get) => ({
 
     // 유효성 검증
     if (typeof newPosition.x !== 'number' || typeof newPosition.y !== 'number') {
-      set({ error: '유효하지 않은 위치입니다' });
-      return state;
+      return { ...state, error: '유효하지 않은 위치입니다' };
     }
 
     const updateNode = (node) => {
@@ -108,8 +105,7 @@ const useMindMapStore = create((set, get) => ({
     // 전체 유효성 검증
     const validation = validateMindMap(updatedMindMap);
     if (!validation.isValid) {
-      set({ error: validation.errors.map(e => e.errors.join(', ')).join('; ') });
-      return state;
+      return { ...state, error: validation.errors.map(e => e.errors.join(', ')).join('; ') };
     }
 
     return {
@@ -124,8 +120,7 @@ const useMindMapStore = create((set, get) => ({
 
     const validation = validateNode(newNodeData);
     if (!validation.isValid) {
-      set({ error: validation.errors.join(', ') });
-      return state;
+      return { ...state, error: validation.errors.join(', ') };
     }
 
     const updateNode = (node) => {
@@ -154,8 +149,7 @@ const useMindMapStore = create((set, get) => ({
 
     const nodeCount = countNodes(updatedMindMap);
     if (nodeCount > 1000) {
-      set({ error: '노드 수가 최대 한도를 초과했습니다 (1000개)' });
-      return state;
+      return { ...state, error: '노드 수가 최대 한도를 초과했습니다 (1000개)' };
     }
 
     return {
@@ -190,8 +184,7 @@ const useMindMapStore = create((set, get) => ({
 
     // 루트 노드가 삭제되지 않았는지 확인
     if (!updatedMindMap) {
-      set({ error: '루트 노드를 삭제할 수 없습니다' });
-      return state;
+      return { ...state, error: '루트 노드를 삭제할 수 없습니다' };
     }
 
     return {

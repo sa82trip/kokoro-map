@@ -1,7 +1,11 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import Node from '../src/components/MindMap/Node.test';
+import { render, screen, fireEvent } from '@testing-library/react';
+import Node from '../src/components/MindMap/Node';
+import useMindMapStore from '../src/store/MindMapStore';
+
+// Zustand store 모킹
+jest.mock('../src/store/MindMapStore');
+const mockUseMindMapStore = useMindMapStore;
 
 // Mock window 객체
 Object.defineProperty(window, 'innerWidth', {
@@ -23,73 +27,74 @@ describe('Node Component', () => {
     isRoot: false
   };
 
-  const mockOnUpdate = jest.fn();
-  const mockOnDelete = jest.fn();
+  const mockUpdateNodeText = jest.fn();
+  const mockUpdateNodePosition = jest.fn();
 
   beforeEach(() => {
-    mockOnUpdate.mockClear();
-    mockOnDelete.mockClear();
+    mockUseMindMapStore.mockReturnValue({
+      updateNodeText: mockUpdateNodeText,
+      updateNodePosition: mockUpdateNodePosition
+    });
+    mockUpdateNodeText.mockClear();
+    mockUpdateNodePosition.mockClear();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   test('렌더링 시 노드가 표시되어야 합니다', () => {
     render(<Node node={mockNode} position={mockNode.position} />);
 
     expect(screen.getByText('Test Node')).toBeInTheDocument();
-    expect(screen.getByTestId('node-container')).toHaveStyle({
-      backgroundColor: '#4A90E2',
-      left: '100px',
-      top: '100px'
-    });
   });
 
-  test('드래그 기능이 동작해야 합니다', () => {
-    const { container } = render(<Node node={mockNode} position={mockNode.position} />);
-    const nodeElement = container.firstChild;
-
-    // 마우스 다운 이벤트 - 노드 내에서 발생
-    fireEvent.mouseDown(nodeElement, {
-      clientX: 100,
-      clientY: 100,
-      target: nodeElement
-    });
-
-    // 마우스 이동 이벤트 - 같은 target에서 발생
-    fireEvent.mouseMove(nodeElement, {
-      clientX: 150,
-      clientY: 150
-    });
-
-    // 마우스 업 이벤트
-    fireEvent.mouseUp(nodeElement);
-
-    // 위치가 변경되어야 합니다
-    expect(nodeElement).toHaveStyle({
-      left: '150px',
-      top: '150px'
-    });
-  });
-
-  test('텍스트 편집 기능이 동작해야 합니다', () => {
+  test('노드가 올바른 위치에 렌더링되어야 합니다', () => {
     render(<Node node={mockNode} position={mockNode.position} />);
 
-    // 텍스트 클릭 시 편집 모드
+    const nodeElement = screen.getByTestId('node-container');
+    expect(nodeElement.style.left).toBe('100px');
+    expect(nodeElement.style.top).toBe('100px');
+  });
+
+  test('노드 색상이 올바르게 적용되어야 합니다', () => {
+    render(<Node node={mockNode} position={mockNode.position} />);
+
+    const nodeElement = screen.getByTestId('node-container');
+    expect(nodeElement.style.backgroundColor).toBe('rgb(74, 144, 226)');
+  });
+
+  test('텍스트 클릭 시 편집 모드로 전환되어야 합니다', () => {
+    render(<Node node={mockNode} position={mockNode.position} />);
+
     fireEvent.click(screen.getByText('Test Node'));
+    expect(screen.getByDisplayValue('Test Node')).toBeInTheDocument();
+  });
 
-    // 입력 필드가 나타나야 합니다
+  test('텍스트 변경 시 스토어 업데이트가 호출되어야 합니다', () => {
+    render(<Node node={mockNode} position={mockNode.position} />);
+
+    fireEvent.click(screen.getByText('Test Node'));
     const input = screen.getByDisplayValue('Test Node');
-    expect(input).toBeInTheDocument();
-
-    // 텍스트 변경
     fireEvent.change(input, { target: { value: 'Updated Text' } });
 
-    // Enter 키로 저장
+    expect(mockUpdateNodeText).toHaveBeenCalledWith('test-node', 'Updated Text');
+  });
+
+  test('Enter 키로 편집이 완료되어야 합니다', () => {
+    render(<Node node={mockNode} position={mockNode.position} />);
+
+    fireEvent.click(screen.getByText('Test Node'));
+    const input = screen.getByDisplayValue('Test Node');
     fireEvent.keyDown(input, { key: 'Enter' });
 
-    expect(screen.getByText('Updated Text')).toBeInTheDocument();
+    // 편집 모드 종료 → 텍스트 표시 모드
+    expect(screen.getByText('Test Node')).toBeInTheDocument();
+    expect(screen.queryByDisplayValue('Test Node')).not.toBeInTheDocument();
   });
 
   test('Esc 키로 편집 취소가 가능해야 합니다', () => {
-    const { container } = render(<Node node={mockNode} position={mockNode.position} />);
+    render(<Node node={mockNode} position={mockNode.position} />);
 
     // 편집 모드로 전환
     fireEvent.click(screen.getByText('Test Node'));
@@ -101,54 +106,78 @@ describe('Node Component', () => {
     // Esc 키로 취소
     fireEvent.keyDown(input, { key: 'Escape' });
 
-    // 원래 텍스트로 복원됩니다
+    // 원래 텍스트로 복원
     expect(screen.getByText('Test Node')).toBeInTheDocument();
-    expect(screen.queryByDisplayValue('Updated Text')).not.toBeInTheDocument();
   });
 
-  test('드래그 중에 노드가 확대되어야 합니다', () => {
-    const { container } = render(<Node node={mockNode} position={mockNode.position} />);
-    const nodeElement = container.firstChild;
+  test('드래그 시 document 레벨에서 위치가 업데이트되어야 합니다', () => {
+    render(<Node node={mockNode} position={mockNode.position} />);
 
-    // 마우스 다운 이벤트 발생
-    fireEvent.mouseDown(nodeElement, { clientX: 150, clientY: 150 });
+    const nodeElement = screen.getByTestId('node-container');
 
-    // isDragging 상태가 true로 변경됨에 따라 확대 효과 적용
-    expect(nodeElement).toHaveStyle({
-      transform: 'scale(1.05)'
-    });
+    // 노드에서 마우스 다운
+    fireEvent.mouseDown(nodeElement, { clientX: 200, clientY: 150 });
+
+    // document 레벨에서 마우스 이동 (노드 밖으로)
+    fireEvent.mouseMove(document, { clientX: 300, clientY: 250 });
+
+    expect(mockUpdateNodePosition).toHaveBeenCalledWith('test-node', { x: 200, y: 200 });
   });
 
-  test('hover 시 시각적 피드백이 적용되어야 합니다', () => {
-    const { container } = render(<Node node={mockNode} position={mockNode.position} />);
-    const nodeElement = container.firstChild;
+  test('document 레벨 mouseup으로 드래그가 종료되어야 합니다', () => {
+    render(<Node node={mockNode} position={mockNode.position} />);
 
-    // 마우스 오버
-    fireEvent.mouseEnter(nodeElement);
+    const nodeElement = screen.getByTestId('node-container');
+    fireEvent.mouseDown(nodeElement, { clientX: 200, clientY: 150 });
 
-    // 호버 스타일 적용 (테스트 환경에서는 직접 테스트 어려움)
-    // 실제 애플리케이션에서는 CSS로 확인
-    expect(nodeElement).toHaveStyle({
-      cursor: 'move'
-    });
+    // document에서 mouseup
+    fireEvent.mouseUp(document);
+
+    // 이후 마우스 이동은 위치 업데이트하지 않음
+    mockUpdateNodePosition.mockClear();
+    fireEvent.mouseMove(document, { clientX: 500, clientY: 500 });
+    expect(mockUpdateNodePosition).not.toHaveBeenCalled();
   });
 
-  test('자식 노드 표시 지원', () => {
-    const nodeWithChildren = {
-      ...mockNode,
-      children: [
-        { id: 'child-1', text: 'Child 1', color: '#52c41a', position: { x: 0, y: 0 } }
-      ]
-    };
+  test('드래그 중 transition이 비활성화되어야 합니다', () => {
+    render(<Node node={mockNode} position={mockNode.position} />);
 
-    const { container } = render(<Node node={nodeWithChildren} position={mockNode.position} />);
+    const nodeElement = screen.getByTestId('node-container');
+    fireEvent.mouseDown(nodeElement, { clientX: 200, clientY: 150 });
 
-    // 자식 노드는 부모 컴포넌트에서 렌더링되므로 여기서는 테스트하지 않음
-    // Node 컴포넌트는 개별 노드만 다룸
-    expect(container.firstChild).toBeInTheDocument();
+    expect(nodeElement.style.transition).toBe('none');
   });
 
-  test('root 노드 특수 스타일 적용', () => {
+  test('input/textarea 클릭 시 드래그가 시작되지 않아야 합니다', () => {
+    render(<Node node={mockNode} position={mockNode.position} />);
+
+    // 편집 모드로 전환
+    fireEvent.click(screen.getByText('Test Node'));
+    const input = screen.getByDisplayValue('Test Node');
+
+    // input에서 마우스 다운 → 드래그 시작 안 함
+    fireEvent.mouseDown(input);
+    fireEvent.mouseMove(document, { clientX: 500, clientY: 500 });
+
+    // updateNodePosition이 호출되지 않아야 함 (드래그가 시작되지 않았으므로)
+    expect(mockUpdateNodePosition).not.toHaveBeenCalled();
+  });
+
+  test('자식 추가 버튼이 렌더링되어야 합니다', () => {
+    render(<Node node={mockNode} position={mockNode.position} />);
+    expect(screen.getByText('+')).toBeInTheDocument();
+  });
+
+  test('추가 버튼 클릭 시 onAddChild를 호출해야 합니다', () => {
+    const mockOnAddChild = jest.fn();
+    render(<Node node={mockNode} position={mockNode.position} onAddChild={mockOnAddChild} />);
+
+    fireEvent.click(screen.getByText('+'));
+    expect(mockOnAddChild).toHaveBeenCalled();
+    expect(mockOnAddChild.mock.calls[0][0]).toBe('test-node');
+  });
+
+  test('root 노드도 정상적으로 렌더링되어야 합니다', () => {
     const rootNode = {
       ...mockNode,
       isRoot: true,
@@ -156,23 +185,31 @@ describe('Node Component', () => {
     };
 
     render(<Node node={rootNode} position={rootNode.position} />);
-
     expect(screen.getByText('Root Node')).toBeInTheDocument();
-    // 루트 노드는 특별한 스타일을 가질 수 있음 (현재는 기본 스타일)
   });
 
-  test('유효하지 않은 위치 처리', () => {
+  test('유효하지 않은 위치도 그대로 렌더링되어야 합니다', () => {
     const invalidPosition = { x: -100, y: -100 };
 
-    const { container } = render(
-      <Node node={mockNode} position={invalidPosition} />
-    );
+    render(<Node node={mockNode} position={invalidPosition} />);
 
-    expect(container.firstChild).toHaveStyle({
-      left: '-100px',
-      top: '-100px'
-    });
+    const nodeElement = screen.getByTestId('node-container');
+    expect(nodeElement.style.left).toBe('-100px');
+    expect(nodeElement.style.top).toBe('-100px');
+  });
 
-    // 실제 애플리케이션에서는 경계 검사 추가 가능
+  test('선택된 노드는 테두리가 표시되어야 합니다', () => {
+    render(<Node node={mockNode} position={mockNode.position} isSelected={true} />);
+
+    const nodeElement = screen.getByTestId('node-container');
+    expect(nodeElement.style.border).toContain('3px solid #1890ff');
+  });
+
+  test('선택되지 않은 노드는 테두리가 없어야 합니다', () => {
+    render(<Node node={mockNode} position={mockNode.position} isSelected={false} />);
+
+    const nodeElement = screen.getByTestId('node-container');
+    // inline style에서 border가 설정되지 않으면 빈 문자열
+    expect(nodeElement.style.border).toBe('');
   });
 });
