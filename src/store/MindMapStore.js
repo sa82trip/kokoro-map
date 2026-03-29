@@ -350,13 +350,14 @@ const useMindMapStore = create((set, get) => ({
     set({ connectionColor: color });
   },
 
-  // 전체 레이아웃 재조정
+  // 전체 레이아웃 재조정 — 간격 설정도 기본값으로 초기화 후 재배치
   resetLayout: () => {
-    const { mindMapData, layoutConfig } = get();
+    const { mindMapData } = get();
     if (!mindMapData) return;
-    const layouted = calculateAutoLayout(mindMapData, layoutConfig);
+    const defaultConfig = { horizontalGap: 100, verticalGap: 30 };
+    const layouted = calculateAutoLayout(mindMapData, defaultConfig);
     if (layouted) {
-      set({ mindMapData: layouted, error: null });
+      set({ mindMapData: layouted, layoutConfig: defaultConfig, error: null });
       storage.save(layouted);
     }
   },

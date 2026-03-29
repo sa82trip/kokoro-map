@@ -38,6 +38,13 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
     setText(node.text || 'New Node');
   }, [node.text]);
 
+  // 외부에서 position 변경 시 동기화 (자동정렬, 재조정 등)
+  useEffect(() => {
+    if (!isDragging) {
+      setPosition(initialPosition || { x: 0, y: 0 });
+    }
+  }, [initialPosition?.x, initialPosition?.y]);
+
   // document 레벨 마우스 이벤트로 드래그
   useEffect(() => {
     if (!isDragging) return;
