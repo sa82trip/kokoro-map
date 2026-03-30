@@ -1,5 +1,6 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import useMindMapStore from '../store/MindMapStore';
+import useFileManagerStore from '../store/FileManagerStore';
 import { createChildNode } from '../types/NodeTypes';
 import { calculateNewChildPosition } from '../utils/LayoutEngine';
 
@@ -45,14 +46,8 @@ const findNextSibling = (data, nodeId) => {
 };
 
 const useKeyboardShortcuts = () => {
-  const {
-    mindMapData,
-    selectedNodeId,
-    setSelectedNodeId,
-    addNode,
-    deleteNode,
-    saveNodePositions
-  } = useMindMapStore();
+  const [showHelp, setShowHelp] = useState(false);
+  const [saveFeedback, setSaveFeedback] = useState(false);
 
   const handleKeyDown = useCallback((e) => {
     // 입력 필드에서는 무시
@@ -62,9 +57,34 @@ const useKeyboardShortcuts = () => {
     const store = useMindMapStore.getState();
     const { mindMapData: data, selectedNodeId: selId } = store;
 
-    // Escape: 선택 해제
+    // Escape: 선택 해제 또는 도움말 닫기
     if (e.key === 'Escape') {
-      store.setSelectedNodeId(null);
+      if (showHelp) {
+        setShowHelp(false);
+      } else {
+        store.setSelectedNodeId(null);
+      }
+      return;
+    }
+
+    // ?: 단축키 도움말 토글
+    if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+      e.preventDefault();
+      setShowHelp((prev) => !prev);
+      return;
+    }
+
+    // Ctrl+S: 저장
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+      e.preventDefault();
+      if (data) {
+        const fm = useFileManagerStore.getState();
+        if (fm.activeDocumentId) {
+          fm.saveActiveDocument(data);
+          setSaveFeedback(true);
+          setTimeout(() => setSaveFeedback(false), 1500);
+        }
+      }
       return;
     }
 
@@ -115,7 +135,6 @@ const useKeyboardShortcuts = () => {
     // 화살표 키: 노드 탐색
     if (e.key === 'ArrowRight') {
       e.preventDefault();
-      // 첫 번째 자식으로 이동
       if (selectedNode?.children?.length > 0) {
         store.setSelectedNodeId(selectedNode.children[0].id);
       }
@@ -124,7 +143,6 @@ const useKeyboardShortcuts = () => {
 
     if (e.key === 'ArrowLeft') {
       e.preventDefault();
-      // 부모로 이동
       const parent = findParent(data, selId);
       if (parent) {
         store.setSelectedNodeId(parent.id);
@@ -134,7 +152,6 @@ const useKeyboardShortcuts = () => {
 
     if (e.key === 'ArrowUp') {
       e.preventDefault();
-      // 이전 형제로 이동
       const prevSibling = findPreviousSibling(data, selId);
       if (prevSibling) {
         store.setSelectedNodeId(prevSibling.id);
@@ -144,19 +161,20 @@ const useKeyboardShortcuts = () => {
 
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      // 다음 형제로 이동
       const nextSibling = findNextSibling(data, selId);
       if (nextSibling) {
         store.setSelectedNodeId(nextSibling.id);
       }
       return;
     }
-  }, []);
+  }, [showHelp]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
+
+  return { showHelp, setShowHelp, saveFeedback };
 };
 
 export default useKeyboardShortcuts;

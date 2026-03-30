@@ -1,5 +1,36 @@
 # Changelog
 
+## [US-11: 키보드 단축키] - 2026-03-30
+
+**Branch**: `main`
+
+### Added
+- **Hooks** (`src/hooks/`)
+  - `useKeyboardShortcuts.js` — Ctrl+S 저장, ? 도움말 토글 추가. showHelp, saveFeedback 상태 반환
+
+- **Components** (`src/components/MindMap/`)
+  - `KeyboardShortcutsHelp.jsx` — 단축키 도움말 패널 (노드 조작/탐색/일반 3그룹, ?/Esc 토글, 오버레이+모달)
+
+- **Tests** (`tests/`)
+  - `KeyboardShortcuts.test.js` — 25 tests (Escape 선택 해제, Delete/Backspace 삭제, 루트 삭제 불가, Enter 자식 추가, Tab 형제 추가, ArrowRight/Left/Up/Down 탐색, 입력 필드 무시, contentEditable 무시, Ctrl+S/Cmd+S 저장, ?/Shift+/ 도움말 토글, 도움말 Escape 닫기, KeyboardShortcutsHelp 렌더링/닫기/오버레이/그룹/설명, selectedNodeId 스토어 동기화)
+
+### Changed
+- `src/components/MindMap/MindMapContainer.jsx` — 로컬 selectedNodeId 상태를 스토어 selectedNodeId로 교체하여 useKeyboardShortcuts와 동기화
+- `src/components/MindMap/MindMap.jsx` — useKeyboardShortcuts 훅 연동, KeyboardShortcutsHelp 조건부 렌더링
+- `src/hooks/useKeyboardShortcuts.js` — Ctrl+S 저장 단축키, ? 도움말 토글, showHelp/saveFeedback 상태 반환, 도움말 열린 상태에서 Escape로 닫기
+
+### Tests
+- `KeyboardShortcuts.test.js` — 25 tests
+- Total: 385 tests passing / 25 test suites
+
+### Technical Notes
+- selectedNodeId 동기화: MindMapContainer의 로컬 useState → 스토어 selectedNodeId/setSelectedNodeId 사용
+- 단축키 필터링: INPUT/TEXTAREA/contentEditable 요소에서는 키보드 이벤트 무시
+- 도움말 패널: ? 키 또는 Shift+/ 키로 토글, Escape로 닫기, 오버레이 클릭으로 닫기
+- Total: 4 files changed (1 new, 3 modified)
+
+---
+
 ## [US-10: 실행 취소/다시 실행 (Undo/Redo)] - 2026-03-30
 
 **Branch**: `main`

@@ -61,7 +61,8 @@ const MindMapContainer = ({ data }) => {
   const connectionColor = useMindMapStore((state) => state.connectionColor);
   const viewport = useMindMapStore((state) => state.viewport);
   const setViewport = useMindMapStore((state) => state.setViewport);
-  const [selectedNodeId, setSelectedNodeId] = useState(null);
+  const selectedNodeId = useMindMapStore((state) => state.selectedNodeId);
+  const setSelectedNodeId = useMindMapStore((state) => state.setSelectedNodeId);
 
   // 패닝 상태
   const [isPanning, setIsPanning] = useState(false);
