@@ -1,5 +1,25 @@
 # Changelog
 
+## [FolderPickerDialog 계층 구분 표시 수정] - 2026-03-30
+
+### Problem
+문서 이동 다이얼로그(FolderPickerDialog)에서 루트 폴더와 하위 폴더가 flat 리스트로 나열되어 계층 구조를 구분할 수 없었음
+
+### Root Cause
+`folders.map()`으로 순서대로 렌더링하여 부모-자식 관계가 시각적으로 구분되지 않았음
+
+### Solution
+DFS 트리 순회로 부모 바로 아래 자식이 배치되도록 정렬, `getFolderDepth` 기반 들여쓰기(paddingLeft) 적용
+
+### Changed
+- `src/components/Home/FolderPickerDialog.jsx` — getFolderDepth import, DFS 트리 순회 정렬, depth 기반 paddingLeft 들여쓰기
+
+### Tests
+- `FolderPickerDialog.test.jsx` — 3 tests 추가 (들여쓰기 렌더링, 부모-자식 순서, 하위 폴더 클릭)
+- Total: 346 tests passing / 24 test suites
+
+---
+
 ## [US-9: 폴더 구조 관리] - 2026-03-30
 
 **Branch**: `main`
@@ -46,7 +66,7 @@
 - Total: 343 tests passing / 24 test suites
 
 ### Known Issues
-- FolderPickerDialog에서 폴더 계층 구분 없음 — flat 리스트로 표시되어 루트/하위 폴더 구분 불가
+- (해결됨) FolderPickerDialog에서 폴더 계층 구분 없음 → DFS 트리 순회 + 들여쓰기로 수정 완료
 
 ### Technical Notes
 - 폴더 최대 깊이 3단계 제한 (getFolderDepth로 부모 체인 계산)
