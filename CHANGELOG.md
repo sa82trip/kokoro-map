@@ -1,5 +1,33 @@
 # Changelog
 
+## [비밀번호 방식 개선: 시간 기반 + 세션 연장] - 2026-03-31
+
+**Branch**: `main` | **Version**: v1.0.5
+
+### Problem
+1. 세션이 5분만에 리셋되어 잦은 재인증 필요
+2. 사용자가 직접 비밀번호를 설정해야 하는 번거로움
+
+### Solution
+1. `sessionStorage` → `localStorage` + 24시간 만료로 세션 연장
+2. 비밀번호를 `km{HHMM}` 시간 기반 자동 생성 방식으로 변경
+
+### Changed
+- `src/components/Auth/PasswordGuard.jsx` — 전면 리팩토링
+  - 비밀번호 설정 화면 제거 (needsSetup/confirmPassword 상태 삭제)
+  - `getCurrentPassword()` — 현재 시간 기반 비밀번호 생성 (`km0850` 형식)
+  - 세션 저장소: `sessionStorage` → `localStorage` + `expiresAt` 타임스탬프 (24시간)
+  - 기존 `mindmap-auth-hash` / `sessionStorage` 데이터 자동 정리
+- `package.json` — v1.0.3 → v1.0.5
+
+### Technical Notes
+- 비밀번호 형식: `km` + 현재 시간(HHMM) 예) 08:50 → `km0850`
+- 세션 만료: 24시간 (localStorage 기반)
+- 기존 사용자 데이터 자동 마이그레이션 (old hash/sessionStorage 키 제거)
+- Total: 2 files changed
+
+---
+
 ## [비밀번호 보호 기능] - 2026-03-31
 
 **Branch**: `main` | **Version**: v1.0.3
