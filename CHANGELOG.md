@@ -1,5 +1,31 @@
 # Changelog
 
+## [US-13: 연결선 고급 스타일] - 2026-03-30
+
+**Branch**: `main`
+
+### Added
+- **Store** (`src/store/`)
+  - `MindMapStore.js` — `connectionArrow`, `connectionDashed`, `connectionWidth`, `connectionColorMode` 상태 추가. `setConnectionArrow`, `setConnectionDashed`, `setConnectionWidth`, `setConnectionColorMode` 액션 추가
+
+### Changed
+- `MindMapStore.js` — `reset()`에 4개 신규 기본값 추가
+- `MindMapContainer.jsx` — `renderConnections` 반환 타입 변경 (`{ markerDefs, paths }`), SVG `<defs>` 마커 정의, `strokeDasharray` 점선, 동적 `strokeWidth`, 브랜치별 색상 상속 로직 추가
+- `Toolbar.jsx` — 설정 패널에 화살표/점선/두께/색상모드 4개 섹션 추가, 스크롤 지원, 브랜치 모드 시 색상 팔레트 비활성화
+- `tests/MindMapCSS.test.js` — useMindMapStore mock에 selector 패턴 지원 추가
+
+### Tests
+- `MindMapStore.test.js` — 17 tests 추가 (connectionArrow 4, connectionDashed 4, connectionWidth 5, connectionColorMode 4, reset 확장 1)
+- `MindMapContainer.test.jsx` — 8 tests 추가 (화살표 2, 점선 2, 두께 1, 브랜치 색상 1, 전역 색상 1, 조합 1), mock을 selector 지원으로 개선
+- Total: 422 tests passing / 25 test suites
+
+### Technical Notes
+- SVG 마커 전략: 색상별 고유 `<marker>` 정의 (Map으로 중복 제거), `markerUnits="userSpaceOnUse"` 로 선 두께 무관 일정 크기
+- 브랜치 색상: `connectionColorMode === 'branch'` 시 부모 노드 `node.color`를 연결선 색상으로 사용
+- 하위 호환: 기존 마인드맵은 신규 상태 기본값으로 정상 동작 (UI 상태이므로 문서 데이터에 영향 없음)
+
+---
+
 ## [노드 설정 툴바 UX 개선] - 2026-03-30
 
 ### Problem

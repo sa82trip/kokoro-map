@@ -257,6 +257,162 @@ describe('MindMapStore - connectionColor', () => {
   });
 });
 
+describe('MindMapStore - connectionArrow', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    useMindMapStore.setState({
+      mindMapData: null,
+      loading: false,
+      error: null,
+      validationErrors: [],
+      connectionArrow: false,
+      activeDocumentId: null,
+      undoStack: [],
+      redoStack: [],
+      _preDragSnapshot: null
+    });
+  });
+
+  test('기본값은 false이다', () => {
+    expect(useMindMapStore.getState().connectionArrow).toBe(false);
+  });
+
+  test('화살표를 활성화할 수 있다', () => {
+    useMindMapStore.getState().setConnectionArrow(true);
+    expect(useMindMapStore.getState().connectionArrow).toBe(true);
+  });
+
+  test('화살표를 비활성화할 수 있다', () => {
+    useMindMapStore.getState().setConnectionArrow(true);
+    useMindMapStore.getState().setConnectionArrow(false);
+    expect(useMindMapStore.getState().connectionArrow).toBe(false);
+  });
+
+  test('boolean이 아닌 값은 무시된다', () => {
+    useMindMapStore.getState().setConnectionArrow('true');
+    expect(useMindMapStore.getState().connectionArrow).toBe(false);
+    useMindMapStore.getState().setConnectionArrow(1);
+    expect(useMindMapStore.getState().connectionArrow).toBe(false);
+    useMindMapStore.getState().setConnectionArrow(null);
+    expect(useMindMapStore.getState().connectionArrow).toBe(false);
+  });
+});
+
+describe('MindMapStore - connectionDashed', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    useMindMapStore.setState({
+      mindMapData: null,
+      loading: false,
+      error: null,
+      validationErrors: [],
+      connectionDashed: false,
+      activeDocumentId: null,
+      undoStack: [],
+      redoStack: [],
+      _preDragSnapshot: null
+    });
+  });
+
+  test('기본값은 false이다', () => {
+    expect(useMindMapStore.getState().connectionDashed).toBe(false);
+  });
+
+  test('점선을 활성화할 수 있다', () => {
+    useMindMapStore.getState().setConnectionDashed(true);
+    expect(useMindMapStore.getState().connectionDashed).toBe(true);
+  });
+
+  test('점선을 비활성화할 수 있다', () => {
+    useMindMapStore.getState().setConnectionDashed(true);
+    useMindMapStore.getState().setConnectionDashed(false);
+    expect(useMindMapStore.getState().connectionDashed).toBe(false);
+  });
+
+  test('boolean이 아닌 값은 무시된다', () => {
+    useMindMapStore.getState().setConnectionDashed('true');
+    expect(useMindMapStore.getState().connectionDashed).toBe(false);
+  });
+});
+
+describe('MindMapStore - connectionWidth', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    useMindMapStore.setState({
+      mindMapData: null,
+      loading: false,
+      error: null,
+      validationErrors: [],
+      connectionWidth: 2,
+      activeDocumentId: null,
+      undoStack: [],
+      redoStack: [],
+      _preDragSnapshot: null
+    });
+  });
+
+  test('기본값은 2이다', () => {
+    expect(useMindMapStore.getState().connectionWidth).toBe(2);
+  });
+
+  test('두께를 변경할 수 있다', () => {
+    useMindMapStore.getState().setConnectionWidth(4);
+    expect(useMindMapStore.getState().connectionWidth).toBe(4);
+  });
+
+  test('최소값은 1이다', () => {
+    useMindMapStore.getState().setConnectionWidth(0);
+    expect(useMindMapStore.getState().connectionWidth).toBe(1);
+  });
+
+  test('최대값은 5이다', () => {
+    useMindMapStore.getState().setConnectionWidth(10);
+    expect(useMindMapStore.getState().connectionWidth).toBe(5);
+  });
+
+  test('number가 아닌 값은 무시된다', () => {
+    useMindMapStore.getState().setConnectionWidth('3');
+    expect(useMindMapStore.getState().connectionWidth).toBe(2);
+  });
+});
+
+describe('MindMapStore - connectionColorMode', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    useMindMapStore.setState({
+      mindMapData: null,
+      loading: false,
+      error: null,
+      validationErrors: [],
+      connectionColorMode: 'global',
+      activeDocumentId: null,
+      undoStack: [],
+      redoStack: [],
+      _preDragSnapshot: null
+    });
+  });
+
+  test('기본값은 global이다', () => {
+    expect(useMindMapStore.getState().connectionColorMode).toBe('global');
+  });
+
+  test('branch 모드로 변경할 수 있다', () => {
+    useMindMapStore.getState().setConnectionColorMode('branch');
+    expect(useMindMapStore.getState().connectionColorMode).toBe('branch');
+  });
+
+  test('global 모드로 되돌릴 수 있다', () => {
+    useMindMapStore.getState().setConnectionColorMode('branch');
+    useMindMapStore.getState().setConnectionColorMode('global');
+    expect(useMindMapStore.getState().connectionColorMode).toBe('global');
+  });
+
+  test('유효하지 않은 모드는 무시된다', () => {
+    useMindMapStore.getState().setConnectionColorMode('invalid');
+    expect(useMindMapStore.getState().connectionColorMode).toBe('global');
+  });
+});
+
 describe('MindMapStore - resetLayout', () => {
   test('resetLayout이 전체 노드 위치를 재계산한다', () => {
     const root = createRootNode('루트');
@@ -315,6 +471,19 @@ describe('MindMapStore - viewport', () => {
     useMindMapStore.getState().setViewport({ x: 200, y: 100 });
     useMindMapStore.getState().reset();
     expect(useMindMapStore.getState().viewport).toEqual({ x: 0, y: 0 });
+  });
+
+  test('reset 액션에 연결선 고급 설정 초기화가 포함된다', () => {
+    useMindMapStore.getState().setConnectionArrow(true);
+    useMindMapStore.getState().setConnectionDashed(true);
+    useMindMapStore.getState().setConnectionWidth(5);
+    useMindMapStore.getState().setConnectionColorMode('branch');
+    useMindMapStore.getState().reset();
+    const state = useMindMapStore.getState();
+    expect(state.connectionArrow).toBe(false);
+    expect(state.connectionDashed).toBe(false);
+    expect(state.connectionWidth).toBe(2);
+    expect(state.connectionColorMode).toBe('global');
   });
 });
 

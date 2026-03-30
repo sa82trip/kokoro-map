@@ -19,7 +19,28 @@ describe('MindMap CSS Styles', () => {
   const mockDeleteNode = jest.fn();
 
   beforeEach(() => {
-    useMindMapStore.mockReturnValue({ addNode: mockAddNode, deleteNode: mockDeleteNode });
+    const mockState = {
+      addNode: mockAddNode,
+      deleteNode: mockDeleteNode,
+      connectionStyle: 'bezier',
+      connectionColor: '#b0b8c8',
+      connectionArrow: false,
+      connectionDashed: false,
+      connectionWidth: 2,
+      connectionColorMode: 'global',
+      viewport: { x: 0, y: 0 },
+      setViewport: jest.fn(),
+      selectedNodeId: null,
+      setSelectedNodeId: jest.fn(),
+      toolbarNodeId: null,
+      setToolbarNodeId: jest.fn()
+    };
+    useMindMapStore.mockImplementation((selector) => {
+      if (typeof selector === 'function') {
+        return selector(mockState);
+      }
+      return mockState;
+    });
   });
 
   afterEach(() => {

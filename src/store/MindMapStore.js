@@ -16,6 +16,10 @@ const useMindMapStore = create((set, get) => ({
   layoutConfig: { horizontalGap: 100, verticalGap: 30 },
   connectionStyle: 'bezier',
   connectionColor: '#b0b8c8',
+  connectionArrow: false,
+  connectionDashed: false,
+  connectionWidth: 2,
+  connectionColorMode: 'global',
   viewport: { x: 0, y: 0 },
   activeDocumentId: null,
   selectedNodeId: null,
@@ -504,6 +508,30 @@ const useMindMapStore = create((set, get) => ({
     set({ connectionColor: color });
   },
 
+  // 연결선 화살표 표시
+  setConnectionArrow: (enabled) => {
+    if (typeof enabled !== 'boolean') return;
+    set({ connectionArrow: enabled });
+  },
+
+  // 연결선 점선 스타일
+  setConnectionDashed: (enabled) => {
+    if (typeof enabled !== 'boolean') return;
+    set({ connectionDashed: enabled });
+  },
+
+  // 연결선 두께 (1~5)
+  setConnectionWidth: (width) => {
+    if (typeof width !== 'number') return;
+    set({ connectionWidth: Math.min(5, Math.max(1, Math.round(width))) });
+  },
+
+  // 연결선 색상 모드 ('global' | 'branch')
+  setConnectionColorMode: (mode) => {
+    if (mode !== 'global' && mode !== 'branch') return;
+    set({ connectionColorMode: mode });
+  },
+
   // 전체 레이아웃 재조정
   resetLayout: () => {
     const { mindMapData } = get();
@@ -572,6 +600,10 @@ const useMindMapStore = create((set, get) => ({
     layoutConfig: { horizontalGap: 100, verticalGap: 30 },
     connectionStyle: 'bezier',
     connectionColor: '#b0b8c8',
+    connectionArrow: false,
+    connectionDashed: false,
+    connectionWidth: 2,
+    connectionColorMode: 'global',
     viewport: { x: 0, y: 0 },
     activeDocumentId: null,
     selectedNodeId: null,

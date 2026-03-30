@@ -18,6 +18,14 @@ const Toolbar = () => {
     setConnectionStyle,
     connectionColor,
     setConnectionColor,
+    connectionArrow,
+    setConnectionArrow,
+    connectionDashed,
+    setConnectionDashed,
+    connectionWidth,
+    setConnectionWidth,
+    connectionColorMode,
+    setConnectionColorMode,
     layoutConfig,
     setLayoutConfig,
     resetViewport,
@@ -364,7 +372,9 @@ const Toolbar = () => {
             background: '#fff',
             borderRadius: 10,
             padding: 16,
-            minWidth: 260,
+            minWidth: 280,
+            maxHeight: 'calc(100vh - 70px)',
+            overflowY: 'auto',
             boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
             border: '1px solid #e0e4ea',
             zIndex: 200
@@ -408,7 +418,11 @@ const Toolbar = () => {
           {/* 연결선 색상 */}
           <div style={{ marginBottom: 12 }}>
             <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>연결선 색상</div>
-            <div style={{ display: 'flex', gap: 2, flexWrap: 'wrap', maxWidth: 220 }}>
+            <div style={{
+              display: 'flex', gap: 2, flexWrap: 'wrap', maxWidth: 220,
+              opacity: connectionColorMode === 'branch' ? 0.3 : 1,
+              pointerEvents: connectionColorMode === 'branch' ? 'none' : 'auto'
+            }}>
               {COLOR_PALETTE.slice(0, 16).map((color) => (
                 <div
                   key={color}
@@ -421,6 +435,123 @@ const Toolbar = () => {
                   }}
                 />
               ))}
+            </div>
+            {connectionColorMode === 'branch' && (
+              <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>노드 색상 상속 모드</div>
+            )}
+          </div>
+
+          {/* 화살표 */}
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>화살표</div>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button
+                data-testid="btn-arrow-off"
+                onClick={() => setConnectionArrow(false)}
+                style={{
+                  ...buttonBase,
+                  fontSize: 12,
+                  padding: '4px 10px',
+                  background: !connectionArrow ? '#4A90E2' : '#f0f0f0',
+                  color: !connectionArrow ? '#fff' : '#333'
+                }}
+              >
+                없음
+              </button>
+              <button
+                data-testid="btn-arrow-on"
+                onClick={() => setConnectionArrow(true)}
+                style={{
+                  ...buttonBase,
+                  fontSize: 12,
+                  padding: '4px 10px',
+                  background: connectionArrow ? '#4A90E2' : '#f0f0f0',
+                  color: connectionArrow ? '#fff' : '#333'
+                }}
+              >
+                표시
+              </button>
+            </div>
+          </div>
+
+          {/* 점선 스타일 */}
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>점선 스타일</div>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button
+                data-testid="btn-dashed-off"
+                onClick={() => setConnectionDashed(false)}
+                style={{
+                  ...buttonBase,
+                  fontSize: 12,
+                  padding: '4px 10px',
+                  background: !connectionDashed ? '#4A90E2' : '#f0f0f0',
+                  color: !connectionDashed ? '#fff' : '#333'
+                }}
+              >
+                실선
+              </button>
+              <button
+                data-testid="btn-dashed-on"
+                onClick={() => setConnectionDashed(true)}
+                style={{
+                  ...buttonBase,
+                  fontSize: 12,
+                  padding: '4px 10px',
+                  background: connectionDashed ? '#4A90E2' : '#f0f0f0',
+                  color: connectionDashed ? '#fff' : '#333'
+                }}
+              >
+                점선
+              </button>
+            </div>
+          </div>
+
+          {/* 연결선 두께 */}
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>
+              연결선 두께: {connectionWidth}px
+            </div>
+            <input
+              data-testid="connection-width-slider"
+              type="range"
+              min={1} max={5} step={1}
+              value={connectionWidth}
+              onChange={(e) => setConnectionWidth(Number(e.target.value))}
+              style={{ width: '100%' }}
+            />
+          </div>
+
+          {/* 색상 모드 */}
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>색상 모드</div>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button
+                data-testid="btn-color-mode-global"
+                onClick={() => setConnectionColorMode('global')}
+                style={{
+                  ...buttonBase,
+                  fontSize: 12,
+                  padding: '4px 10px',
+                  background: connectionColorMode === 'global' ? '#4A90E2' : '#f0f0f0',
+                  color: connectionColorMode === 'global' ? '#fff' : '#333'
+                }}
+              >
+                전역
+              </button>
+              <button
+                data-testid="btn-color-mode-branch"
+                onClick={() => setConnectionColorMode('branch')}
+                style={{
+                  ...buttonBase,
+                  fontSize: 12,
+                  padding: '4px 10px',
+                  background: connectionColorMode === 'branch' ? '#4A90E2' : '#f0f0f0',
+                  color: connectionColorMode === 'branch' ? '#fff' : '#333'
+                }}
+              >
+                브랜치
+              </button>
             </div>
           </div>
 

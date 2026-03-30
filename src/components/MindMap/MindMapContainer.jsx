@@ -17,10 +17,11 @@ const getNodeSize = (node) => {
 };
 
 // 부모-자식 연결선 렌더링
-const renderConnections = (node, connectionStyle = 'bezier', connectionColor = '#b0b8c8') => {
-  if (!node || !node.children || node.children.length === 0) return [];
+const renderConnections = (node, connectionStyle = 'bezier', connectionColor = '#b0b8c8', connectionArrow = false, connectionDashed = false, connectionWidth = 2, connectionColorMode = 'global') => {
+  if (!node || !node.children || node.children.length === 0) return { markerDefs: new Map(), paths: [] };
 
-  const lines = [];
+  const markerDefs = new Map();
+  const paths = [];
   const pos = node.position || { x: 0, y: 0 };
   const size = getNodeSize(node);
   const x1 = pos.x + size.width;
@@ -38,27 +39,57 @@ const renderConnections = (node, connectionStyle = 'bezier', connectionColor = '
       ? `M ${x1} ${y1} L ${x2} ${y2}`
       : `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
 
-    lines.push(
+    const lineColor = connectionColorMode === 'branch'
+      ? (node.color || '#4A90E2')
+      : connectionColor;
+
+    const markerId = `arrowhead-${lineColor.replace('#', '')}`;
+    if (connectionArrow && !markerDefs.has(markerId)) {
+      markerDefs.set(markerId, (
+        <marker
+          key={markerId}
+          id={markerId}
+          markerWidth="10"
+          markerHeight="7"
+          refX="9"
+          refY="3.5"
+          orient="auto"
+          markerUnits="userSpaceOnUse"
+        >
+          <polygon points="0 0, 10 3.5, 0 7" fill={lineColor} />
+        </marker>
+      ));
+    }
+
+    paths.push(
       <path
         key={`line-${node.id}-${child.id}`}
         d={pathD}
         fill="none"
-        stroke={connectionColor}
-        strokeWidth={2}
+        stroke={lineColor}
+        strokeWidth={connectionWidth}
         strokeLinecap="round"
+        strokeDasharray={connectionDashed ? '8 4' : undefined}
+        markerEnd={connectionArrow ? `url(#${markerId})` : undefined}
       />
     );
 
-    lines.push(...renderConnections(child, connectionStyle, connectionColor));
+    const childResult = renderConnections(child, connectionStyle, connectionColor, connectionArrow, connectionDashed, connectionWidth, connectionColorMode);
+    childResult.markerDefs.forEach((v, k) => { if (!markerDefs.has(k)) markerDefs.set(k, v); });
+    paths.push(...childResult.paths);
   });
 
-  return lines;
+  return { markerDefs, paths };
 };
 
 const MindMapContainer = ({ data }) => {
   const { addNode, deleteNode } = useMindMapStore();
   const connectionStyle = useMindMapStore((state) => state.connectionStyle);
   const connectionColor = useMindMapStore((state) => state.connectionColor);
+  const connectionArrow = useMindMapStore((state) => state.connectionArrow);
+  const connectionDashed = useMindMapStore((state) => state.connectionDashed);
+  const connectionWidth = useMindMapStore((state) => state.connectionWidth);
+  const connectionColorMode = useMindMapStore((state) => state.connectionColorMode);
   const viewport = useMindMapStore((state) => state.viewport);
   const setViewport = useMindMapStore((state) => state.setViewport);
   const selectedNodeId = useMindMapStore((state) => state.selectedNodeId);
@@ -172,7 +203,7 @@ const MindMapContainer = ({ data }) => {
     );
   };
 
-  const connections = renderConnections(data, connectionStyle, connectionColor);
+  const { markerDefs, paths } = renderConnections(data, connectionStyle, connectionColor, connectionArrow, connectionDashed, connectionWidth, connectionColorMode);
 
   return (
     <div
@@ -212,7 +243,8 @@ const MindMapContainer = ({ data }) => {
             overflow: 'visible'
           }}
         >
-          {connections}
+          <defs>{Array.from(markerDefs.values())}</defs>
+          {paths}
         </svg>
         <div style={{ pointerEvents: 'auto' }}>
           {renderNodes(data)}
