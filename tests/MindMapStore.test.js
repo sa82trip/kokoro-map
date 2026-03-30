@@ -3,6 +3,25 @@ import useMindMapStore from '../src/store/MindMapStore';
 import { createRootNode } from '../src/types/NodeTypes';
 import { validateNode, validateMindMap } from '../src/utils/NodeValidator';
 
+// FileManagerStore mock
+jest.mock('../src/store/FileManagerStore', () => {
+  const mockState = {
+    activeDocumentId: 'mock-doc-id',
+    initialized: true,
+    documents: [{ id: 'mock-doc-id', title: '테스트' }],
+    saveActiveDocument: jest.fn(),
+    createDocument: jest.fn(() => 'mock-doc-id'),
+    loadDocument: jest.fn(),
+    initialize: jest.fn()
+  };
+  return {
+    __esModule: true,
+    default: {
+      getState: () => mockState
+    }
+  };
+});
+
 // Mock window 객체
 Object.defineProperty(window, 'innerWidth', {
   value: 1920,

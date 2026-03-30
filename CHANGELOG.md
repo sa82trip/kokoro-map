@@ -1,5 +1,42 @@
 # Changelog
 
+## [US-6: 파일 저장 및 불러오기] - 2026-03-30
+
+### Added
+- **Types** (`src/types/`)
+  - `DocumentTypes.js` — DocumentMeta 모델, createDocumentMeta, updateDocumentMeta, validateDocumentMeta, EXPORT_VERSION
+
+- **Utils** (`src/utils/`)
+  - `StorageManager.js` — 다중 문서 localStorage 관리 (mindmap-docs/index, mindmap-docs/{docId})
+  - `FileExporter.js` — JSON 내보내기 (export envelope, Blob 다운로드)
+  - `FileImporter.js` — JSON 가져오기 (FileReader, NodeValidator 검증, 파일 피커)
+
+- **Store** (`src/store/`)
+  - `FileManagerStore.js` — Zustand 스토어 (문서 CRUD, 활성 문서 관리, 레거시 마이그레이션)
+
+### Changed
+- `src/store/MindMapStore.js` — 인라인 storage 객체 제거 → FileManagerStore 연동, activeDocumentId 상태 추가, 12곳 storage.save → _saveToStorage 치환
+- `src/components/MindMap/Toolbar.jsx` — 저장/내보내기/가져오기 버튼 추가 (saveFeedback 포함)
+- `src/components/MindMap/MindMap.jsx` — FileManagerStore.initialize() 호출 추가
+
+### Tests
+- `src/types/DocumentTypes.test.js` — 15 tests (createDocumentMeta, updateDocumentMeta, validateDocumentMeta)
+- `src/utils/StorageManager.test.js` — 16 tests (loadIndex, saveDocument, 레거시 관리)
+- `src/store/FileManagerStore.test.js` — 17 tests (initialize, CRUD, 마이그레이션)
+- `src/utils/FileExporter.test.js` — 7 tests (generateExportFilename, createExportEnvelope, exportToJSON)
+- `src/utils/FileImporter.test.js` — 7 tests (importFromJSON, openFilePicker)
+- Total: 192 tests passing / 14 test suites
+
+### Technical Notes
+- 스토리지 구조: 단일 키(mindmap-app-data) → 다중 키(mindmap-docs/index + mindmap-docs/{docId})
+- MindMapStore ↔ FileManagerStore 단방향 의존 (FileManagerStore는 MindMapStore를 모름)
+- 레거시 자동 마이그레이션: 앱 시작 시 mindmap-app-data → mindmap-docs/* 일회성 이관
+- Export envelope: { version: 1, exportedAt, meta: {title, nodeCount}, data }
+- Import 검증: JSON 파싱 → 버전 확인 → validateMindMap (기존 NodeValidator 재사용)
+- Total: 11 files changed (5 new, 3 modified, 3 test updates)
+
+---
+
 ## [US-5 버그 수정: 노드 드래그 Y축 에러 + 연결선 끊김 + 성능] - 2026-03-30
 
 ### Problem

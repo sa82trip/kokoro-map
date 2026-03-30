@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import useMindMapStore from '../../store/MindMapStore';
+import useFileManagerStore from '../../store/FileManagerStore';
+import { exportToJSON } from '../../utils/FileExporter';
+import { openFilePicker } from '../../utils/FileImporter';
 import { COLOR_PALETTE } from '../../types/NodeTypes';
 
 const Toolbar = () => {
@@ -22,6 +25,7 @@ const Toolbar = () => {
   const [titleText, setTitleText] = useState('');
   const [showNewConfirm, setShowNewConfirm] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [saveFeedback, setSaveFeedback] = useState(false);
   const titleInputRef = useRef(null);
 
   const title = mindMapData?.text || '마인드맵';
@@ -64,6 +68,36 @@ const Toolbar = () => {
   const confirmNewMindMap = () => {
     createNewMindMap();
     setShowNewConfirm(false);
+  };
+
+  const handleSave = () => {
+    if (mindMapData) {
+      const fm = useFileManagerStore.getState();
+      fm.saveActiveDocument(mindMapData);
+      setSaveFeedback(true);
+      setTimeout(() => setSaveFeedback(false), 1000);
+    }
+  };
+
+  const handleExport = () => {
+    if (mindMapData) {
+      const fm = useFileManagerStore.getState();
+      const meta = fm.getActiveDocumentMeta();
+      exportToJSON(mindMapData, meta);
+    }
+  };
+
+  const handleImport = async () => {
+    const result = await openFilePicker();
+    if (result.success) {
+      const fm = useFileManagerStore.getState();
+      const docId = fm.createDocument(result.meta.title || '가져온 마인드맵', result.data);
+      const store = useMindMapStore.getState();
+      store.setMindMapData(result.data);
+      store.setActiveDocumentId(docId);
+    } else if (result.errors && result.errors.length > 0) {
+      useMindMapStore.getState().setError(result.errors.join('\n'));
+    }
   };
 
   const toolbarStyle = {
@@ -139,6 +173,46 @@ const Toolbar = () => {
       </div>
 
       <div style={{ display: 'flex', gap: 8 }}>
+        <button
+          style={{
+            ...buttonBase,
+            background: saveFeedback ? '#d4edda' : '#f0f4ff',
+            color: saveFeedback ? '#155724' : '#4A90E2'
+          }}
+          onClick={handleSave}
+          title="저장"
+          data-testid="btn-save"
+        >
+          {saveFeedback ? '✓ 저장됨' : '💾 저장'}
+        </button>
+        <button
+          style={{
+            ...buttonBase,
+            background: '#f0f4ff',
+            color: '#4A90E2'
+          }}
+          onClick={handleExport}
+          title="JSON 내보내기"
+          data-testid="btn-export"
+          onMouseEnter={(e) => e.target.style.background = '#dde5f7'}
+          onMouseLeave={(e) => e.target.style.background = '#f0f4ff'}
+        >
+          📤 내보내기
+        </button>
+        <button
+          style={{
+            ...buttonBase,
+            background: '#f0f4ff',
+            color: '#4A90E2'
+          }}
+          onClick={handleImport}
+          title="JSON 가져오기"
+          data-testid="btn-import"
+          onMouseEnter={(e) => e.target.style.background = '#dde5f7'}
+          onMouseLeave={(e) => e.target.style.background = '#f0f4ff'}
+        >
+          📥 가져오기
+        </button>
         <button
           style={{
             ...buttonBase,

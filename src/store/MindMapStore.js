@@ -2,37 +2,7 @@ import { create } from 'zustand';
 import { validateNode, validateMindMap } from '../utils/NodeValidator';
 import { createRootNode, DEFAULT_NODE_STYLE } from '../types/NodeTypes';
 import { calculateAutoLayout } from '../utils/LayoutEngine';
-
-const STORAGE_KEY = 'mindmap-app-data';
-
-// localStorage 유틸리티
-const storage = {
-  save: (data) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      return true;
-    } catch (e) {
-      console.warn('localStorage 저장 실패:', e);
-      return false;
-    }
-  },
-  load: () => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : null;
-    } catch (e) {
-      console.warn('localStorage 로드 실패:', e);
-      return null;
-    }
-  },
-  clear: () => {
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch (e) {
-      console.warn('localStorage 삭제 실패:', e);
-    }
-  }
-};
+import useFileManagerStore from './FileManagerStore';
 
 // 마인드맵 스토어
 const useMindMapStore = create((set, get) => ({
@@ -45,12 +15,21 @@ const useMindMapStore = create((set, get) => ({
   connectionStyle: 'bezier',
   connectionColor: '#b0b8c8',
   viewport: { x: 0, y: 0 },
+  activeDocumentId: null,
 
   // 로딩 상태 설정
   setLoading: (isLoading) => set({ loading: isLoading }),
 
   // 에러 상태 설정
   setError: (err) => set({ error: err }),
+
+  // 문서 저장 헬퍼
+  _saveToStorage: (data) => {
+    const fm = useFileManagerStore.getState();
+    if (fm.activeDocumentId) {
+      fm.saveActiveDocument(data);
+    }
+  },
 
   // 액션
   setMindMapData: (data) => {
@@ -71,29 +50,62 @@ const useMindMapStore = create((set, get) => ({
       validationErrors: []
     });
 
-    storage.save(data);
+    get()._saveToStorage(data);
   },
 
   // localStorage에서 데이터 로드
   loadFromStorage: () => {
-    const savedData = storage.load();
-    if (savedData) {
-      const validation = validateMindMap(savedData);
-      if (validation.isValid) {
-        // 기존 노드에 style 필드 마이그레이션
-        const migrateNode = (node) => {
-          const withStyle = { ...node, style: node.style || { ...DEFAULT_NODE_STYLE } };
-          if (withStyle.children) {
-            withStyle.children = withStyle.children.map(migrateNode);
-          }
-          return withStyle;
-        };
-        const migrated = migrateNode(savedData);
-        set({ mindMapData: migrated, error: null });
-        storage.save(migrated);
-        return true;
+    const fm = useFileManagerStore.getState();
+
+    // FileManagerStore가 초기화되지 않았으면 초기화
+    if (!fm.initialized) {
+      fm.initialize();
+    }
+
+    // 활성 문서가 있으면 로드
+    if (fm.activeDocumentId) {
+      const savedData = fm.loadDocument(fm.activeDocumentId);
+      if (savedData) {
+        const validation = validateMindMap(savedData);
+        if (validation.isValid) {
+          // 기존 노드에 style 필드 마이그레이션
+          const migrateNode = (node) => {
+            const withStyle = { ...node, style: node.style || { ...DEFAULT_NODE_STYLE } };
+            if (withStyle.children) {
+              withStyle.children = withStyle.children.map(migrateNode);
+            }
+            return withStyle;
+          };
+          const migrated = migrateNode(savedData);
+          set({ mindMapData: migrated, error: null, activeDocumentId: fm.activeDocumentId });
+          get()._saveToStorage(migrated);
+          return true;
+        }
       }
     }
+
+    // 첫 번째 문서 로드 시도
+    if (fm.documents && fm.documents.length > 0) {
+      const firstDoc = fm.documents[0];
+      const savedData = fm.loadDocument(firstDoc.id);
+      if (savedData) {
+        const validation = validateMindMap(savedData);
+        if (validation.isValid) {
+          const migrateNode = (node) => {
+            const withStyle = { ...node, style: node.style || { ...DEFAULT_NODE_STYLE } };
+            if (withStyle.children) {
+              withStyle.children = withStyle.children.map(migrateNode);
+            }
+            return withStyle;
+          };
+          const migrated = migrateNode(savedData);
+          set({ mindMapData: migrated, error: null, activeDocumentId: firstDoc.id });
+          get()._saveToStorage(migrated);
+          return true;
+        }
+      }
+    }
+
     return false;
   },
 
@@ -102,13 +114,16 @@ const useMindMapStore = create((set, get) => ({
     const newRoot = createRootNode(title);
     const layouted = calculateAutoLayout(newRoot);
 
-    set({
-      mindMapData: layouted || newRoot,
-      error: null,
-      validationErrors: []
-    });
+    const data = layouted || newRoot;
+    const fm = useFileManagerStore.getState();
+    const docId = fm.createDocument(title, data);
 
-    storage.save(layouted || newRoot);
+    set({
+      mindMapData: data,
+      error: null,
+      validationErrors: [],
+      activeDocumentId: docId
+    });
   },
 
   // 자동 레이아웃 적용
@@ -119,7 +134,7 @@ const useMindMapStore = create((set, get) => ({
     const layouted = calculateAutoLayout(mindMapData, layoutConfig);
     if (layouted) {
       set({ mindMapData: layouted });
-      storage.save(layouted);
+      get()._saveToStorage(layouted);
     }
   },
 
@@ -140,7 +155,7 @@ const useMindMapStore = create((set, get) => ({
 
     const updated = updateRoot(mindMapData);
     set({ mindMapData: updated });
-    storage.save(updated);
+    get()._saveToStorage(updated);
   },
 
   // 노드 텍스트 업데이트
@@ -177,7 +192,7 @@ const useMindMapStore = create((set, get) => ({
       return { ...state, error: totalValidation.errors.map(e => e.errors.join(', ')).join('; ') };
     }
 
-    storage.save(updatedMindMap);
+    get()._saveToStorage(updatedMindMap);
 
     return {
       mindMapData: updatedMindMap,
@@ -220,7 +235,7 @@ const useMindMapStore = create((set, get) => ({
   saveNodePositions: () => {
     const { mindMapData } = get();
     if (mindMapData) {
-      storage.save(mindMapData);
+      get()._saveToStorage(mindMapData);
     }
   },
 
@@ -257,7 +272,7 @@ const useMindMapStore = create((set, get) => ({
     };
 
     const updatedMindMap = updateNode(state.mindMapData);
-    storage.save(updatedMindMap);
+    get()._saveToStorage(updatedMindMap);
 
     return { mindMapData: updatedMindMap, error: null };
   }),
@@ -299,7 +314,7 @@ const useMindMapStore = create((set, get) => ({
       return { ...state, error: '노드 수가 최대 한도를 초과했습니다 (1000개)' };
     }
 
-    storage.save(updatedMindMap);
+    get()._saveToStorage(updatedMindMap);
 
     return {
       mindMapData: updatedMindMap,
@@ -334,7 +349,7 @@ const useMindMapStore = create((set, get) => ({
       return { ...state, error: '루트 노드를 삭제할 수 없습니다' };
     }
 
-    storage.save(updatedMindMap);
+    get()._saveToStorage(updatedMindMap);
 
     return {
       mindMapData: updatedMindMap,
@@ -362,7 +377,7 @@ const useMindMapStore = create((set, get) => ({
     const layouted = calculateAutoLayout(mindMapData, defaultConfig);
     if (layouted) {
       set({ mindMapData: layouted, layoutConfig: defaultConfig, error: null });
-      storage.save(layouted);
+      get()._saveToStorage(layouted);
     }
   },
 
@@ -395,6 +410,9 @@ const useMindMapStore = create((set, get) => ({
 
   resetViewport: () => set({ viewport: { x: 0, y: 0 } }),
 
+  // 활성 문서 ID 설정
+  setActiveDocumentId: (docId) => set({ activeDocumentId: docId }),
+
   // 초기화
   reset: () => set({
     mindMapData: null,
@@ -404,7 +422,8 @@ const useMindMapStore = create((set, get) => ({
     layoutConfig: { horizontalGap: 100, verticalGap: 30 },
     connectionStyle: 'bezier',
     connectionColor: '#b0b8c8',
-    viewport: { x: 0, y: 0 }
+    viewport: { x: 0, y: 0 },
+    activeDocumentId: null
   })
 }));
 

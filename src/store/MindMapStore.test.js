@@ -1,17 +1,38 @@
 import useMindMapStore from './MindMapStore';
 import { createRootNode, createChildNode } from '../types/NodeTypes';
 
+// FileManagerStore mock — jest.mock은 호이스팅되므로 변수 참조 불가
+jest.mock('./FileManagerStore', () => {
+  const mockState = {
+    activeDocumentId: 'mock-doc-id',
+    initialized: true,
+    documents: [{ id: 'mock-doc-id', title: '테스트' }],
+    saveActiveDocument: jest.fn(),
+    createDocument: jest.fn(() => 'mock-doc-id'),
+    loadDocument: jest.fn(),
+    initialize: jest.fn()
+  };
+  return {
+    __esModule: true,
+    default: {
+      getState: () => mockState
+    }
+  };
+});
+
 Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
 Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 768 });
 
 describe('MindMapStore - connectionStyle', () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     useMindMapStore.setState({
       mindMapData: null,
       loading: false,
       error: null,
       validationErrors: [],
-      connectionStyle: 'bezier'
+      connectionStyle: 'bezier',
+      activeDocumentId: null
     });
   });
 
@@ -39,12 +60,13 @@ describe('MindMapStore - connectionStyle', () => {
 
 describe('MindMapStore - deleteNode', () => {
   beforeEach(() => {
-    // 스토어 초기화
+    jest.clearAllMocks();
     useMindMapStore.setState({
       mindMapData: null,
       loading: false,
       error: null,
-      validationErrors: []
+      validationErrors: [],
+      activeDocumentId: null
     });
   });
 
@@ -125,12 +147,14 @@ describe('MindMapStore - deleteNode', () => {
 
 describe('MindMapStore - layoutConfig', () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     useMindMapStore.setState({
       mindMapData: null,
       loading: false,
       error: null,
       validationErrors: [],
-      layoutConfig: { horizontalGap: 100, verticalGap: 30 }
+      layoutConfig: { horizontalGap: 100, verticalGap: 30 },
+      activeDocumentId: null
     });
   });
 
@@ -166,12 +190,14 @@ describe('MindMapStore - layoutConfig', () => {
 
 describe('MindMapStore - backgroundColor', () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     const root = createRootNode('루트');
     useMindMapStore.setState({
       mindMapData: root,
       loading: false,
       error: null,
-      validationErrors: []
+      validationErrors: [],
+      activeDocumentId: 'mock-doc-id'
     });
   });
 
@@ -190,12 +216,14 @@ describe('MindMapStore - backgroundColor', () => {
 
 describe('MindMapStore - connectionColor', () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     useMindMapStore.setState({
       mindMapData: null,
       loading: false,
       error: null,
       validationErrors: [],
-      connectionColor: '#b0b8c8'
+      connectionColor: '#b0b8c8',
+      activeDocumentId: null
     });
   });
 
@@ -232,8 +260,10 @@ describe('MindMapStore - resetLayout', () => {
 
 describe('MindMapStore - viewport', () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     useMindMapStore.setState({
-      viewport: { x: 0, y: 0 }
+      viewport: { x: 0, y: 0 },
+      activeDocumentId: null
     });
   });
 
