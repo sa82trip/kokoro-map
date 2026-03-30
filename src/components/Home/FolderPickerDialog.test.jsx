@@ -29,8 +29,9 @@ describe('FolderPickerDialog', () => {
     jest.clearAllMocks();
     useFileManagerStore.setState({
       folders: [
-        { id: 'f1', name: '폴더 1', parentId: null },
-        { id: 'f2', name: '폴더 2', parentId: null }
+        { id: 'f1', name: '폴더 1', parentId: null, order: 0 },
+        { id: 'f2', name: '폴더 2', parentId: null, order: 1 },
+        { id: 'f3', name: '하위 폴더', parentId: 'f1', order: 0 }
       ]
     });
   });
@@ -70,5 +71,30 @@ describe('FolderPickerDialog', () => {
     render(<FolderPickerDialog docId="d1" currentFolderId={null} onSelect={mockOnSelect} onCancel={mockOnCancel} />);
     fireEvent.click(screen.getByTestId('picker-cancel'));
     expect(mockOnCancel).toHaveBeenCalled();
+  });
+
+  test('하위 폴더가 들여쓰기로 표시된다', () => {
+    render(<FolderPickerDialog docId="d1" currentFolderId={null} onSelect={mockOnSelect} onCancel={mockOnCancel} />);
+    const rootFolder = screen.getByTestId('picker-f1');
+    const childFolder = screen.getByTestId('picker-f3');
+    // 루트 폴더는 기본 패딩, 하위 폴더는 추가 들여쓰기
+    expect(rootFolder.style.paddingLeft).toBe('12px');
+    expect(childFolder.style.paddingLeft).toBe('32px');
+  });
+
+  test('하위 폴더가 부모 폴더 바로 아래에 렌더링된다', () => {
+    render(<FolderPickerDialog docId="d1" currentFolderId={null} onSelect={mockOnSelect} onCancel={mockOnCancel} />);
+    const list = screen.getByRole('list');
+    const items = list.querySelectorAll('.folder-picker-item');
+    // 순서: 루트, 폴더1, 하위폴더(f3), 폴더2
+    expect(items[1]).toHaveAttribute('data-testid', 'picker-f1');
+    expect(items[2]).toHaveAttribute('data-testid', 'picker-f3');
+    expect(items[3]).toHaveAttribute('data-testid', 'picker-f2');
+  });
+
+  test('하위 폴더 클릭 시 정상적으로 onSelect가 호출된다', () => {
+    render(<FolderPickerDialog docId="d1" currentFolderId={null} onSelect={mockOnSelect} onCancel={mockOnCancel} />);
+    fireEvent.click(screen.getByTestId('picker-f3'));
+    expect(mockOnSelect).toHaveBeenCalledWith('d1', 'f3');
   });
 });
