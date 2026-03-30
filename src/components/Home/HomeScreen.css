@@ -1,0 +1,104 @@
+.home-screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f5f7fa;
+}
+
+/* 헤더 */
+.home-header {
+  background: #ffffff;
+  border-bottom: 1px solid #e8ecf1;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.home-header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 60px;
+}
+
+.home-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.home-logo h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0;
+}
+
+.new-document-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  background: #4A90E2;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.new-document-btn:hover {
+  background: #3a7bd5;
+}
+
+.new-document-btn:active {
+  background: #2e6bc4;
+}
+
+/* 메인 콘텐츠 */
+.home-content {
+  flex: 1;
+  padding: 32px 0;
+}
+
+.recent-section {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 20px 0;
+  padding: 0 20px;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .home-header {
+    padding: 0 16px;
+  }
+
+  .home-header-content {
+    height: 52px;
+  }
+
+  .home-logo h1 {
+    font-size: 18px;
+  }
+
+  .new-document-btn {
+    padding: 6px 14px;
+    font-size: 13px;
+  }
+
+  .home-content {
+    padding: 20px 0;
+  }
+}

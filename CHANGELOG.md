@@ -1,5 +1,110 @@
 # Changelog
 
+## [US-7: 최근 문서 관리] - 2026-03-30
+
+**Branch**: `main`
+
+### Added
+- **Dependencies** (`package.json`)
+  - `react-router-dom` — React Router v6
+
+- **Components** (`src/components/Home/`)
+  - `HomeScreen.jsx` — 홈 화면 (헤더, 새 마인드맵 버튼, RecentDocumentList)
+  - `HomeScreen.css` — 헤더 sticky, 버튼 스타일, 반응형
+  - `DocumentCard.jsx` — 문서 카드 (썸네일, 상대시간 포맷, 삭제 확인 오버레이)
+  - `DocumentCard.css` — 카드 호버 애니메이션, 삭제 버튼 페이드인
+  - `RecentDocumentList.jsx` — 최근 문서 목록 (updatedAt 정렬, 최대 20개, 빈 상태)
+  - `RecentDocumentList.css` — 그리드 레이아웃, 반응형 768px/480px
+
+- **Components** (`src/components/MindMap/`)
+  - `MindMapEditor.jsx` — URL docId 기반 문서 로드/생성 에디터 래퍼
+
+### Changed
+- `src/main.jsx` — BrowserRouter로 App 감싸기
+- `src/App.jsx` — Routes 설정 (`/` HomeScreen, `/editor/:docId` MindMapEditor, `*` → `/`)
+- `jest.setup.js` — TextEncoder/TextDecoder polyfill 추가 (react-router-dom 호환)
+
+### Tests
+- `DocumentCard.test.jsx` — 9 tests (렌더링, 클릭, 삭제 확인/취소, 썸네일, 시간 포맷)
+- `RecentDocumentList.test.jsx` — 7 tests (렌더링, 정렬, 빈 상태, 클릭, 삭제, 20개 제한)
+- `HomeScreen.test.jsx` — 6 tests (헤더, 버튼, 라우팅, 초기화)
+- Total: 214 tests passing / 17 test suites
+
+### Technical Notes
+- 라우팅: `/` (홈), `/editor/new` (새 문서 → 실제 docId로 URL 교체), `/editor/:docId` (기존 문서)
+- 삭제: DocumentCard 오버레이 → RecentDocumentList → FileManagerStore.deleteDocument
+- MindMap.jsx는 수정하지 않음 (MindMapEditor가 래핑)
+- Vite build 성공 (78 modules, 220KB gzipped 72KB)
+
+---
+
+## [US-7 Task 7-3 + 7-4: RecentDocumentList 컴포넌트 + 삭제 기능 통합] - 2026-03-30
+
+### Added
+- **Components** (`src/components/Home/`)
+  - `RecentDocumentList.jsx` — 최근 문서 목록 (updatedAt 내림차순 정렬, 최대 20개, 빈 상태 SVG+안내 메시지)
+  - `RecentDocumentList.css` — 그리드 레이아웃 (auto-fill, minmax 220px), 반응형 768px/480px 브레이크포인트
+
+### Tests
+- `src/components/Home/RecentDocumentList.test.jsx` — 7 tests (렌더링, 정렬, 빈 상태, 클릭, 삭제, 콜백, 최대 20개)
+- Total: 208 tests passing / 16 test suites
+
+### Technical Notes
+- DocumentCard 모킹하여 독립적으로 RecentDocumentList 로직만 테스트
+- FileManagerStore.deleteDocument 직접 호출 → 스토어 상태에서 문서 제거 + onDeleteDocument 콜백
+- useMemo로 documents 변경 시에만 정렬/슬라이스 재계산
+- Total: 3 files added
+
+---
+
+## [US-7 Task 7-5: react-router-dom 설치 및 라우팅 설정] - 2026-03-30
+
+### Added
+- **Dependencies** (`package.json`)
+  - `react-router-dom` — React Router v6 추가
+
+- **Components** (`src/components/MindMap/`)
+  - `MindMapEditor.jsx` — URL 파라미터(docId) 기반 문서 로드/생성 에디터 래퍼
+
+- **Components** (`src/components/Home/`)
+  - `HomeScreen.jsx` — 홈 화면 임시 placeholder (다른 Agent가 본격 구현 예정)
+  - `HomeScreen.css` — 홈 화면 기본 스타일
+
+### Changed
+- `src/main.jsx` — BrowserRouter로 App 감싸기 추가
+- `src/App.jsx` — 정적 MindMap 렌더링 → React Router Routes 기반으로 전체 교체
+  - `/` → HomeScreen
+  - `/editor/:docId` → MindMapEditor
+  - `*` → `/` 리다이렉트
+
+### Technical Notes
+- MindMap.jsx는 수정하지 않음 (기존 코드 그대로 유지)
+- MindMapEditor는 docId가 'new'면 새 문서 생성 후 실제 docId로 URL 교체
+- 기존 문서 ID가 존재하지 않으면 홈으로 리다이렉트
+- Vite build 성공 (73 modules, 215KB gzipped 70KB)
+
+---
+
+## [US-7 Task 7-2: DocumentCard 컴포넌트] - 2026-03-30
+
+### Added
+- **Components** (`src/components/Home/`)
+  - `DocumentCard.jsx` — 문서 카드 컴포넌트 (썸네일/플레이스홀더, 상대시간 포맷, 삭제 확인 오버레이)
+  - `DocumentCard.css` — 카드 스타일 (호버 애니메이션, 삭제 버튼 페이드인, 반응형)
+
+### Tests
+- `src/components/Home/DocumentCard.test.jsx` — 9 tests (렌더링, 클릭, 삭제 확인/취소, 썸네일, 시간 포맷)
+- Total: 201 tests passing / 15 test suites
+
+### Technical Notes
+- 썸네일 없으면 마인드맵 아이콘 SVG 플레이스홀더 표시
+- formatDate: 방금 전 / N분 전 / N시간 전 / N일 전 / 날짜 포맷 자동 변환
+- 삭제 버튼은 hover 시에만 표시 (opacity 트랜지션)
+- 삭제 확인은 전체 카드 오버레이 (stopPropagation으로 카드 클릭 전파 차단)
+- Total: 3 files added
+
+---
+
 ## [US-6: 파일 저장 및 불러오기] - 2026-03-30
 
 ### Added

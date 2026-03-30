@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useMindMapStore from '../../store/MindMapStore';
 import useFileManagerStore from '../../store/FileManagerStore';
 import { exportToJSON } from '../../utils/FileExporter';
@@ -6,6 +7,7 @@ import { openFilePicker } from '../../utils/FileImporter';
 import { COLOR_PALETTE } from '../../types/NodeTypes';
 
 const Toolbar = () => {
+  const navigate = useNavigate();
   const {
     mindMapData,
     createNewMindMap,
@@ -148,6 +150,21 @@ const Toolbar = () => {
   return (
     <div style={toolbarStyle} data-testid="toolbar">
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button
+          onClick={() => navigate('/')}
+          title="홈으로"
+          data-testid="btn-home"
+          style={{
+            ...buttonBase,
+            padding: '6px 10px',
+            background: '#f0f4ff',
+            color: '#4A90E2'
+          }}
+          onMouseEnter={(e) => e.target.style.background = '#dde5f7'}
+          onMouseLeave={(e) => e.target.style.background = '#f0f4ff'}
+        >
+          &#8592; 홈
+        </button>
         <div style={{ fontSize: 22, marginRight: 4 }}>&#129504;</div>
         {isEditingTitle ? (
           <input

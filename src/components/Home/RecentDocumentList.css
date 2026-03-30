@@ -1,0 +1,51 @@
+.recent-documents {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.recent-documents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+  padding: 0 20px;
+}
+
+/* 빈 상태 */
+.recent-documents-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.recent-documents-empty p {
+  font-size: 16px;
+  color: #666;
+  margin: 20px 0 4px 0;
+  font-weight: 500;
+}
+
+.recent-documents-empty span {
+  font-size: 13px;
+  color: #999;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .recent-documents-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+    padding: 0 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .recent-documents-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 0 10px;
+  }
+}

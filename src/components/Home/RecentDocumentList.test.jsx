@@ -1,0 +1,126 @@
+import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import RecentDocumentList from './RecentDocumentList';
+import useFileManagerStore from '../../store/FileManagerStore';
+
+// DocumentCard 모킹
+jest.mock('./DocumentCard', () => {
+  return function MockDocumentCard({ document, onClick, onDelete }) {
+    return (
+      <div
+        data-testid={`doc-card-${document.id}`}
+        onClick={() => onClick(document.id)}
+      >
+        <span>{document.title}</span>
+        <button
+          data-testid={`delete-${document.id}`}
+          onClick={(e) => { e.stopPropagation(); onDelete(document.id); }}
+        >
+          삭제
+        </button>
+      </div>
+    );
+  };
+});
+
+describe('RecentDocumentList', () => {
+  const mockDocuments = [
+    {
+      id: 'doc-1',
+      title: '첫 번째 마인드맵',
+      folderId: null,
+      createdAt: '2026-03-28T10:00:00.000Z',
+      updatedAt: '2026-03-30T10:00:00.000Z',
+      nodeCount: 5,
+      thumbnail: null
+    },
+    {
+      id: 'doc-2',
+      title: '두 번째 마인드맵',
+      folderId: null,
+      createdAt: '2026-03-29T10:00:00.000Z',
+      updatedAt: '2026-03-29T15:00:00.000Z',
+      nodeCount: 3,
+      thumbnail: null
+    },
+    {
+      id: 'doc-3',
+      title: '세 번째 마인드맵',
+      folderId: null,
+      createdAt: '2026-03-25T10:00:00.000Z',
+      updatedAt: '2026-03-25T15:00:00.000Z',
+      nodeCount: 8,
+      thumbnail: null
+    }
+  ];
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // 스토어 초기화
+    useFileManagerStore.setState({
+      documents: mockDocuments,
+      initialized: true,
+      activeDocumentId: null
+    });
+  });
+
+  test('문서 카드를 렌더링한다', () => {
+    render(<RecentDocumentList />);
+    expect(screen.getByTestId('doc-card-doc-1')).toBeInTheDocument();
+    expect(screen.getByTestId('doc-card-doc-2')).toBeInTheDocument();
+    expect(screen.getByTestId('doc-card-doc-3')).toBeInTheDocument();
+  });
+
+  test('최근 수정순으로 정렬된다', () => {
+    render(<RecentDocumentList />);
+    const cards = screen.getAllByTestId(/^doc-card-/);
+    // doc-1 (3/30) > doc-2 (3/29) > doc-3 (3/25)
+    expect(cards[0]).toHaveAttribute('data-testid', 'doc-card-doc-1');
+    expect(cards[1]).toHaveAttribute('data-testid', 'doc-card-doc-2');
+    expect(cards[2]).toHaveAttribute('data-testid', 'doc-card-doc-3');
+  });
+
+  test('문서가 없으면 빈 상태 메시지를 표시한다', () => {
+    useFileManagerStore.setState({ documents: [] });
+    render(<RecentDocumentList />);
+    expect(screen.getByText('아직 생성된 마인드맵이 없습니다')).toBeInTheDocument();
+  });
+
+  test('카드 클릭 시 onOpenDocument가 호출된다', () => {
+    const mockOnOpen = jest.fn();
+    render(<RecentDocumentList onOpenDocument={mockOnOpen} />);
+    fireEvent.click(screen.getByTestId('doc-card-doc-1'));
+    expect(mockOnOpen).toHaveBeenCalledWith('doc-1');
+  });
+
+  test('삭제 시 FileManagerStore.deleteDocument가 호출된다', () => {
+    render(<RecentDocumentList />);
+    fireEvent.click(screen.getByTestId('delete-doc-1'));
+    const state = useFileManagerStore.getState();
+    expect(state.documents.find(d => d.id === 'doc-1')).toBeUndefined();
+  });
+
+  test('삭제 시 onDeleteDocument 콜백이 호출된다', () => {
+    const mockOnDelete = jest.fn();
+    render(<RecentDocumentList onDeleteDocument={mockOnDelete} />);
+    fireEvent.click(screen.getByTestId('delete-doc-2'));
+    expect(mockOnDelete).toHaveBeenCalledWith('doc-2');
+  });
+
+  test('최대 20개까지만 표시한다', () => {
+    const manyDocs = Array.from({ length: 25 }, (_, i) => ({
+      id: `doc-${i}`,
+      title: `마인드맵 ${i}`,
+      folderId: null,
+      createdAt: new Date(Date.now() - i * 3600000).toISOString(),
+      updatedAt: new Date(Date.now() - i * 3600000).toISOString(),
+      nodeCount: i,
+      thumbnail: null
+    }));
+    useFileManagerStore.setState({ documents: manyDocs });
+    render(<RecentDocumentList />);
+    const cards = screen.getAllByTestId(/^doc-card-/);
+    expect(cards.length).toBe(20);
+  });
+});

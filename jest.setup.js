@@ -1,6 +1,11 @@
 // Jest 설정 파일
 require('@testing-library/jest-dom');
 
+// TextEncoder/TextDecoder polyfill (react-router-dom 호환성)
+const { TextEncoder, TextDecoder } = require('util');
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
+
 // Mock window 객체 테스트
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
