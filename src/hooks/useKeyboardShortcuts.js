@@ -119,7 +119,19 @@ const useKeyboardShortcuts = () => {
         const parentColor = selectedNode.color || '#4A90E2';
         const newNode = createChildNode(selId, '새 노드', parentColor);
         const existingCount = selectedNode.children ? selectedNode.children.length : 0;
-        const newPos = calculateNewChildPosition(selectedNode.position || { x: 0, y: 0 }, existingCount);
+
+        // direction 결정
+        let childDirection;
+        if (selectedNode.isRoot) {
+          const rightCount = selectedNode.children.filter(c => (c.direction || 'right') === 'right').length;
+          const leftCount = selectedNode.children.filter(c => c.direction === 'left').length;
+          childDirection = leftCount <= rightCount ? 'left' : 'right';
+        } else {
+          childDirection = selectedNode.direction || 'right';
+        }
+        newNode.direction = childDirection;
+
+        const newPos = calculateNewChildPosition(selectedNode.position || { x: 0, y: 0 }, existingCount, undefined, childDirection);
         newNode.position = newPos;
         store.addNode(selId, newNode);
         store.setSelectedNodeId(newNode.id);
@@ -135,7 +147,19 @@ const useKeyboardShortcuts = () => {
         const parentColor = parent.color || '#4A90E2';
         const newNode = createChildNode(parent.id, '새 노드', parentColor);
         const existingCount = parent.children ? parent.children.length : 0;
-        const newPos = calculateNewChildPosition(parent.position || { x: 0, y: 0 }, existingCount);
+
+        // direction 결정
+        let childDirection;
+        if (parent.isRoot) {
+          const rightCount = parent.children.filter(c => (c.direction || 'right') === 'right').length;
+          const leftCount = parent.children.filter(c => c.direction === 'left').length;
+          childDirection = leftCount <= rightCount ? 'left' : 'right';
+        } else {
+          childDirection = parent.direction || 'right';
+        }
+        newNode.direction = childDirection;
+
+        const newPos = calculateNewChildPosition(parent.position || { x: 0, y: 0 }, existingCount, undefined, childDirection);
         newNode.position = newPos;
         store.addNode(parent.id, newNode);
         store.setSelectedNodeId(newNode.id);

@@ -143,7 +143,19 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
     e.stopPropagation();
     const childNode = createChildNode(node.id, '새 노드', node.color);
     const existingCount = node.children ? node.children.length : 0;
-    childNode.position = calculateNewChildPosition(position, existingCount);
+
+    // direction 결정
+    let childDirection;
+    if (node.isRoot) {
+      const rightCount = node.children.filter(c => (c.direction || 'right') === 'right').length;
+      const leftCount = node.children.filter(c => c.direction === 'left').length;
+      childDirection = leftCount <= rightCount ? 'left' : 'right';
+    } else {
+      childDirection = node.direction || 'right';
+    }
+
+    childNode.direction = childDirection;
+    childNode.position = calculateNewChildPosition(position, existingCount, undefined, childDirection);
     if (onAddChild) onAddChild(node.id, childNode);
   };
 

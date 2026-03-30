@@ -17,6 +17,7 @@ export const ITreeNode = {
   },
   children: 'array',
   isRoot: 'boolean',
+  direction: 'string', // 'left' | 'right' — 루트 직계 자식의 확장 방향
   style: {
     fontSize: 'number',
     textColor: 'string',
@@ -48,6 +49,7 @@ export const NodeSchema = {
       items: { $ref: '#/definitions/Node' }
     },
     isRoot: { type: 'boolean' },
+    direction: { type: 'string' },
     style: {
       type: 'object',
       properties: {
@@ -78,6 +80,7 @@ export const NodeSchema = {
           items: { $ref: '#/definitions/Node' }
         },
         isRoot: { type: 'boolean' },
+        direction: { type: 'string' },
         style: {
           type: 'object',
           properties: {
@@ -148,7 +151,7 @@ export const createRootNode = (text = '마인드맵') => ({
   style: { ...DEFAULT_NODE_STYLE }
 });
 
-export const createChildNode = (parentId, text = '새 노드', parentColor = '#4A90E2') => ({
+export const createChildNode = (parentId, text = '새 노드', parentColor = '#4A90E2', direction) => ({
   id: `node-${Date.now()}-${++nodeIdCounter}`,
   text,
   color: getChildNodeColor(parentColor),
@@ -156,5 +159,6 @@ export const createChildNode = (parentId, text = '새 노드', parentColor = '#4
   children: [],
   isRoot: false,
   parentId,
+  direction,
   style: { ...DEFAULT_NODE_STYLE }
 });

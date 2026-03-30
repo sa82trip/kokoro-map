@@ -49,6 +49,21 @@ describe('NodeTypes', () => {
       expect(node.children).toEqual([]);
     });
 
+    test('direction을 전달하면 설정된다', () => {
+      const node = createChildNode('root', '새 노드', '#4A90E2', 'left');
+      expect(node.direction).toBe('left');
+    });
+
+    test('direction을 전달하지 않으면 undefined이다', () => {
+      const node = createChildNode('root');
+      expect(node.direction).toBeUndefined();
+    });
+
+    test('createRootNode에는 direction이 없다', () => {
+      const root = createRootNode();
+      expect(root.direction).toBeUndefined();
+    });
+
     test('자식 노드 색상이 항상 같은 연두색이 아니다', () => {
       const colors = new Set();
       for (let i = 0; i < 10; i++) {

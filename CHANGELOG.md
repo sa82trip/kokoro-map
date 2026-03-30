@@ -1,5 +1,29 @@
 # Changelog
 
+## [Split Layout: 좌/우 분할 배치] - 2026-03-30
+
+**Branch**: `main`
+
+### Added
+- **Model** (`src/types/`)
+  - `NodeTypes.js` — `direction` 필드 (ITreeNode, NodeSchema), `createChildNode` direction 파라미터
+- **Layout** (`src/utils/`)
+  - `LayoutEngine.js` — `assignDirections` (교대 direction 할당), `layoutDirectionGroup` (방향별 그룹 배치), direction 파라미터 지원
+
+### Changed
+- `LayoutEngine.js` — `calculateAutoLayout` 루트 중앙 배치 + 좌/우 분할, `calculateNewChildPosition` direction 파라미터 추가
+- `MindMapContainer.jsx` — `renderConnections` 위치 기반 좌/우 판별 (`isLeftChild`)
+- `Node.jsx` — `handleAddChild` 루트 균형 분배 / 비루트 direction 상속
+- `useKeyboardShortcuts.js` — Enter/Tab 핸들러 direction 로직 추가
+
+### Tests
+- `LayoutEngine.test.js` — 8개 신규 (split, left/right subtree, 중앙 배치, direction 유지, 독립 수직 정렬)
+- `NodeTypes.test.js` — 3개 신규 (direction 설정/미설정/루트)
+- `MindMapContainer.test.jsx` — 3개 신규 (좌/우/혼합 연결선)
+- Total: 438 tests passing / 25 test suites
+
+---
+
 ## [노드 액션 버튼 UX 개선] - 2026-03-30
 
 **Branch**: `main`

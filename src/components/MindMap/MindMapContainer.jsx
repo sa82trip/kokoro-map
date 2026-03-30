@@ -24,13 +24,16 @@ const renderConnections = (node, connectionStyle = 'bezier', connectionColor = '
   const paths = [];
   const pos = node.position || { x: 0, y: 0 };
   const size = getNodeSize(node);
-  const x1 = pos.x + size.width;
-  const y1 = pos.y + size.height / 2;
 
   node.children.forEach((child) => {
     const childPos = child.position || { x: 0, y: 0 };
     const childSize = getNodeSize(child);
-    const x2 = childPos.x;
+
+    // 자식 위치 기반으로 좌/우 판별
+    const isLeftChild = childPos.x < pos.x;
+    const x1 = isLeftChild ? pos.x : pos.x + size.width;
+    const y1 = pos.y + size.height / 2;
+    const x2 = isLeftChild ? childPos.x + childSize.width : childPos.x;
     const y2 = childPos.y + childSize.height / 2;
 
     const midX = (x1 + x2) / 2;

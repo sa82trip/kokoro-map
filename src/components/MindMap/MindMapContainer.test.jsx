@@ -282,4 +282,93 @@ describe('MindMapContainer', () => {
       expect(markers.length).toBe(2);
     });
   });
+
+  // === 좌/우 분할 연결선 테스트 ===
+  describe('좌/우 분할 연결선', () => {
+    test('좌측 자식 연결선이 부모 왼쪽에서 자식 오른쪽으로 그려진다', () => {
+      const splitData = {
+        id: 'root',
+        text: '루트',
+        color: '#4A90E2',
+        position: { x: 400, y: 300 },
+        children: [
+          {
+            id: 'left-child',
+            text: '왼쪽',
+            color: '#E67E22',
+            position: { x: 100, y: 300 }, // 루트보다 왼쪽
+            children: [],
+            isRoot: false
+          }
+        ],
+        isRoot: true
+      };
+
+      const { container } = render(<MindMapContainer data={splitData} />);
+      const paths = container.querySelectorAll('svg path');
+      expect(paths.length).toBe(1);
+
+      const pathD = paths[0].getAttribute('d');
+      // 베지어 곡선 경로가 존재해야 함
+      expect(pathD).toContain('M');
+      expect(pathD).toContain('C');
+    });
+
+    test('우측 자식 연결선이 부모 오른쪽에서 자식 왼쪽으로 그려진다', () => {
+      const rightData = {
+        id: 'root',
+        text: '루트',
+        color: '#4A90E2',
+        position: { x: 400, y: 300 },
+        children: [
+          {
+            id: 'right-child',
+            text: '오른쪽',
+            color: '#9B59B6',
+            position: { x: 700, y: 300 }, // 루트보다 오른쪽
+            children: [],
+            isRoot: false
+          }
+        ],
+        isRoot: true
+      };
+
+      const { container } = render(<MindMapContainer data={rightData} />);
+      const paths = container.querySelectorAll('svg path');
+      expect(paths.length).toBe(1);
+      expect(paths[0].getAttribute('d')).toContain('M');
+    });
+
+    test('좌/우 혼합 연결선이 모두 렌더링된다', () => {
+      const mixedData = {
+        id: 'root',
+        text: '루트',
+        color: '#4A90E2',
+        position: { x: 400, y: 300 },
+        children: [
+          {
+            id: 'left-child',
+            text: '왼쪽',
+            color: '#E67E22',
+            position: { x: 100, y: 200 },
+            children: [],
+            isRoot: false
+          },
+          {
+            id: 'right-child',
+            text: '오른쪽',
+            color: '#9B59B6',
+            position: { x: 700, y: 400 },
+            children: [],
+            isRoot: false
+          }
+        ],
+        isRoot: true
+      };
+
+      const { container } = render(<MindMapContainer data={mixedData} />);
+      const paths = container.querySelectorAll('svg path');
+      expect(paths.length).toBe(2);
+    });
+  });
 });
