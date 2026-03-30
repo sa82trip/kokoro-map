@@ -1,5 +1,74 @@
 # Changelog
 
+## [US-5 버그 수정: 노드 드래그 Y축 에러 + 연결선 끊김 + 성능] - 2026-03-30
+
+### Problem
+1. 노드를 위쪽으로 드래그하면 모든 노드가 화면에서 사라짐
+2. 에러 발생 시 복구 불가 (전체 화면이 에러 메시지로 대체)
+3. 노드를 위/아래로 많이 드래그하면 연결선이 끊겨 보임
+4. 드래그 중 끊기는 현상 (매 mousemove마다 무거운 연산)
+
+### Root Cause
+1. `NodeValidator.js`에서 `position.y < 0` 거부 → store error 상태 → MindMap 에러 화면 전환 → 전체 노드 사라짐
+2. 에러 시 MindMap 전체를 에러 화면으로 교체하여 복구 불가
+3. SVG 기본 `overflow: hidden`으로 음수 좌표의 연결선이 잘림
+4. 매 mousemove마다 전체 트리 validation + localStorage 직렬화 수행
+
+### Solution
+1. Validator position 제한 `-4096~4096` 확장, 드래그 중 validation/localStorage 생략
+2. 에러 발생 시 에러 배너로 표시 (MindMap 컨테이너 유지)
+3. SVG에 `overflow: visible` 추가
+4. `updateNodePosition` 경량화 + `saveNodePositions` 액션 분리 (drag end 시만 저장)
+
+### Changed
+- `src/utils/NodeValidator.js` — position 범위 `min: 0` → `min: -4096`
+- `src/components/MindMap/MindMap.jsx` — 에러 배너 UI로 교체 (MindMap 유지)
+- `src/components/MindMap/MindMapContainer.jsx` — SVG `overflow: visible` 추가
+- `src/store/MindMapStore.js` — `updateNodePosition` 경량화, `saveNodePositions` 추가
+- `src/components/MindMap/Node.jsx` — drag end 시 `saveNodePositions()` 호출
+- `src/components/MindMap/Node.test.jsx` — `saveNodePositions` mock 추가
+- `tests/Node.test.jsx` — `saveNodePositions` mock 추가
+- `tests/__mocks__/MindMapStore.js` — `saveNodePositions` mock 추가
+- `jest.config.js` — `/e2e/` 테스트 경로 제외
+
+### Added
+- `playwright.config.js` — Playwright 설정 (Vite dev server 연동)
+- `e2e/node-drag.spec.js` — E2E 테스트 7개 (드래그, 패닝+드래그, 연결선 추적)
+
+### Tests
+- 단위 테스트: 130/130 통과 / 9 스위트
+- E2E 테스트: 7/7 통과 (Playwright + Chromium)
+
+### Technical Notes
+- Total: 12 files changed, ~280 insertions(+), ~25 deletions(-)
+
+---
+
+## [US-5: 캔버스 패닝 (Canvas Panning)] - 2026-03-30
+
+### Added
+- **Store** (`src/store/`)
+  - `MindMapStore.js` — viewport 상태 및 panViewport, setViewport, resetViewport 액션 추가
+
+### Changed
+- `src/components/MindMap/MindMapContainer.jsx` — transform 래퍼 div 추가, 배경 드래그 패닝 이벤트 핸들러 구현, viewportOffset prop 전달
+- `src/components/MindMap/Node.jsx` — viewportOffset prop 추가, 드래그 좌표 변환 (화면→월드)
+- `src/components/MindMap/Toolbar.jsx` — "중앙 이동" resetViewport 버튼 추가
+- `SPRINT-2.md` — 기존 US-5~US-8을 US-6~US-9로 시프트, 새 US-5 캔버스 패닝 삽입
+- `tests/__mocks__/MindMapStore.js` — viewport 관련 mock 추가
+
+### Tests
+- `src/store/MindMapStore.test.js` — viewport 액션 테스트 6개 추가 (초기값, panViewport, setViewport, resetViewport, 누적, reset 포함)
+- Total: 130 tests passing / 9 test suites
+
+### Technical Notes
+- 패닝 트리거: 배경(빈 공간) mousedown, 노드는 stopPropagation으로 충돌 없음
+- Transform 방식: `transform: translate(viewport.x, viewport.y)` 래퍼 div
+- 노드 드래그: `worldX = screenX - viewportOffset.x` 좌표 변환
+- Total: 8 files changed, ~120 insertions(+), ~20 deletions(-)
+
+---
+
 ## [버그 수정: 자동정렬/재조정 노드-간선 분리 + 기능 분리] - 2026-03-30
 
 ### Problem

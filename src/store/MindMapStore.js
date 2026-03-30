@@ -44,6 +44,7 @@ const useMindMapStore = create((set, get) => ({
   layoutConfig: { horizontalGap: 100, verticalGap: 30 },
   connectionStyle: 'bezier',
   connectionColor: '#b0b8c8',
+  viewport: { x: 0, y: 0 },
 
   // 로딩 상태 설정
   setLoading: (isLoading) => set({ loading: isLoading }),
@@ -207,18 +208,21 @@ const useMindMapStore = create((set, get) => ({
 
     const updatedMindMap = updateNode(state.mindMapData);
 
-    const validation = validateMindMap(updatedMindMap);
-    if (!validation.isValid) {
-      return { ...state, error: validation.errors.map(e => e.errors.join(', ')).join('; ') };
-    }
-
-    storage.save(updatedMindMap);
-
+    // 드래그 중 잦은 호출에서 전체 validation/localStorage 저장 생략
+    // (position은 이미 type 체크됨, 저장은 drag end 시 수행)
     return {
       mindMapData: updatedMindMap,
       error: null
     };
   }),
+
+  // 노드 위치 저장 (drag end 시 호출)
+  saveNodePositions: () => {
+    const { mindMapData } = get();
+    if (mindMapData) {
+      storage.save(mindMapData);
+    }
+  },
 
   // 노드 스타일 업데이트
   updateNodeStyle: (nodeId, styleProps) => set((state) => {
@@ -377,6 +381,20 @@ const useMindMapStore = create((set, get) => ({
     return { layoutConfig: newConfig };
   }),
 
+  // 뷰포트 패닝
+  panViewport: (dx, dy) => set((state) => ({
+    viewport: {
+      x: state.viewport.x + dx,
+      y: state.viewport.y + dy
+    }
+  })),
+
+  setViewport: (offset) => set({
+    viewport: { x: offset.x, y: offset.y }
+  }),
+
+  resetViewport: () => set({ viewport: { x: 0, y: 0 } }),
+
   // 초기화
   reset: () => set({
     mindMapData: null,
@@ -385,7 +403,8 @@ const useMindMapStore = create((set, get) => ({
     validationErrors: [],
     layoutConfig: { horizontalGap: 100, verticalGap: 30 },
     connectionStyle: 'bezier',
-    connectionColor: '#b0b8c8'
+    connectionColor: '#b0b8c8',
+    viewport: { x: 0, y: 0 }
   })
 }));
 

@@ -21,7 +21,8 @@ module.exports = {
   testPathIgnorePatterns: [
     '/node_modules/',
     '/build/',
-    '/dist/'
+    '/dist/',
+    '/e2e/'
   ],
   verbose: true,
   testTimeout: 10000,

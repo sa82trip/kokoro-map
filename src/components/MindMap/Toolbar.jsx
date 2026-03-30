@@ -14,7 +14,8 @@ const Toolbar = () => {
     connectionColor,
     setConnectionColor,
     layoutConfig,
-    setLayoutConfig
+    setLayoutConfig,
+    resetViewport
   } = useMindMapStore();
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -177,6 +178,20 @@ const Toolbar = () => {
           onMouseLeave={(e) => e.target.style.background = '#f0f4ff'}
         >
           &#8634; 재조정
+        </button>
+        <button
+          style={{
+            ...buttonBase,
+            background: '#f0f4ff',
+            color: '#4A90E2'
+          }}
+          onClick={resetViewport}
+          title="화면 초기 위치"
+          data-testid="btn-reset-viewport"
+          onMouseEnter={(e) => e.target.style.background = '#dde5f7'}
+          onMouseLeave={(e) => e.target.style.background = '#f0f4ff'}
+        >
+          &#8862; 중앙 이동
         </button>
         <button
           style={{

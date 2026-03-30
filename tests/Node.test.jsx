@@ -39,8 +39,10 @@ describe('Node Component', () => {
     mockUseMindMapStore.mockReturnValue({
       updateNodeText: mockUpdateNodeText,
       updateNodePosition: mockUpdateNodePosition,
-      updateNodeStyle: mockUpdateNodeStyle
+      updateNodeStyle: mockUpdateNodeStyle,
+      saveNodePositions: jest.fn()
     });
+    mockUseMindMapStore.getState = jest.fn(() => ({ viewport: { x: 0, y: 0 } }));
     mockUpdateNodeText.mockClear();
     mockUpdateNodePosition.mockClear();
     mockUpdateNodeStyle.mockClear();

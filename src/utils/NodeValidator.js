@@ -26,15 +26,15 @@ export const validationRules = {
     required: true,
     x: {
       type: 'number',
-      min: 0,
+      min: -4096,
       max: 4096,
-      message: 'X 좌표는 0~4096 사이여야 합니다'
+      message: 'X 좌표는 -4096~4096 사이여야 합니다'
     },
     y: {
       type: 'number',
-      min: 0,
+      min: -4096,
       max: 4096,
-      message: 'Y 좌표는 0~4096 사이여야 합니다'
+      message: 'Y 좌표는 -4096~4096 사이여야 합니다'
     }
   },
   children: {
@@ -66,10 +66,10 @@ export const validateNode = (node) => {
   if (!node.position || typeof node.position !== 'object') {
     errors.push('위치 정보가 필요합니다');
   } else {
-    if (node.position.x < 0 || node.position.x > 4096) {
+    if (node.position.x < -4096 || node.position.x > 4096) {
       errors.push('X 좌표가 유효하지 않습니다');
     }
-    if (node.position.y < 0 || node.position.y > 4096) {
+    if (node.position.y < -4096 || node.position.y > 4096) {
       errors.push('Y 좌표가 유효하지 않습니다');
     }
   }

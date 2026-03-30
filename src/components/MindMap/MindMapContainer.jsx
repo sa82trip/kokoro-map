@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Node from './Node';
 import useMindMapStore from '../../store/MindMapStore';
 import { measureText } from '../../utils/TextMeasurer';
@@ -59,7 +59,14 @@ const MindMapContainer = ({ data }) => {
   const { addNode, deleteNode } = useMindMapStore();
   const connectionStyle = useMindMapStore((state) => state.connectionStyle);
   const connectionColor = useMindMapStore((state) => state.connectionColor);
+  const viewport = useMindMapStore((state) => state.viewport);
+  const setViewport = useMindMapStore((state) => state.setViewport);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
+
+  // 패닝 상태
+  const [isPanning, setIsPanning] = useState(false);
+  const panStartRef = useRef({ x: 0, y: 0 });
+  const viewportStartRef = useRef({ x: 0, y: 0 });
 
   // document 클릭으로 노드 선택 해제 — 모든 hooks는 early return 전에 호출
   useEffect(() => {
@@ -74,7 +81,44 @@ const MindMapContainer = ({ data }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // 패닝 마우스 이벤트
+  useEffect(() => {
+    if (!isPanning) return;
+
+    const handleMouseMove = (e) => {
+      const dx = e.clientX - panStartRef.current.x;
+      const dy = e.clientY - panStartRef.current.y;
+      setViewport({
+        x: viewportStartRef.current.x + dx,
+        y: viewportStartRef.current.y + dy
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsPanning(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isPanning, setViewport]);
+
   if (!data) return null;
+
+  // 캔버스 배경 드래그 → 패닝
+  const handleCanvasMouseDown = (e) => {
+    if (e.target !== e.currentTarget) return;
+    if (e.clientY < 52) return;
+
+    setIsPanning(true);
+    panStartRef.current = { x: e.clientX, y: e.clientY };
+    viewportStartRef.current = { x: viewport.x, y: viewport.y };
+    e.preventDefault();
+  };
 
   const handleNodeSelect = (nodeId) => {
     setSelectedNodeId(nodeId);
@@ -86,6 +130,7 @@ const MindMapContainer = ({ data }) => {
   };
 
   const handleContainerClick = (e) => {
+    if (isPanning) return;
     if (e.target.classList.contains('mindmap-container')) {
       setSelectedNodeId(null);
     }
@@ -126,23 +171,41 @@ const MindMapContainer = ({ data }) => {
         height: '100vh',
         overflow: 'hidden',
         background: 'linear-gradient(to bottom right, #f5f7fa, #c3cfe2)',
-        paddingTop: 52
+        paddingTop: 52,
+        cursor: isPanning ? 'grabbing' : 'grab'
       }}
+      onMouseDown={handleCanvasMouseDown}
       onClick={handleContainerClick}
     >
-      <svg
+      <div
+        data-testid="canvas-viewport"
         style={{
           position: 'absolute',
           top: 0,
           left: 0,
           width: '100%',
           height: '100%',
+          transform: `translate(${viewport.x}px, ${viewport.y}px)`,
           pointerEvents: 'none'
         }}
       >
-        {connections}
-      </svg>
-      {renderNodes(data)}
+        <svg
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            overflow: 'visible'
+          }}
+        >
+          {connections}
+        </svg>
+        <div style={{ pointerEvents: 'auto' }}>
+          {renderNodes(data)}
+        </div>
+      </div>
     </div>
   );
 };

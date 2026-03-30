@@ -229,3 +229,43 @@ describe('MindMapStore - resetLayout', () => {
     expect(state.mindMapData.children[0].position.x).toBeGreaterThan(0);
   });
 });
+
+describe('MindMapStore - viewport', () => {
+  beforeEach(() => {
+    useMindMapStore.setState({
+      viewport: { x: 0, y: 0 }
+    });
+  });
+
+  test('초기 viewport는 { x: 0, y: 0 }이다', () => {
+    expect(useMindMapStore.getState().viewport).toEqual({ x: 0, y: 0 });
+  });
+
+  test('panViewport로 viewport를 델타 이동할 수 있다', () => {
+    useMindMapStore.getState().panViewport(50, -30);
+    expect(useMindMapStore.getState().viewport).toEqual({ x: 50, y: -30 });
+  });
+
+  test('setViewport로 절대 위치를 설정할 수 있다', () => {
+    useMindMapStore.getState().setViewport({ x: 200, y: 100 });
+    expect(useMindMapStore.getState().viewport).toEqual({ x: 200, y: 100 });
+  });
+
+  test('resetViewport로 원점으로 복귀한다', () => {
+    useMindMapStore.getState().setViewport({ x: 200, y: 100 });
+    useMindMapStore.getState().resetViewport();
+    expect(useMindMapStore.getState().viewport).toEqual({ x: 0, y: 0 });
+  });
+
+  test('누적 패닝이 정확히 계산된다', () => {
+    useMindMapStore.getState().panViewport(10, 20);
+    useMindMapStore.getState().panViewport(-5, 10);
+    expect(useMindMapStore.getState().viewport).toEqual({ x: 5, y: 30 });
+  });
+
+  test('reset 액션에 viewport 초기화가 포함된다', () => {
+    useMindMapStore.getState().setViewport({ x: 200, y: 100 });
+    useMindMapStore.getState().reset();
+    expect(useMindMapStore.getState().viewport).toEqual({ x: 0, y: 0 });
+  });
+});

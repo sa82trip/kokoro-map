@@ -7,7 +7,7 @@ import DeleteConfirmDialog from './DeleteConfirmDialog';
 import NodeEditorToolbar from './NodeEditorToolbar';
 
 const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelected, onSelect }) => {
-  const { updateNodeText, updateNodePosition, updateNodeStyle } = useMindMapStore();
+  const { updateNodeText, updateNodePosition, updateNodeStyle, saveNodePositions } = useMindMapStore();
   const [isEditing, setIsEditing] = useState(false);
   const [text, setText] = useState(node.text || 'New Node');
   const [position, setPosition] = useState(initialPosition || { x: 0, y: 0 });
@@ -50,16 +50,19 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
     if (!isDragging) return;
 
     const handleMouseMove = (e) => {
+      const vp = useMindMapStore.getState().viewport || { x: 0, y: 0 };
       const newPosition = {
-        x: e.clientX - dragOffsetRef.current.x,
-        y: e.clientY - dragOffsetRef.current.y
+        x: e.clientX - dragOffsetRef.current.x - vp.x,
+        y: e.clientY - dragOffsetRef.current.y - vp.y
       };
+      if (isNaN(newPosition.x) || isNaN(newPosition.y)) return;
       setPosition(newPosition);
       updateNodePosition(node.id, newPosition);
     };
 
     const handleMouseUp = () => {
       setIsDragging(false);
+      saveNodePositions();
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -69,7 +72,7 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, node.id, updateNodePosition]);
+  }, [isDragging, node.id, updateNodePosition, saveNodePositions]);
 
   // 디바운스 자동 저장 (300ms)
   const debouncedSave = useCallback((newText) => {
@@ -114,12 +117,14 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     if (isEditing) return;
 
+    const vp = useMindMapStore.getState().viewport || { x: 0, y: 0 };
     setIsDragging(true);
     dragOffsetRef.current = {
-      x: e.clientX - position.x,
-      y: e.clientY - position.y
+      x: e.clientX - position.x - vp.x,
+      y: e.clientY - position.y - vp.y
     };
     e.preventDefault();
+    e.stopPropagation();
   };
 
   // 노드 클릭 → 선택만 (툴바는 isSelected로 제어)

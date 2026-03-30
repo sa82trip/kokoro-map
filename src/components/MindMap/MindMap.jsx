@@ -31,18 +31,25 @@ const MindMap = ({ initialData = null }) => {
     );
   }
 
-  // 에러 처리
-  if (error) {
-    return (
-      <div className="error-container">
-        <h2>Error</h2>
-        <p>{error}</p>
-      </div>
-    );
-  }
-
+  // 에러 처리 — 에러 배너로 표시, MindMap은 계속 렌더링
   return (
     <div className="mindmap-wrapper">
+      {error && (
+        <div style={{
+          position: 'absolute', top: 52, left: 0, right: 0, zIndex: 150,
+          background: '#fff2f0', borderBottom: '1px solid #ffa39e',
+          padding: '6px 20px', fontSize: 13, color: '#cf1322',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+        }}>
+          <span>{error}</span>
+          <button
+            onClick={() => useMindMapStore.getState().setError(null)}
+            style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 16, color: '#cf1322' }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
       <Toolbar />
       <MindMapContainer data={mindMapData} />
     </div>
