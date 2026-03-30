@@ -99,6 +99,7 @@ const MindMapContainer = ({ data }) => {
   const setSelectedNodeId = useMindMapStore((state) => state.setSelectedNodeId);
   const toolbarNodeId = useMindMapStore((state) => state.toolbarNodeId);
   const setToolbarNodeId = useMindMapStore((state) => state.setToolbarNodeId);
+  const zoomLevel = useMindMapStore((state) => state.zoomLevel);
 
   // 패닝 상태
   const [isPanning, setIsPanning] = useState(false);
@@ -189,11 +190,18 @@ const MindMapContainer = ({ data }) => {
 
   const renderNodes = (node) => {
     if (!node) return null;
+
+    // 확대/축소에 따라 위치 조정
+    const scaledPosition = node.position ? {
+      x: node.position.x * zoomLevel,
+      y: node.position.y * zoomLevel
+    } : { x: 0, y: 0 };
+
     return (
       <React.Fragment key={node.id}>
         <Node
           node={node}
-          position={node.position || { x: window.innerWidth / 2 - 100, y: window.innerHeight / 2 - 40 }}
+          position={scaledPosition}
           onAddChild={handleAddChild}
           onDelete={handleDeleteNode}
           isSelected={selectedNodeId === node.id}
@@ -231,7 +239,8 @@ const MindMapContainer = ({ data }) => {
           left: 0,
           width: '100%',
           height: '100%',
-          transform: `translate(${viewport.x}px, ${viewport.y}px)`,
+          transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${zoomLevel})`,
+          transformOrigin: '0 0',
           pointerEvents: 'none'
         }}
       >

@@ -1,0 +1,110 @@
+/* 확대/축소 컨트롤 스타일 */
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+}
+
+.zoom-controls:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 확대/축소 버튼 */
+.zoom-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #666;
+}
+
+.zoom-btn:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.zoom-btn:active {
+  transform: scale(0.95);
+}
+
+/* 확대/축소 레벨 표시 */
+.zoom-level {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #333;
+  min-width: 60px;
+  justify-content: center;
+}
+
+/* 초기화 버튼 */
+.zoom-reset {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #999;
+  padding: 2px;
+}
+
+.zoom-reset:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+  .zoom-controls {
+    background: rgba(40, 40, 40, 0.95);
+    border-color: #333;
+  }
+
+  .zoom-level {
+    color: #ddd;
+  }
+
+  .zoom-btn {
+    color: #999;
+  }
+
+  .zoom-btn:hover {
+    background: #333;
+    color: #fff;
+  }
+
+  .zoom-reset {
+    color: #666;
+  }
+
+  .zoom-reset:hover {
+    background: #333;
+    color: #fff;
+  }
+}
+
+/* 도툴바에 통합된 스타일 */
+.zoom-controls.toolbar {
+  margin-left: auto;
+}

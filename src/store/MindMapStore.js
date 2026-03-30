@@ -21,6 +21,10 @@ const useMindMapStore = create((set, get) => ({
   connectionWidth: 2,
   connectionColorMode: 'global',
   viewport: { x: 0, y: 0 },
+  zoomLevel: 1.0,
+  maxZoom: 3.0,
+  minZoom: 0.25,
+  zoomStep: 0.25,
   activeDocumentId: null,
   selectedNodeId: null,
   toolbarNodeId: null,
@@ -576,6 +580,24 @@ const useMindMapStore = create((set, get) => ({
 
   resetViewport: () => set({ viewport: { x: 0, y: 0 } }),
 
+  // 확대/축소
+  zoomIn: () => set((state) => {
+    const newZoom = Math.min(state.maxZoom, state.zoomLevel + state.zoomStep);
+    return { zoomLevel: newZoom };
+  }),
+
+  zoomOut: () => set((state) => {
+    const newZoom = Math.max(state.minZoom, state.zoomLevel - state.zoomStep);
+    return { zoomLevel: newZoom };
+  }),
+
+  setZoomLevel: (level) => set((state) => {
+    const clamped = Math.max(state.minZoom, Math.min(state.maxZoom, level));
+    return { zoomLevel: clamped };
+  }),
+
+  resetZoom: () => set({ zoomLevel: 1.0 }),
+
   // 활성 문서 ID 설정
   setActiveDocumentId: (docId) => set({ activeDocumentId: docId }),
 
@@ -605,6 +627,10 @@ const useMindMapStore = create((set, get) => ({
     connectionWidth: 2,
     connectionColorMode: 'global',
     viewport: { x: 0, y: 0 },
+    zoomLevel: 1.0,
+    maxZoom: 3.0,
+    minZoom: 0.25,
+    zoomStep: 0.25,
     activeDocumentId: null,
     selectedNodeId: null,
     toolbarNodeId: null,

@@ -1,5 +1,47 @@
 # Changelog
 
+## [US-15: 화면 확대/축소] - 2026-03-31
+
+**Branch**: `main` | **Tests**: 459 tests passing
+
+### Added
+- **Store** (`src/store/MindMapStore.js`)
+  - `zoomLevel`, `maxZoom`, `minZoom`, `zoomStep` 상태 추가
+  - `zoomIn`, `zoomOut`, `setZoomLevel`, `resetZoom` 액션 메서드 추가
+- **Hook** (`src/hooks/useZoom.js`)
+  - `useZoom` 훅: 마우스 휠 및 키보드 이벤트 처리
+  - Ctrl/Cmd + '+', '-', '0' 단축키 지원
+  - 마우스 위치 기준 확대/축소
+- **Component** (`src/components/ZoomControls.jsx`)
+  - 확대/축소 컨트롤 버튼 컴포넌트
+  - 확대 레벨 표시기 (백분율)
+  - 툴바 통합 스타일
+- **Style** (`src/styles/ZoomControls.css`)
+  - 확대/축소 컨트롤 CSS
+  - 다크 모드 지원
+  - 호버 및 애니메이션 효과
+
+### Changed
+- `src/components/MindMap/Toolbar.jsx` — 확대/축소 컨트롤 추가
+- `src/components/MindMap/MindMapContainer.jsx` — viewport transform에 zoomLevel 적용, 노드 위치 조절 로직 업데이트
+- `src/components/MindMap/Node.jsx` — 노드 및 버튼 크기 확대/축소 적용, transformOrigin 설정
+
+### Tests
+- `src/store/MindMapStore.zoom.test.js` — 확대/축소 상태 관리 테스트 (10 tests)
+- `src/hooks/useZoom.test.js` — useZoom 훅 테스트 (6 tests)
+- `src/components/ZoomControls.test.jsx` — 컴포넌트 테스트 (5 tests)
+- Total: 21 tests added
+
+### Technical Notes
+- 최대 확대 레벨: 300%
+- 최소 확대 레벨: 25%
+- 확대 단위: 25%
+- 마우스 휠 + Ctrl/Cmd로 확대/축소 가능
+- 키보드 단축키: Ctrl/Cmd + '+', '-', '0'
+- Total: 21 tests added, 459 tests passing
+
+---
+
 ## [Split Layout: 좌/우 분할 배치] - 2026-03-30
 
 **Branch**: `main`

@@ -1,10 +1,26 @@
 # 마인드맵 프로젝트 - React 마인드맵 에디터
 
 ## 현재 상태
-**Phase**: Sprint 3 진행 중 — US-10, US-11, US-13, Split Layout 완료
+**Phase**: Sprint 3 진행 중 — US-10, US-11, US-13, US-15, Split Layout 완료
 **다음 작업**: US-14 PNG 내보내기
 
 ## 최근 작업
+
+### 2026-03-31: 화면 확대/축소 기능
+- **브랜치**: `main`
+
+**Data Layer:**
+- `MindMapStore.js` — 확대/축소 상태 및 액션 추가 (zoomLevel, zoomIn, zoomOut, resetZoom)
+- `useZoom.js` — 마우스 휠 및 키보드 이벤트 훅
+- `ZoomControls.jsx` — 확대/축소 컨트롤 버튼
+
+**UI:**
+- `Toolbar.jsx` — 확대/축소 컨트롤 툴바 통합
+- `MindMapContainer.jsx` — viewport transform에 zoomLevel 적용
+- `Node.jsx` — 노드 크기 확대/축소 적용
+
+**Tests:**
+- 459/459 테스트 통과 (확대/축소 테스트 21개 추가)
 
 ### 2026-03-30: Split Layout (좌/우 분할 배치)
 - **브랜치**: `main`
@@ -31,5 +47,6 @@
 - 없음
 
 ## TODO
-1. US-14 PNG 내보내기
-2. US-12 테마 시스템 (다크 모드) — 후순위
+1. US-15 화면 확대/축소 기능
+2. US-14 PNG 내보내기
+3. US-12 테마 시스템 (다크 모드) — 후순위

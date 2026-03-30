@@ -7,7 +7,7 @@ import DeleteConfirmDialog from './DeleteConfirmDialog';
 import NodeEditorToolbar from './NodeEditorToolbar';
 
 const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelected, onSelect, showToolbar, onToggleToolbar }) => {
-  const { updateNodeText, updateNodePosition, updateNodeStyle, saveNodePositions } = useMindMapStore();
+  const { updateNodeText, updateNodePosition, updateNodeStyle, saveNodePositions, zoomLevel } = useMindMapStore();
   const [isEditing, setIsEditing] = useState(false);
   const [text, setText] = useState(node.text || 'New Node');
   const [position, setPosition] = useState(initialPosition || { x: 0, y: 0 });
@@ -205,8 +205,10 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
     transition: isDragging ? 'none' : 'width 0.2s ease, height 0.2s ease, background-color 0.3s ease, box-shadow 0.2s ease',
     userSelect: 'none',
     border: 'none',
+    transform: `scale(${zoomLevel})`,
+    transformOrigin: 'top left',
     ...(isDragging && {
-      transform: 'scale(1.05)',
+      transform: `scale(${zoomLevel}) scale(1.05)`,
       boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
       zIndex: 1000
     })
@@ -236,7 +238,9 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
     color: 'white',
     fontWeight: 'bold',
     lineHeight: 1,
-    border: '2px solid white'
+    border: '2px solid white',
+    transform: `scale(${zoomLevel})`,
+    transformOrigin: 'center'
   };
 
   return (

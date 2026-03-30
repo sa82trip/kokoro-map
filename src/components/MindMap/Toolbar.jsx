@@ -5,6 +5,7 @@ import useFileManagerStore from '../../store/FileManagerStore';
 import { exportToJSON } from '../../utils/FileExporter';
 import { openFilePicker } from '../../utils/FileImporter';
 import { COLOR_PALETTE } from '../../types/NodeTypes';
+import ZoomControls from '../../components/ZoomControls';
 
 const Toolbar = () => {
   const navigate = useNavigate();
@@ -29,6 +30,7 @@ const Toolbar = () => {
     layoutConfig,
     setLayoutConfig,
     resetViewport,
+    resetZoom,
     undo,
     redo,
     canUndo,
@@ -332,20 +334,23 @@ const Toolbar = () => {
         >
           &#8634; 재조정
         </button>
-        <button
-          style={{
-            ...buttonBase,
-            background: '#f0f4ff',
-            color: '#4A90E2'
-          }}
-          onClick={resetViewport}
-          title="화면 초기 위치"
-          data-testid="btn-reset-viewport"
-          onMouseEnter={(e) => e.target.style.background = '#dde5f7'}
-          onMouseLeave={(e) => e.target.style.background = '#f0f4ff'}
-        >
-          &#8862; 중앙 이동
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <ZoomControls className="toolbar" />
+          <button
+            style={{
+              ...buttonBase,
+              background: '#f0f4ff',
+              color: '#4A90E2'
+            }}
+            onClick={resetViewport}
+            title="화면 초기 위치"
+            data-testid="btn-reset-viewport"
+            onMouseEnter={(e) => e.target.style.background = '#dde5f7'}
+            onMouseLeave={(e) => e.target.style.background = '#f0f4ff'}
+          >
+            &#8862; 중앙 이동
+          </button>
+        </div>
         <button
           style={{
             ...buttonBase,
