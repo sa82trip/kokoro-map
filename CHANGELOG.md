@@ -1,5 +1,59 @@
 # Changelog
 
+## [비밀번호 보호 기능] - 2026-03-31
+
+**Branch**: `main` | **Version**: v1.0.3
+
+### Added
+- **Auth** (`src/components/Auth/`)
+  - `PasswordGuard.jsx` — 비밀번호 인증 가드 컴포넌트
+  - `PasswordGuard.css` — 잠금 화면 스타일 (그라디언트 배경, 모달 카드)
+
+### Changed
+- `App.jsx` — PasswordGuard로 전체 앱 래핑
+
+### Technical Notes
+- Web Crypto API `crypto.subtle.digest('SHA-256')` 로 비밀번호 해시 (외부 의존성 없음)
+- localStorage: 비밀번호 해시 저장 (mindmap-auth-hash)
+- sessionStorage: 세션 토큰 저장 (브라우저 탭 닫으면 자동 삭제 → 재인증)
+- 최초 접속: 비밀번호 설정 화면 (4자 이상 + 확인)
+- 이후 접속: 비밀번호 입력 화면
+- 비밀번호 보기 토글 지원
+- Total: 3 files changed (2 new, 1 modified)
+
+---
+
+## [배율 변경 시 연결선 위치 버그 수정] - 2026-04-01
+
+**Branch**: `main` | **Version**: v1.0.2
+
+### Added
+- **Tests** (`tests/zoom-consistency.test.js`)
+  - 100%, 200%, 50% 배율에서 연결선 위치 일관성 테스트
+  - 다양한 배율에서 연결선이 노드 중앙을 연결하는지 검증 테스트
+- **Test Helper** (`tests/zoom-consistency.test.js`)
+  - `calculateNodeSize` 함수: 배율 적용된 노드 크기 계산
+  - `calculateConnections` 함수: 배율 적용된 연결선 계산 테스트용
+
+### Changed
+- **Components** (`src/components/MindMap/MindMapContainer.jsx`)
+  - `renderConnections` 함수 수정:
+    - `zoomLevel` 파라미터 추가 (기본값: 1.0)
+    - 연결선 계산 시 배율 적용된 좌표 사용
+    - 노드 중앙에서 연결선 시작하도록 로직 변경 (기존: 좌/우 끝에서 시작)
+  - 재귀 호출 시 `zoomLevel` 전달
+- **Store** (`src/store/MindMapStore.zoom.test.js`)
+  - 배율 관련 테스트 추가 (zoomIn, zoomOut, setZoomLevel 등)
+
+### Technical Notes
+- 연결선 계산 로직에서 배율 처리 방식 변경:
+  - 기존: SVG transform으로 전체 캔버스 확대/축소 → 연결선 원본 크기 유지
+  - 변경: 연결선 좌표에 직접 배율 적용 → 노드와 일치하는 확대/축소
+- 배율 변경 시 노드와 연결선의 상대적 위치 유지
+- Total: 4 tests passing
+
+---
+
 ## [노드 이름 변경 단축키 + 버전 표시] - 2026-03-31
 
 **Branch**: `main` | **Version**: v1.0.1

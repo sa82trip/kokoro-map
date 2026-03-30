@@ -17,7 +17,7 @@ const getNodeSize = (node) => {
 };
 
 // 부모-자식 연결선 렌더링
-const renderConnections = (node, connectionStyle = 'bezier', connectionColor = '#b0b8c8', connectionArrow = false, connectionDashed = false, connectionWidth = 2, connectionColorMode = 'global') => {
+const renderConnections = (node, connectionStyle = 'bezier', connectionColor = '#b0b8c8', connectionArrow = false, connectionDashed = false, connectionWidth = 2, connectionColorMode = 'global', zoomLevel = 1.0) => {
   if (!node || !node.children || node.children.length === 0) return { markerDefs: new Map(), paths: [] };
 
   const markerDefs = new Map();
@@ -29,12 +29,30 @@ const renderConnections = (node, connectionStyle = 'bezier', connectionColor = '
     const childPos = child.position || { x: 0, y: 0 };
     const childSize = getNodeSize(child);
 
-    // 자식 위치 기반으로 좌/우 판별
-    const isLeftChild = childPos.x < pos.x;
-    const x1 = isLeftChild ? pos.x : pos.x + size.width;
-    const y1 = pos.y + size.height / 2;
-    const x2 = isLeftChild ? childPos.x + childSize.width : childPos.x;
-    const y2 = childPos.y + childSize.height / 2;
+    // 배율 적용된 위치 계산
+    const scaledPos = {
+      x: pos.x * zoomLevel,
+      y: pos.y * zoomLevel
+    };
+    const scaledChildPos = {
+      x: childPos.x * zoomLevel,
+      y: childPos.y * zoomLevel
+    };
+    const scaledSize = {
+      width: size.width * zoomLevel,
+      height: size.height * zoomLevel
+    };
+    const scaledChildSize = {
+      width: childSize.width * zoomLevel,
+      height: childSize.height * zoomLevel
+    };
+
+    // 연결선은 노드 중앙에서 시작 (수직 중앙)
+    const x1 = scaledPos.x + scaledSize.width / 2;
+    const y1 = scaledPos.y + scaledSize.height / 2;
+    // 연결선은 자식 노드 중앙에서 끝나도록 (수직 중앙)
+    const x2 = scaledChildPos.x + scaledChildSize.width / 2;
+    const y2 = scaledChildPos.y + scaledChildSize.height / 2;
 
     const midX = (x1 + x2) / 2;
 
@@ -77,7 +95,7 @@ const renderConnections = (node, connectionStyle = 'bezier', connectionColor = '
       />
     );
 
-    const childResult = renderConnections(child, connectionStyle, connectionColor, connectionArrow, connectionDashed, connectionWidth, connectionColorMode);
+    const childResult = renderConnections(child, connectionStyle, connectionColor, connectionArrow, connectionDashed, connectionWidth, connectionColorMode, zoomLevel);
     childResult.markerDefs.forEach((v, k) => { if (!markerDefs.has(k)) markerDefs.set(k, v); });
     paths.push(...childResult.paths);
   });
@@ -214,7 +232,7 @@ const MindMapContainer = ({ data }) => {
     );
   };
 
-  const { markerDefs, paths } = renderConnections(data, connectionStyle, connectionColor, connectionArrow, connectionDashed, connectionWidth, connectionColorMode);
+  const { markerDefs, paths } = renderConnections(data, connectionStyle, connectionColor, connectionArrow, connectionDashed, connectionWidth, connectionColorMode, zoomLevel);
 
   return (
     <div
