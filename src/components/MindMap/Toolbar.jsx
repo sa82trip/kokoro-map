@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import useMindMapStore from '../../store/MindMapStore';
 import useFileManagerStore from '../../store/FileManagerStore';
-import { exportToJSON } from '../../utils/FileExporter';
+import { exportToJSON, exportToPNG } from '../../utils/FileExporter';
 import { openFilePicker } from '../../utils/FileImporter';
 import { COLOR_PALETTE } from '../../types/NodeTypes';
 import ZoomControls from '../../components/ZoomControls';
+import ExportDialog from './ExportDialog';
 
 const Toolbar = () => {
   const navigate = useNavigate();
@@ -42,6 +44,7 @@ const Toolbar = () => {
   const [showNewConfirm, setShowNewConfirm] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [saveFeedback, setSaveFeedback] = useState(false);
+  const [showExportDialog, setShowExportDialog] = useState(false);
   const titleInputRef = useRef(null);
 
   const title = mindMapData?.text || '마인드맵';
@@ -121,6 +124,45 @@ const Toolbar = () => {
       const meta = fm.getActiveDocumentMeta();
       exportToJSON(mindMapData, meta);
     }
+  };
+
+  const handleExportPNG = async (config) => {
+    if (!mindMapData) return;
+
+    const mindMapContainer = document.getElementById('mindmap-container');
+    if (!mindMapContainer) return;
+
+    try {
+      const { filename } = await exportToPNG(mindMapContainer, config);
+      showNotification(`PNG 이미지 "${filename}"가 저장되었습니다.`);
+    } catch (error) {
+      showNotification('내보내기에 실패했습니다.', 'error');
+      console.error('Export failed:', error);
+    }
+  };
+
+  const showNotification = (message, type = 'success') => {
+    // 간단한 알림 표시 (임시)
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed;
+      top: 70px;
+      right: 20px;
+      background: ${type === 'success' ? '#52c41a' : '#ff4d4f'};
+      color: white;
+      padding: 12px 20px;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 3000;
+      animation: slideIn 0.3s ease;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+      notification.style.animation = 'slideOut 0.3s ease';
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
   };
 
   const handleImport = async () => {
@@ -272,8 +314,8 @@ const Toolbar = () => {
             background: '#f0f4ff',
             color: '#4A90E2'
           }}
-          onClick={handleExport}
-          title="JSON 내보내기"
+          onClick={() => setShowExportDialog(true)}
+          title="내보내기"
           data-testid="btn-export"
           onMouseEnter={(e) => e.target.style.background = '#dde5f7'}
           onMouseLeave={(e) => e.target.style.background = '#f0f4ff'}
@@ -592,15 +634,16 @@ const Toolbar = () => {
         </div>
       )}
 
-      {showNewConfirm && (
+      {showNewConfirm && createPortal(
         <div style={{
           position: 'fixed',
           top: 0, left: 0, right: 0, bottom: 0,
           background: 'rgba(0,0,0,0.3)',
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           justifyContent: 'center',
-          zIndex: 200
+          paddingTop: 80,
+          zIndex: 2000
         }}>
           <div style={{
             background: '#fff',
@@ -630,8 +673,32 @@ const Toolbar = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
+
+      {/* ExportDialog — Portal로 body에 렌더링 */}
+      {showExportDialog && createPortal(
+        <ExportDialog
+          isOpen={showExportDialog}
+          onClose={() => setShowExportDialog(false)}
+          onExportPNG={handleExportPNG}
+          onExportJSON={handleExport}
+        />,
+        document.body
+      )}
+
+      {/* 알림 CSS */}
+      <style jsx>{`
+        @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+          from { transform: translateX(0); opacity: 1; }
+          to { transform: translateX(100%); opacity: 0; }
+        }
+      `}</style>
     </div>
   );
 };

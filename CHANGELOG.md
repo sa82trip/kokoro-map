@@ -1,5 +1,37 @@
 # Changelog
 
+## [US-14: PNG 내보내기] - 2026-03-31
+
+**Branch**: `main`
+
+### Added
+- **Dependencies** (`package.json`)
+  - `html-to-image` — DOM → PNG 캡처 라이브러리
+  - `file-saver` — Blob 파일 저장 라이브러리
+
+- **Utils** (`src/utils/`)
+  - `FileExporter.js` — `exportToPNG`, `calculateCaptureArea`, `generatePNGFilename` 추가
+  - `StringUtils.js` — `sanitizeFilename`, `generateExportFilename` 공통 유틸리티 (신규)
+  - `FileHelper.js` — `downloadFile`, `downloadJSON` 공통 유틸리티 (신규)
+
+- **Components** (`src/components/MindMap/`)
+  - `ExportDialog.jsx` — PNG/JSON 탭 내보내기 다이얼로그 (배경색, 여백, 해상도 설정)
+
+### Changed
+- `FileExporter.js` — 기존 `generateExportFilename`, `downloadJSON`을 공통 유틸리티로 추출
+- `Toolbar.jsx` — 내보내기 버튼 PNG/JSON 통합, `createPortal`로 다이얼로그 렌더링, 알림 시스템 추가
+
+### Bug Fix
+- 다이얼로그(ExportDialog, 새 마인드맵 확인)가 Toolbar 내부 렌더링으로 상단 잘림 → `createPortal(document.body)`로 해결
+- 내보내기 버튼 높이 다름 → 불필요한 wrapper div 제거
+
+### Technical Notes
+- `calculateCaptureArea`: `.node:not([hidden])` 단일 반복으로 min/max 계산 (최적화)
+- ExportDialog: PNG 탭(배경색/여백/해상도) + JSON 탭(설명만) 구조
+- Total: 6 files changed (3 new, 3 modified)
+
+---
+
 ## [US-15: 화면 확대/축소] - 2026-03-31
 
 **Branch**: `main` | **Tests**: 459 tests passing

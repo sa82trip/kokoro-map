@@ -1,26 +1,29 @@
 # 마인드맵 프로젝트 - React 마인드맵 에디터
 
 ## 현재 상태
-**Phase**: Sprint 3 진행 중 — US-10, US-11, US-13, US-15, Split Layout 완료
-**다음 작업**: US-14 PNG 내보내기
+**Phase**: Sprint 3 진행 중 — US-10, US-11, US-13, US-14, US-15, Split Layout 완료
+**다음 작업**: US-12 테마 시스템 (다크 모드)
 
 ## 최근 작업
 
-### 2026-03-31: 화면 확대/축소 기능
+### 2026-03-31: US-14 PNG 내보내기 + 다이얼로그 버그 수정
 - **브랜치**: `main`
 
 **Data Layer:**
-- `MindMapStore.js` — 확대/축소 상태 및 액션 추가 (zoomLevel, zoomIn, zoomOut, resetZoom)
-- `useZoom.js` — 마우스 휠 및 키보드 이벤트 훅
-- `ZoomControls.jsx` — 확대/축소 컨트롤 버튼
+- `FileExporter.js` — PNG 내보내기 함수 추가 (exportToPNG, calculateCaptureArea, generatePNGFilename)
+- `StringUtils.js` — 공통 파일명 유틸리티 (sanitizeFilename, generateExportFilename)
+- `FileHelper.js` — 공통 파일 다운로드 유틸리티 (downloadFile, downloadJSON)
 
 **UI:**
-- `Toolbar.jsx` — 확대/축소 컨트롤 툴바 통합
-- `MindMapContainer.jsx` — viewport transform에 zoomLevel 적용
-- `Node.jsx` — 노드 크기 확대/축소 적용
+- `ExportDialog.jsx` — PNG/JSON 탭 내보내기 다이얼로그 (배경색, 여백, 해상도 설정)
+- `Toolbar.jsx` — 내보내기 버튼, createPortal로 다이얼로그 렌더링, 알림 시스템
 
-**Tests:**
-- 459/459 테스트 통과 (확대/축소 테스트 21개 추가)
+**Bug Fix:**
+- 다이얼로그가 Toolbar 내부에 렌더링되어 상단이 잘리는 문제 → `createPortal(document.body)`로 해결
+- 내보내기/새 마인드맵 다이얼로그 모두 `paddingTop: 80` + `alignItems: 'flex-start'` 적용
+
+### 2026-03-31: 화면 확대/축소 기능
+- **브랜치**: `main` (US-15 완료)
 
 ### 2026-03-30: Split Layout (좌/우 분할 배치)
 - **브랜치**: `main`
@@ -47,6 +50,4 @@
 - 없음
 
 ## TODO
-1. US-15 화면 확대/축소 기능
-2. US-14 PNG 내보내기
-3. US-12 테마 시스템 (다크 모드) — 후순위
+1. US-12 테마 시스템 (다크 모드) — 후순위
