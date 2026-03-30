@@ -6,19 +6,17 @@
 
 ## 최근 작업
 
-### 2026-03-30: US-11 키보드 단축키
+### 2026-03-30: 버그 수정 (선택 시각 + 키보드 노드 생성)
 - **브랜치**: `main`
-
-**Data Layer:**
-- `MindMapStore.js` — selectedNodeId를 MindMapContainer에서 스토어로 이관하여 키보드 단축키와 동기화
+- **커밋**: 45252ce
 
 **UI:**
-- `KeyboardShortcutsHelp.jsx` — 단축키 도움말 패널 (? 키 토글, 노드 조작/탐색/일반 3그룹)
-- `MindMapContainer.jsx` — 로컬 selectedNodeId → 스토어 selectedNodeId로 교체
-- `MindMap.jsx` — useKeyboardShortcuts 훅 연동, KeyboardShortcutsHelp 렌더링
+- `Node.jsx` — 선택 시각 표시를 `border`에서 `box-shadow ring`으로 개선 (파란색 글로우)
+- `useKeyboardShortcuts.js` — Enter/Tab 키 `calculateNewChildPosition` 인자 수정
 
-**Integration:**
-- `useKeyboardShortcuts.js` — Ctrl+S 저장, ? 도움말 토글 추가. showHelp/saveFeedback 상태 반환
+**Tests:**
+- `KeyboardShortcuts.test.js` — 인자 타입 검증 테스트 2개 추가 (Enter, Tab)
+- `Node.test.jsx` — border → box-shadow 테스트 업데이트
 
 ## 알려진 이슈
 - 없음
