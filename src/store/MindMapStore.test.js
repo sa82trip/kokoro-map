@@ -32,7 +32,10 @@ describe('MindMapStore - connectionStyle', () => {
       error: null,
       validationErrors: [],
       connectionStyle: 'bezier',
-      activeDocumentId: null
+      activeDocumentId: null,
+      undoStack: [],
+      redoStack: [],
+      _preDragSnapshot: null
     });
   });
 
@@ -66,7 +69,10 @@ describe('MindMapStore - deleteNode', () => {
       loading: false,
       error: null,
       validationErrors: [],
-      activeDocumentId: null
+      activeDocumentId: null,
+      undoStack: [],
+      redoStack: [],
+      _preDragSnapshot: null
     });
   });
 
@@ -154,7 +160,10 @@ describe('MindMapStore - layoutConfig', () => {
       error: null,
       validationErrors: [],
       layoutConfig: { horizontalGap: 100, verticalGap: 30 },
-      activeDocumentId: null
+      activeDocumentId: null,
+      undoStack: [],
+      redoStack: [],
+      _preDragSnapshot: null
     });
   });
 
@@ -197,7 +206,10 @@ describe('MindMapStore - backgroundColor', () => {
       loading: false,
       error: null,
       validationErrors: [],
-      activeDocumentId: 'mock-doc-id'
+      activeDocumentId: 'mock-doc-id',
+      undoStack: [],
+      redoStack: [],
+      _preDragSnapshot: null
     });
   });
 
@@ -223,7 +235,10 @@ describe('MindMapStore - connectionColor', () => {
       error: null,
       validationErrors: [],
       connectionColor: '#b0b8c8',
-      activeDocumentId: null
+      activeDocumentId: null,
+      undoStack: [],
+      redoStack: [],
+      _preDragSnapshot: null
     });
   });
 
@@ -263,7 +278,10 @@ describe('MindMapStore - viewport', () => {
     jest.clearAllMocks();
     useMindMapStore.setState({
       viewport: { x: 0, y: 0 },
-      activeDocumentId: null
+      activeDocumentId: null,
+      undoStack: [],
+      redoStack: [],
+      _preDragSnapshot: null
     });
   });
 
@@ -297,5 +315,185 @@ describe('MindMapStore - viewport', () => {
     useMindMapStore.getState().setViewport({ x: 200, y: 100 });
     useMindMapStore.getState().reset();
     expect(useMindMapStore.getState().viewport).toEqual({ x: 0, y: 0 });
+  });
+});
+
+describe('MindMapStore - Undo/Redo', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    const root = createRootNode('루트');
+    useMindMapStore.setState({
+      mindMapData: root,
+      loading: false,
+      error: null,
+      validationErrors: [],
+      activeDocumentId: 'mock-doc-id',
+      undoStack: [],
+      redoStack: [],
+      _preDragSnapshot: null
+    });
+  });
+
+  test('초기 상태에서 undo/redo가 불가능하다', () => {
+    expect(useMindMapStore.getState().canUndo()).toBe(false);
+    expect(useMindMapStore.getState().canRedo()).toBe(false);
+  });
+
+  test('노드 추가 후 undo로 되돌릴 수 있다', () => {
+    const root = useMindMapStore.getState().mindMapData;
+    expect(root.children).toHaveLength(0);
+
+    const child = createChildNode('root', '자식1', root.color);
+    child.position = { x: 300, y: 200 };
+    useMindMapStore.getState().addNode('root', child);
+
+    expect(useMindMapStore.getState().mindMapData.children).toHaveLength(1);
+    expect(useMindMapStore.getState().canUndo()).toBe(true);
+
+    useMindMapStore.getState().undo();
+
+    expect(useMindMapStore.getState().mindMapData.children).toHaveLength(0);
+    expect(useMindMapStore.getState().canUndo()).toBe(false);
+    expect(useMindMapStore.getState().canRedo()).toBe(true);
+  });
+
+  test('undo 후 redo로 다시 복원할 수 있다', () => {
+    const root = useMindMapStore.getState().mindMapData;
+    const child = createChildNode('root', '자식1', root.color);
+    child.position = { x: 300, y: 200 };
+    useMindMapStore.getState().addNode('root', child);
+
+    useMindMapStore.getState().undo();
+    expect(useMindMapStore.getState().mindMapData.children).toHaveLength(0);
+
+    useMindMapStore.getState().redo();
+    expect(useMindMapStore.getState().mindMapData.children).toHaveLength(1);
+    expect(useMindMapStore.getState().mindMapData.children[0].text).toBe('자식1');
+  });
+
+  test('노드 삭제 후 undo로 복원할 수 있다', () => {
+    const root = useMindMapStore.getState().mindMapData;
+    const child = createChildNode('root', '자식1', root.color);
+    child.position = { x: 300, y: 200 };
+    root.children = [child];
+    useMindMapStore.setState({ mindMapData: root, undoStack: [], redoStack: [] });
+
+    useMindMapStore.getState().deleteNode(child.id);
+    expect(useMindMapStore.getState().mindMapData.children).toHaveLength(0);
+
+    useMindMapStore.getState().undo();
+    expect(useMindMapStore.getState().mindMapData.children).toHaveLength(1);
+    expect(useMindMapStore.getState().mindMapData.children[0].text).toBe('자식1');
+  });
+
+  test('노드 텍스트 변경 후 undo로 복원할 수 있다', () => {
+    const root = useMindMapStore.getState().mindMapData;
+    const originalText = root.text;
+
+    useMindMapStore.getState().updateNodeText('root', '변경된 텍스트');
+    expect(useMindMapStore.getState().mindMapData.text).toBe('변경된 텍스트');
+
+    useMindMapStore.getState().undo();
+    expect(useMindMapStore.getState().mindMapData.text).toBe(originalText);
+  });
+
+  test('노드 스타일 변경 후 undo로 복원할 수 있다', () => {
+    useMindMapStore.getState().updateNodeStyle('root', { fontSize: 24 });
+    expect(useMindMapStore.getState().mindMapData.style.fontSize).toBe(24);
+
+    useMindMapStore.getState().undo();
+    expect(useMindMapStore.getState().mindMapData.style.fontSize).toBe(16);
+  });
+
+  test('제목 변경 후 undo로 복원할 수 있다', () => {
+    useMindMapStore.getState().updateMindMapTitle('새 제목');
+    expect(useMindMapStore.getState().mindMapData.text).toBe('새 제목');
+
+    useMindMapStore.getState().undo();
+    expect(useMindMapStore.getState().mindMapData.text).toBe('루트');
+  });
+
+  test('새 변경이 있으면 redo 스택이 초기화된다', () => {
+    const root = useMindMapStore.getState().mindMapData;
+    const child = createChildNode('root', '자식1', root.color);
+    child.position = { x: 300, y: 200 };
+    useMindMapStore.getState().addNode('root', child);
+
+    useMindMapStore.getState().undo();
+    expect(useMindMapStore.getState().canRedo()).toBe(true);
+
+    // 새로운 변경
+    const child2 = createChildNode('root', '자식2', root.color);
+    child2.position = { x: 300, y: 200 };
+    useMindMapStore.getState().addNode('root', child2);
+
+    expect(useMindMapStore.getState().canRedo()).toBe(false);
+    expect(useMindMapStore.getState().mindMapData.children).toHaveLength(1);
+    expect(useMindMapStore.getState().mindMapData.children[0].text).toBe('자식2');
+  });
+
+  test('다중 undo/redo가 정확하게 동작한다', () => {
+    const root = useMindMapStore.getState().mindMapData;
+
+    // 3번 변경
+    useMindMapStore.getState().updateNodeText('root', '변경1');
+    useMindMapStore.getState().updateNodeText('root', '변경2');
+    useMindMapStore.getState().updateNodeText('root', '변경3');
+    expect(useMindMapStore.getState().mindMapData.text).toBe('변경3');
+
+    // 2번 undo
+    useMindMapStore.getState().undo();
+    expect(useMindMapStore.getState().mindMapData.text).toBe('변경2');
+    useMindMapStore.getState().undo();
+    expect(useMindMapStore.getState().mindMapData.text).toBe('변경1');
+
+    // 1번 redo
+    useMindMapStore.getState().redo();
+    expect(useMindMapStore.getState().mindMapData.text).toBe('변경2');
+  });
+
+  test('빈 undoStack에서 undo는 아무 동작하지 않는다', () => {
+    const originalText = useMindMapStore.getState().mindMapData.text;
+    useMindMapStore.getState().undo();
+    expect(useMindMapStore.getState().mindMapData.text).toBe(originalText);
+  });
+
+  test('빈 redoStack에서 redo는 아무 동작하지 않는다', () => {
+    const originalText = useMindMapStore.getState().mindMapData.text;
+    useMindMapStore.getState().redo();
+    expect(useMindMapStore.getState().mindMapData.text).toBe(originalText);
+  });
+
+  test('clearHistory가 undo/redo 스택을 초기화한다', () => {
+    useMindMapStore.getState().updateNodeText('root', '변경');
+    expect(useMindMapStore.getState().canUndo()).toBe(true);
+
+    useMindMapStore.getState().clearHistory();
+    expect(useMindMapStore.getState().undoStack).toHaveLength(0);
+    expect(useMindMapStore.getState().redoStack).toHaveLength(0);
+    expect(useMindMapStore.getState().canUndo()).toBe(false);
+  });
+
+  test('드래그 후 saveNodePositions이 히스토리에 저장된다', () => {
+    const root = useMindMapStore.getState().mindMapData;
+    const originalPos = { ...root.position };
+
+    useMindMapStore.getState().updateNodePosition('root', { x: 500, y: 300 });
+    useMindMapStore.getState().saveNodePositions();
+
+    expect(useMindMapStore.getState().mindMapData.position.x).toBe(500);
+    expect(useMindMapStore.getState().canUndo()).toBe(true);
+
+    useMindMapStore.getState().undo();
+    expect(useMindMapStore.getState().mindMapData.position).toEqual(originalPos);
+  });
+
+  test('reset 액션에 undo/redo 초기화가 포함된다', () => {
+    useMindMapStore.getState().updateNodeText('root', '변경');
+    expect(useMindMapStore.getState().canUndo()).toBe(true);
+
+    useMindMapStore.getState().reset();
+    expect(useMindMapStore.getState().undoStack).toHaveLength(0);
+    expect(useMindMapStore.getState().redoStack).toHaveLength(0);
   });
 });

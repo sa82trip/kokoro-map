@@ -1,38 +1,28 @@
 # 마인드맵 프로젝트 - React 마인드맵 에디터
 
 ## 현재 상태
-**Phase**: Sprint 2 완료 — 모든 이슈 해결됨
-**다음 작업**: Sprint 3 계획 수립
+**Phase**: Sprint 3 진행 중 — US-10 완료, US-11 진행 중
+**다음 작업**: US-11 키보드 단축키 완료 → US-12 테마 시스템
 
 ## 최근 작업
 
-### 2026-03-30: FolderPickerDialog 계층 구분 표시 수정
-- **브랜치**: `main` (커밋: 39c4b8a)
-- DFS 트리 순회로 부모-자식 순서 정렬
-- `getFolderDepth` 기반 들여쓰기 (depth * 20px)
-- 테스트 3개 추가 (346/346 통과)
-
-### 2026-03-30: US-9 폴더 구조 관리 + 버그 수정
+### 2026-03-30: US-10 실행 취소/다시 실행 (Undo/Redo)
 - **브랜치**: `main`
 
 **Data Layer:**
-- `src/types/FolderTypes.js` — Folder 모델, createFolder, updateFolder, validateFolder, getFolderDepth, MAX_FOLDER_DEPTH(3)
-- `src/utils/StorageManager.js` — loadFolders, saveFolders, hasFolders (mindmap-docs/folders 키)
-- `src/store/FileManagerStore.js` — folders, activeFolderId 상태 + 5개 액션 + getFilteredDocuments 폴더 필터
+- `MindMapStore.js` — undoStack, redoStack 상태 추가. _pushHistory, undo, redo, canUndo, canRedo, clearHistory 액션. 드래그 시 _preDragSnapshot 캡처. 모든 mutation 액션에 _pushHistory 연동. selectedNodeId 상태 추가
 
 **UI:**
-- `FolderTree.jsx` — 사이드바 폴더 트리 (전체 문서, 확장/접힘, 활성 표시, 우클릭 컨텍스트 메뉴, 하위 폴더 만들기)
-- `FolderCreateDialog.jsx` — 폴더 생성/이름변경 모달 (create/rename 모드)
-- `FolderContextMenu.jsx` — 우클릭 메뉴 (하위 폴더 만들기, 이름 변경, 삭제)
-- `FolderPickerDialog.jsx` — 문서 이동 다이얼로그 (계층 구분 들여쓰기 포함)
+- `Toolbar.jsx` — Undo/Redo 버튼 (비활성화 상태 시각적 표시). Ctrl+Z / Ctrl+Shift+Z 키보드 단축키 리스너
 
 **Integration:**
-- `HomeScreen.jsx` — .home-body flex 레이아웃 (FolderTree 사이드바 + 메인 콘텐츠)
-- `RecentDocumentList.jsx` — activeFolderId 구독, 폴더 빈 상태
-- `DocumentCard.jsx` — 폴더 태그(folderName), 이동 버튼, FolderPickerDialog 연동
+- `useKeyboardShortcuts.js` — 키보드 단축키 훅 (US-11 진행 중)
 
 ## 알려진 이슈
 - 없음
 
 ## TODO
-1. Sprint 3 계획 수립
+1. US-11 키보드 단축키 완료
+2. US-12 테마 시스템 (다크 모드)
+3. US-13 연결선 고급 스타일
+4. US-14 PNG 내보내기

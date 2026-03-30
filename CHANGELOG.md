@@ -1,5 +1,33 @@
 # Changelog
 
+## [US-10: 실행 취소/다시 실행 (Undo/Redo)] - 2026-03-30
+
+**Branch**: `main`
+
+### Added
+- **Store** (`src/store/`)
+  - `MindMapStore.js` — undoStack, redoStack, _preDragSnapshot, selectedNodeId 상태 추가. _pushHistory, undo, redo, canUndo, canRedo, clearHistory, setSelectedNodeId 액션 추가. 모든 mutation 액션(setMindMapData, updateNodeText, updateNodeStyle, addNode, deleteNode, applyAutoLayout, updateMindMapTitle, resetLayout)에 _pushHistory 연동
+
+- **Hooks** (`src/hooks/`)
+  - `useKeyboardShortcuts.js` — 키보드 단축키 커스텀 훅 (US-11 진행 중, 기본 구조)
+
+### Changed
+- `src/components/MindMap/Toolbar.jsx` — Undo/Redo 버튼 추가 (disabled 시각화). Ctrl+Z / Ctrl+Shift+Z 키보드 리스너 useEffect 추가
+- `src/store/MindMapStore.js` — updateNodePosition에 _preDragSnapshot 캡처. saveNodePositions에 히스토리 저장. loadFromStorage/createNewMindMap/reset에 히스토리 초기화 포함
+- `src/store/MindMapStore.test.js` — 모든 beforeEach에 undoStack/redoStack/_preDragSnapshot 초기화 추가
+
+### Tests
+- `MindMapStore.test.js` — 14 tests 추가 (undo/redo 기본, 노드 추가/삭제/텍스트/스타일/제목 undo, redo 복원, 다중 undo/redo, 빈 스택, clearHistory, 드래그 히스토리, reset 초기화)
+- Total: 360 tests passing / 24 test suites
+
+### Technical Notes
+- undoStack/redoStack 모델: undo 시 현재 상태를 redoStack에 저장, redo 시 현재 상태를 undoStack에 저장
+- 드래그: updateNodePosition 첫 호출 시 _preDragSnapshot 캡처, saveNodePositions에서 스냅샷을 undoStack에 저장
+- 최대 히스토리: 50개 (.slice(-50))
+- Total: 4 files changed (1 new, 3 modified)
+
+---
+
 ## [FolderPickerDialog 계층 구분 표시 수정] - 2026-03-30
 
 ### Problem

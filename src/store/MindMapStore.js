@@ -4,6 +4,8 @@ import { createRootNode, DEFAULT_NODE_STYLE } from '../types/NodeTypes';
 import { calculateAutoLayout } from '../utils/LayoutEngine';
 import useFileManagerStore from './FileManagerStore';
 
+const MAX_HISTORY = 50;
+
 // 마인드맵 스토어
 const useMindMapStore = create((set, get) => ({
   // 상태
@@ -16,12 +18,78 @@ const useMindMapStore = create((set, get) => ({
   connectionColor: '#b0b8c8',
   viewport: { x: 0, y: 0 },
   activeDocumentId: null,
+  selectedNodeId: null,
+
+  // Undo/Redo 상태
+  undoStack: [],
+  redoStack: [],
+  _preDragSnapshot: null,
 
   // 로딩 상태 설정
   setLoading: (isLoading) => set({ loading: isLoading }),
 
   // 에러 상태 설정
   setError: (err) => set({ error: err }),
+
+  // 히스토리 헬퍼: 현재 상태를 undo 스택에 저장
+  _pushHistory: () => {
+    const { mindMapData, undoStack } = get();
+    if (!mindMapData) return;
+
+    const snapshot = JSON.parse(JSON.stringify(mindMapData));
+    const newUndoStack = [...undoStack, snapshot].slice(-MAX_HISTORY);
+
+    set({ undoStack: newUndoStack, redoStack: [] });
+  },
+
+  // 실행 취소
+  undo: () => {
+    const { mindMapData, undoStack, redoStack } = get();
+    if (undoStack.length === 0) return;
+
+    const newUndoStack = [...undoStack];
+    const previousState = newUndoStack.pop();
+
+    const currentSnapshot = mindMapData ? JSON.parse(JSON.stringify(mindMapData)) : null;
+    const newRedoStack = currentSnapshot ? [...redoStack, currentSnapshot] : [...redoStack];
+
+    set({
+      mindMapData: previousState,
+      undoStack: newUndoStack,
+      redoStack: newRedoStack
+    });
+
+    get()._saveToStorage(previousState);
+  },
+
+  // 다시 실행
+  redo: () => {
+    const { mindMapData, undoStack, redoStack } = get();
+    if (redoStack.length === 0) return;
+
+    const newRedoStack = [...redoStack];
+    const nextState = newRedoStack.pop();
+
+    const currentSnapshot = mindMapData ? JSON.parse(JSON.stringify(mindMapData)) : null;
+    const newUndoStack = currentSnapshot ? [...undoStack, currentSnapshot] : [...undoStack];
+
+    set({
+      mindMapData: nextState,
+      undoStack: newUndoStack,
+      redoStack: newRedoStack
+    });
+
+    get()._saveToStorage(nextState);
+  },
+
+  // Undo 가능 여부
+  canUndo: () => get().undoStack.length > 0,
+
+  // Redo 가능 여부
+  canRedo: () => get().redoStack.length > 0,
+
+  // 히스토리 초기화
+  clearHistory: () => set({ undoStack: [], redoStack: [], _preDragSnapshot: null }),
 
   // 문서 저장 헬퍼
   _saveToStorage: (data) => {
@@ -43,6 +111,8 @@ const useMindMapStore = create((set, get) => ({
       });
       return;
     }
+
+    get()._pushHistory();
 
     set({
       mindMapData: data,
@@ -68,7 +138,6 @@ const useMindMapStore = create((set, get) => ({
       if (savedData) {
         const validation = validateMindMap(savedData);
         if (validation.isValid) {
-          // 기존 노드에 style 필드 마이그레이션
           const migrateNode = (node) => {
             const withStyle = { ...node, style: node.style || { ...DEFAULT_NODE_STYLE } };
             if (withStyle.children) {
@@ -77,7 +146,14 @@ const useMindMapStore = create((set, get) => ({
             return withStyle;
           };
           const migrated = migrateNode(savedData);
-          set({ mindMapData: migrated, error: null, activeDocumentId: fm.activeDocumentId });
+          set({
+            mindMapData: migrated,
+            error: null,
+            activeDocumentId: fm.activeDocumentId,
+            undoStack: [],
+            redoStack: [],
+            _preDragSnapshot: null
+          });
           get()._saveToStorage(migrated);
           return true;
         }
@@ -99,7 +175,14 @@ const useMindMapStore = create((set, get) => ({
             return withStyle;
           };
           const migrated = migrateNode(savedData);
-          set({ mindMapData: migrated, error: null, activeDocumentId: firstDoc.id });
+          set({
+            mindMapData: migrated,
+            error: null,
+            activeDocumentId: firstDoc.id,
+            undoStack: [],
+            redoStack: [],
+            _preDragSnapshot: null
+          });
           get()._saveToStorage(migrated);
           return true;
         }
@@ -122,7 +205,10 @@ const useMindMapStore = create((set, get) => ({
       mindMapData: data,
       error: null,
       validationErrors: [],
-      activeDocumentId: docId
+      activeDocumentId: docId,
+      undoStack: [],
+      redoStack: [],
+      _preDragSnapshot: null
     });
   },
 
@@ -130,6 +216,8 @@ const useMindMapStore = create((set, get) => ({
   applyAutoLayout: () => {
     const { mindMapData, layoutConfig } = get();
     if (!mindMapData) return;
+
+    get()._pushHistory();
 
     const layouted = calculateAutoLayout(mindMapData, layoutConfig);
     if (layouted) {
@@ -146,6 +234,8 @@ const useMindMapStore = create((set, get) => ({
     const trimmed = newTitle.trim();
     if (!trimmed || trimmed.length > 200) return;
 
+    get()._pushHistory();
+
     const updateRoot = (node) => {
       if (node.isRoot) {
         return { ...node, text: trimmed };
@@ -159,89 +249,112 @@ const useMindMapStore = create((set, get) => ({
   },
 
   // 노드 텍스트 업데이트
-  updateNodeText: (nodeId, newText) => set((state) => {
-    if (!state.mindMapData) return state;
+  updateNodeText: (nodeId, newText) => {
+    const state = get();
+    if (!state.mindMapData) return;
 
     const nodeToUpdate = findNodeById(state.mindMapData, nodeId);
-    if (!nodeToUpdate) return state;
+    if (!nodeToUpdate) return;
 
     const updatedNode = { ...nodeToUpdate, text: newText };
     const validation = validateNode(updatedNode);
 
     if (!validation.isValid) {
-      return { ...state, error: validation.errors.join(', ') };
+      set({ error: validation.errors.join(', ') });
+      return;
     }
 
-    const updateNode = (node) => {
-      if (node.id === nodeId) {
-        return updatedNode;
-      }
-      if (node.children) {
-        return {
-          ...node,
-          children: node.children.map(updateNode)
-        };
-      }
-      return node;
-    };
+    get()._pushHistory();
 
-    const updatedMindMap = updateNode(state.mindMapData);
+    set((s) => {
+      if (!s.mindMapData) return s;
 
-    const totalValidation = validateMindMap(updatedMindMap);
-    if (!totalValidation.isValid) {
-      return { ...state, error: totalValidation.errors.map(e => e.errors.join(', ')).join('; ') };
+      const updateNode = (node) => {
+        if (node.id === nodeId) {
+          return updatedNode;
+        }
+        if (node.children) {
+          return {
+            ...node,
+            children: node.children.map(updateNode)
+          };
+        }
+        return node;
+      };
+
+      const updatedMindMap = updateNode(s.mindMapData);
+
+      const totalValidation = validateMindMap(updatedMindMap);
+      if (!totalValidation.isValid) {
+        return { ...s, error: totalValidation.errors.map(e => e.errors.join(', ')).join('; ') };
+      }
+
+      get()._saveToStorage(updatedMindMap);
+
+      return {
+        mindMapData: updatedMindMap,
+        error: null
+      };
+    });
+  },
+
+  // 노드 위치 업데이트 (드래그 중)
+  updateNodePosition: (nodeId, newPosition) => {
+    const { _preDragSnapshot, mindMapData } = get();
+
+    // 드래그 시작 시 스냅샷 캡처
+    if (!_preDragSnapshot && mindMapData) {
+      set({ _preDragSnapshot: JSON.parse(JSON.stringify(mindMapData)) });
     }
 
-    get()._saveToStorage(updatedMindMap);
+    set((state) => {
+      if (!state.mindMapData) return state;
 
-    return {
-      mindMapData: updatedMindMap,
-      error: null
-    };
-  }),
-
-  // 노드 위치 업데이트
-  updateNodePosition: (nodeId, newPosition) => set((state) => {
-    if (!state.mindMapData) return state;
-
-    if (typeof newPosition.x !== 'number' || typeof newPosition.y !== 'number') {
-      return { ...state, error: '유효하지 않은 위치입니다' };
-    }
-
-    const updateNode = (node) => {
-      if (node.id === nodeId) {
-        return { ...node, position: newPosition };
+      if (typeof newPosition.x !== 'number' || typeof newPosition.y !== 'number') {
+        return { ...state, error: '유효하지 않은 위치입니다' };
       }
-      if (node.children) {
-        return {
-          ...node,
-          children: node.children.map(updateNode)
-        };
-      }
-      return node;
-    };
 
-    const updatedMindMap = updateNode(state.mindMapData);
+      const updateNode = (node) => {
+        if (node.id === nodeId) {
+          return { ...node, position: newPosition };
+        }
+        if (node.children) {
+          return {
+            ...node,
+            children: node.children.map(updateNode)
+          };
+        }
+        return node;
+      };
 
-    // 드래그 중 잦은 호출에서 전체 validation/localStorage 저장 생략
-    // (position은 이미 type 체크됨, 저장은 drag end 시 수행)
-    return {
-      mindMapData: updatedMindMap,
-      error: null
-    };
-  }),
+      const updatedMindMap = updateNode(state.mindMapData);
+
+      return {
+        mindMapData: updatedMindMap,
+        error: null
+      };
+    });
+  },
 
   // 노드 위치 저장 (drag end 시 호출)
   saveNodePositions: () => {
-    const { mindMapData } = get();
+    const { mindMapData, _preDragSnapshot, undoStack } = get();
+
+    // 드래그 전 스냅샷을 히스토리에 저장
+    if (_preDragSnapshot) {
+      const newUndoStack = [...undoStack, _preDragSnapshot].slice(-MAX_HISTORY);
+      set({ undoStack: newUndoStack, redoStack: [], _preDragSnapshot: null });
+    }
+
     if (mindMapData) {
       get()._saveToStorage(mindMapData);
     }
   },
 
   // 노드 스타일 업데이트
-  updateNodeStyle: (nodeId, styleProps) => set((state) => {
-    if (!state.mindMapData) return state;
+  updateNodeStyle: (nodeId, styleProps) => {
+    const state = get();
+    if (!state.mindMapData) return;
 
     const validFontSizes = (v) => typeof v === 'number' && v >= 8 && v <= 72;
     const VALID_WEIGHTS = ['normal', 'bold', '100', '200', '300', '400', '500', '600', '700', '800', '900'];
@@ -258,104 +371,125 @@ const useMindMapStore = create((set, get) => ({
       }
     }
 
-    if (Object.keys(filtered).length === 0) return state;
+    if (Object.keys(filtered).length === 0) return;
 
-    const updateNode = (node) => {
-      if (node.id === nodeId) {
-        const currentStyle = node.style || { ...DEFAULT_NODE_STYLE };
-        return { ...node, style: { ...currentStyle, ...filtered } };
-      }
-      if (node.children) {
-        return { ...node, children: node.children.map(updateNode) };
-      }
-      return node;
-    };
+    get()._pushHistory();
 
-    const updatedMindMap = updateNode(state.mindMapData);
-    get()._saveToStorage(updatedMindMap);
+    set((s) => {
+      if (!s.mindMapData) return s;
 
-    return { mindMapData: updatedMindMap, error: null };
-  }),
+      const updateNode = (node) => {
+        if (node.id === nodeId) {
+          const currentStyle = node.style || { ...DEFAULT_NODE_STYLE };
+          return { ...node, style: { ...currentStyle, ...filtered } };
+        }
+        if (node.children) {
+          return { ...node, children: node.children.map(updateNode) };
+        }
+        return node;
+      };
+
+      const updatedMindMap = updateNode(s.mindMapData);
+      get()._saveToStorage(updatedMindMap);
+
+      return { mindMapData: updatedMindMap, error: null };
+    });
+  },
 
   // 노드 추가
-  addNode: (parentId, newNodeData) => set((state) => {
-    if (!state.mindMapData) return state;
+  addNode: (parentId, newNodeData) => {
+    const state = get();
+    if (!state.mindMapData) return;
 
     const validation = validateNode(newNodeData);
     if (!validation.isValid) {
-      return { ...state, error: validation.errors.join(', ') };
+      set({ error: validation.errors.join(', ') });
+      return;
     }
 
-    const updateNode = (node) => {
-      if (node.id === parentId) {
-        return {
-          ...node,
-          children: [...node.children, newNodeData]
-        };
+    get()._pushHistory();
+
+    set((s) => {
+      if (!s.mindMapData) return s;
+
+      const updateNode = (node) => {
+        if (node.id === parentId) {
+          return {
+            ...node,
+            children: [...node.children, newNodeData]
+          };
+        }
+        if (node.children) {
+          return {
+            ...node,
+            children: node.children.map(updateNode)
+          };
+        }
+        return node;
+      };
+
+      const updatedMindMap = updateNode(s.mindMapData);
+
+      const countNodes = (node) => {
+        if (!node.children) return 1;
+        return 1 + node.children.reduce((sum, child) => sum + countNodes(child), 0);
+      };
+
+      const nodeCount = countNodes(updatedMindMap);
+      if (nodeCount > 1000) {
+        return { ...s, error: '노드 수가 최대 한도를 초과했습니다 (1000개)' };
       }
-      if (node.children) {
-        return {
-          ...node,
-          children: node.children.map(updateNode)
-        };
-      }
-      return node;
-    };
 
-    const updatedMindMap = updateNode(state.mindMapData);
+      get()._saveToStorage(updatedMindMap);
 
-    const countNodes = (node) => {
-      if (!node.children) return 1;
-      return 1 + node.children.reduce((sum, child) => sum + countNodes(child), 0);
-    };
-
-    const nodeCount = countNodes(updatedMindMap);
-    if (nodeCount > 1000) {
-      return { ...state, error: '노드 수가 최대 한도를 초과했습니다 (1000개)' };
-    }
-
-    get()._saveToStorage(updatedMindMap);
-
-    return {
-      mindMapData: updatedMindMap,
-      error: null
-    };
-  }),
+      return {
+        mindMapData: updatedMindMap,
+        error: null
+      };
+    });
+  },
 
   // 노드 삭제
-  deleteNode: (nodeId) => set((state) => {
-    if (!state.mindMapData) return state;
+  deleteNode: (nodeId) => {
+    const state = get();
+    if (!state.mindMapData) return;
 
-    const updateNode = (node) => {
-      if (node.id === nodeId) return null;
+    get()._pushHistory();
 
-      if (node.children) {
-        const filteredChildren = node.children
-          .map(updateNode)
-          .filter(child => child !== null);
+    set((s) => {
+      if (!s.mindMapData) return s;
 
-        return {
-          ...node,
-          children: filteredChildren
-        };
+      const updateNode = (node) => {
+        if (node.id === nodeId) return null;
+
+        if (node.children) {
+          const filteredChildren = node.children
+            .map(updateNode)
+            .filter(child => child !== null);
+
+          return {
+            ...node,
+            children: filteredChildren
+          };
+        }
+
+        return node;
+      };
+
+      const updatedMindMap = updateNode(s.mindMapData);
+
+      if (!updatedMindMap) {
+        return { ...s, error: '루트 노드를 삭제할 수 없습니다' };
       }
 
-      return node;
-    };
+      get()._saveToStorage(updatedMindMap);
 
-    const updatedMindMap = updateNode(state.mindMapData);
-
-    if (!updatedMindMap) {
-      return { ...state, error: '루트 노드를 삭제할 수 없습니다' };
-    }
-
-    get()._saveToStorage(updatedMindMap);
-
-    return {
-      mindMapData: updatedMindMap,
-      error: null
-    };
-  }),
+      return {
+        mindMapData: updatedMindMap,
+        error: null
+      };
+    });
+  },
 
   // 연결선 스타일 변경
   setConnectionStyle: (style) => {
@@ -369,10 +503,13 @@ const useMindMapStore = create((set, get) => ({
     set({ connectionColor: color });
   },
 
-  // 전체 레이아웃 재조정 — 간격 설정도 기본값으로 초기화 후 재배치
+  // 전체 레이아웃 재조정
   resetLayout: () => {
     const { mindMapData } = get();
     if (!mindMapData) return;
+
+    get()._pushHistory();
+
     const defaultConfig = { horizontalGap: 100, verticalGap: 30 };
     const layouted = calculateAutoLayout(mindMapData, defaultConfig);
     if (layouted) {
@@ -413,6 +550,9 @@ const useMindMapStore = create((set, get) => ({
   // 활성 문서 ID 설정
   setActiveDocumentId: (docId) => set({ activeDocumentId: docId }),
 
+  // 노드 선택
+  setSelectedNodeId: (nodeId) => set({ selectedNodeId: nodeId }),
+
   // 초기화
   reset: () => set({
     mindMapData: null,
@@ -423,7 +563,11 @@ const useMindMapStore = create((set, get) => ({
     connectionStyle: 'bezier',
     connectionColor: '#b0b8c8',
     viewport: { x: 0, y: 0 },
-    activeDocumentId: null
+    activeDocumentId: null,
+    selectedNodeId: null,
+    undoStack: [],
+    redoStack: [],
+    _preDragSnapshot: null
   })
 }));
 

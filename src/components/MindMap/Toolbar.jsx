@@ -20,7 +20,11 @@ const Toolbar = () => {
     setConnectionColor,
     layoutConfig,
     setLayoutConfig,
-    resetViewport
+    resetViewport,
+    undo,
+    redo,
+    canUndo,
+    canRedo
   } = useMindMapStore();
 
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -31,6 +35,26 @@ const Toolbar = () => {
   const titleInputRef = useRef(null);
 
   const title = mindMapData?.text || '마인드맵';
+
+  // Undo/Redo 키보드 단축키
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // 입력 필드에서는 무시
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        if (canUndo()) undo();
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'Z' || (e.key === 'z' && e.shiftKey))) {
+        e.preventDefault();
+        if (canRedo()) redo();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo, canUndo, canRedo]);
 
   useEffect(() => {
     if (isEditingTitle && titleInputRef.current) {
@@ -193,11 +217,41 @@ const Toolbar = () => {
         <button
           style={{
             ...buttonBase,
+            background: '#f0f4ff',
+            color: '#4A90E2',
+            opacity: canUndo() ? 1 : 0.4,
+            cursor: canUndo() ? 'pointer' : 'not-allowed'
+          }}
+          onClick={undo}
+          disabled={!canUndo()}
+          title="실행 취소 (Ctrl+Z)"
+          data-testid="btn-undo"
+        >
+          &#8630; 취소
+        </button>
+        <button
+          style={{
+            ...buttonBase,
+            background: '#f0f4ff',
+            color: '#4A90E2',
+            opacity: canRedo() ? 1 : 0.4,
+            cursor: canRedo() ? 'pointer' : 'not-allowed'
+          }}
+          onClick={redo}
+          disabled={!canRedo()}
+          title="다시 실행 (Ctrl+Shift+Z)"
+          data-testid="btn-redo"
+        >
+          &#8631; 되돌리기
+        </button>
+        <button
+          style={{
+            ...buttonBase,
             background: saveFeedback ? '#d4edda' : '#f0f4ff',
             color: saveFeedback ? '#155724' : '#4A90E2'
           }}
           onClick={handleSave}
-          title="저장"
+          title="저장 (Ctrl+S)"
           data-testid="btn-save"
         >
           {saveFeedback ? '✓ 저장됨' : '💾 저장'}
