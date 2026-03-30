@@ -12,6 +12,7 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
   const [text, setText] = useState(node.text || 'New Node');
   const [position, setPosition] = useState(initialPosition || { x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
   const inputRef = useRef(null);
@@ -230,6 +231,8 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
     <div
       data-testid="node-container"
       style={containerStyle}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       onMouseDown={handleMouseDown}
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
@@ -271,16 +274,18 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
         </div>
       )}
 
-      <div
-        style={{ ...actionBtnBase, right: -12, top: '50%', transform: 'translateY(-50%)', backgroundColor: '#52c41a' }}
-        onClick={handleAddChild}
-        onMouseDown={(e) => e.stopPropagation()}
-        title="자식 노드 추가"
-      >
-        +
-      </div>
+      {isHovered && (
+        <div
+          style={{ ...actionBtnBase, right: -12, top: '50%', transform: 'translateY(-50%)', backgroundColor: '#52c41a' }}
+          onClick={handleAddChild}
+          onMouseDown={(e) => e.stopPropagation()}
+          title="자식 노드 추가"
+        >
+          +
+        </div>
+      )}
 
-      {!node.isRoot && (
+      {isHovered && !node.isRoot && (
         <div
           data-testid="delete-button"
           style={{ ...actionBtnBase, left: -12, top: '50%', transform: 'translateY(-50%)', backgroundColor: '#e74c3c' }}

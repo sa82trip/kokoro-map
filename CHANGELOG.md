@@ -1,5 +1,19 @@
 # Changelog
 
+## [노드 액션 버튼 UX 개선] - 2026-03-30
+
+**Branch**: `main`
+
+### Changed
+- `Node.jsx` — `+` (자식 추가), `×` (삭제) 버튼을 항상 표시에서 마우스 호버 시에만 표시하도록 변경. `isHovered` 상태 + `onMouseEnter`/`onMouseLeave` 이벤트 추가
+- `src/components/MindMap/Node.test.jsx` — 호버 관련 테스트 추가 (기본 숨김, 호버 시 표시, 삭제 버튼 호버 테스트)
+- `tests/Node.test.jsx` — 자식 추가 버튼 테스트에 호버 이벤트 추가
+
+### Tests
+- Total: 424 tests passing / 25 test suites
+
+---
+
 ## [US-13: 연결선 고급 스타일] - 2026-03-30
 
 **Branch**: `main`

@@ -163,8 +163,9 @@ describe('Node Component', () => {
     expect(mockUpdateNodePosition).not.toHaveBeenCalled();
   });
 
-  test('자식 추가 버튼이 렌더링되어야 합니다', () => {
+  test('호버 시 자식 추가 버튼이 렌더링되어야 합니다', () => {
     render(<Node node={mockNode} position={mockNode.position} />);
+    fireEvent.mouseEnter(screen.getByTestId('node-container'));
     expect(screen.getByText('+')).toBeInTheDocument();
   });
 
@@ -172,6 +173,7 @@ describe('Node Component', () => {
     const mockOnAddChild = jest.fn();
     render(<Node node={mockNode} position={mockNode.position} onAddChild={mockOnAddChild} />);
 
+    fireEvent.mouseEnter(screen.getByTestId('node-container'));
     fireEvent.click(screen.getByText('+'));
     expect(mockOnAddChild).toHaveBeenCalled();
     expect(mockOnAddChild.mock.calls[0][0]).toBe('test-node');
