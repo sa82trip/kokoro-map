@@ -22,7 +22,11 @@ describe('FileManagerStore', () => {
     useFileManagerStore.setState({
       documents: [],
       activeDocumentId: null,
-      initialized: false
+      initialized: false,
+      searchQuery: '',
+      dateFilter: 'all',
+      sortBy: 'recent',
+      searchInContent: false
     });
     jest.clearAllMocks();
   });
@@ -210,6 +214,219 @@ describe('FileManagerStore', () => {
       StorageManager.loadLegacyData.mockReturnValue(null);
       const result = useFileManagerStore.getState().migrateFromLegacy();
       expect(result).toBeNull();
+    });
+  });
+
+  describe('검색 및 필터링', () => {
+    // 테스트용 문서 세트업 헬퍼
+    const setupDocuments = () => {
+      const now = new Date();
+      const today = now.toISOString();
+      const yesterday = new Date(now.getTime() - 86400000).toISOString();
+      const twoDaysAgo = new Date(now.getTime() - 2 * 86400000).toISOString();
+      const lastWeek = new Date(now.getTime() - 8 * 86400000).toISOString();
+      const lastMonth = new Date(now.getTime() - 35 * 86400000).toISOString();
+
+      const docs = [
+        { id: 'doc-1', title: '프로젝트 계획', createdAt: twoDaysAgo, updatedAt: today, nodeCount: 5 },
+        { id: 'doc-2', title: '회의록', createdAt: lastWeek, updatedAt: yesterday, nodeCount: 3 },
+        { id: 'doc-3', title: '프로젝트 아이디어', createdAt: lastMonth, updatedAt: lastWeek, nodeCount: 8 },
+        { id: 'doc-4', title: '학습 노트', createdAt: lastMonth, updatedAt: lastMonth, nodeCount: 2 },
+      ];
+
+      useFileManagerStore.setState({ documents: docs });
+      return { docs, today, yesterday, twoDaysAgo, lastWeek, lastMonth };
+    };
+
+    describe('setSearchQuery', () => {
+      test('검색어를 설정한다', () => {
+        useFileManagerStore.getState().setSearchQuery('테스트');
+        expect(useFileManagerStore.getState().searchQuery).toBe('테스트');
+      });
+
+      test('빈 문자열로 초기화한다', () => {
+        useFileManagerStore.getState().setSearchQuery('테스트');
+        useFileManagerStore.getState().setSearchQuery('');
+        expect(useFileManagerStore.getState().searchQuery).toBe('');
+      });
+    });
+
+    describe('setDateFilter', () => {
+      test('날짜 필터를 설정한다', () => {
+        useFileManagerStore.getState().setDateFilter('today');
+        expect(useFileManagerStore.getState().dateFilter).toBe('today');
+      });
+
+      test('모든 필터 값을 순환할 수 있다', () => {
+        ['all', 'today', 'week', 'month'].forEach(filter => {
+          useFileManagerStore.getState().setDateFilter(filter);
+          expect(useFileManagerStore.getState().dateFilter).toBe(filter);
+        });
+      });
+    });
+
+    describe('setSortBy', () => {
+      test('정렬 기준을 설정한다', () => {
+        useFileManagerStore.getState().setSortBy('name');
+        expect(useFileManagerStore.getState().sortBy).toBe('name');
+      });
+    });
+
+    describe('getFilteredDocuments', () => {
+      test('필터 없으면 전체 문서를 반환한다', () => {
+        const { docs } = setupDocuments();
+        const result = useFileManagerStore.getState().getFilteredDocuments();
+        expect(result).toHaveLength(docs.length);
+      });
+
+      test('제목으로 검색한다', () => {
+        setupDocuments();
+        useFileManagerStore.getState().setSearchQuery('프로젝트');
+        const result = useFileManagerStore.getState().getFilteredDocuments();
+        expect(result).toHaveLength(2);
+        result.forEach(d => expect(d.title).toContain('프로젝트'));
+      });
+
+      test('검색어는 대소문자 무관하다', () => {
+        setupDocuments();
+        useFileManagerStore.setState({
+          documents: [
+            { id: 'd1', title: 'React Notes', createdAt: '2026-01-01', updatedAt: '2026-01-01', nodeCount: 1 },
+            { id: 'd2', title: 'Vue Guide', createdAt: '2026-01-01', updatedAt: '2026-01-01', nodeCount: 1 },
+          ]
+        });
+        useFileManagerStore.getState().setSearchQuery('react');
+        const result = useFileManagerStore.getState().getFilteredDocuments();
+        expect(result).toHaveLength(1);
+        expect(result[0].id).toBe('d1');
+      });
+
+      test('오늘 필터: updatedAt이 오늘인 문서만', () => {
+        const { today } = setupDocuments();
+        useFileManagerStore.getState().setDateFilter('today');
+        const result = useFileManagerStore.getState().getFilteredDocuments();
+        const todayStr = new Date().toISOString().slice(0, 10);
+        expect(result.every(d => d.updatedAt.slice(0, 10) === todayStr)).toBe(true);
+      });
+
+      test('이번 주 필터: 최근 7일 이내 수정된 문서', () => {
+        setupDocuments();
+        useFileManagerStore.getState().setDateFilter('week');
+        const result = useFileManagerStore.getState().getFilteredDocuments();
+        const now = new Date();
+        const weekAgo = new Date(now.getTime() - 7 * 86400000);
+        expect(result.every(d => new Date(d.updatedAt) >= weekAgo)).toBe(true);
+      });
+
+      test('이번 달 필터: 최근 30일 이내 수정된 문서', () => {
+        setupDocuments();
+        useFileManagerStore.getState().setDateFilter('month');
+        const result = useFileManagerStore.getState().getFilteredDocuments();
+        const now = new Date();
+        const monthAgo = new Date(now.getTime() - 30 * 86400000);
+        expect(result.every(d => new Date(d.updatedAt) >= monthAgo)).toBe(true);
+      });
+
+      test('최근순 정렬 (기본값)', () => {
+        setupDocuments();
+        const result = useFileManagerStore.getState().getFilteredDocuments();
+        for (let i = 1; i < result.length; i++) {
+          expect(new Date(result[i - 1].updatedAt) >= new Date(result[i].updatedAt)).toBe(true);
+        }
+      });
+
+      test('이름순 정렬', () => {
+        setupDocuments();
+        useFileManagerStore.getState().setSortBy('name');
+        const result = useFileManagerStore.getState().getFilteredDocuments();
+        for (let i = 1; i < result.length; i++) {
+          expect(result[i - 1].title.localeCompare(result[i].title, 'ko')).toBeLessThanOrEqual(0);
+        }
+      });
+
+      test('생성순 정렬', () => {
+        setupDocuments();
+        useFileManagerStore.getState().setSortBy('created');
+        const result = useFileManagerStore.getState().getFilteredDocuments();
+        for (let i = 1; i < result.length; i++) {
+          expect(new Date(result[i - 1].createdAt) >= new Date(result[i].createdAt)).toBe(true);
+        }
+      });
+
+      test('검색 + 날짜 필터 조합', () => {
+        const { today } = setupDocuments();
+        useFileManagerStore.getState().setSearchQuery('프로젝트');
+        useFileManagerStore.getState().setDateFilter('today');
+        const result = useFileManagerStore.getState().getFilteredDocuments();
+        // '프로젝트 계획'은 오늘 수정됨, '프로젝트 아이디어'는 지난주
+        const todayStr = new Date().toISOString().slice(0, 10);
+        result.forEach(d => {
+          expect(d.title).toContain('프로젝트');
+          expect(d.updatedAt.slice(0, 10)).toBe(todayStr);
+        });
+      });
+
+      test('검색 결과가 없으면 빈 배열', () => {
+        setupDocuments();
+        useFileManagerStore.getState().setSearchQuery('존재하지않는키워드');
+        const result = useFileManagerStore.getState().getFilteredDocuments();
+        expect(result).toEqual([]);
+      });
+    });
+
+    describe('노드 내용 검색 (searchInContent)', () => {
+      test('searchInContent가 true이면 노드 텍스트도 검색한다', () => {
+        useFileManagerStore.setState({
+          documents: [
+            { id: 'd1', title: '마인드맵', createdAt: '2026-01-01', updatedAt: '2026-01-01', nodeCount: 2 },
+            { id: 'd2', title: '회의록', createdAt: '2026-01-01', updatedAt: '2026-01-01', nodeCount: 3 },
+          ]
+        });
+        StorageManager.loadDocument.mockImplementation((docId) => {
+          if (docId === 'd1') return { id: 'root', text: '마인드맵', children: [{ id: 'c1', text: 'React 학습', children: [] }] };
+          if (docId === 'd2') return { id: 'root', text: '회의록', children: [{ id: 'c2', text: 'Vue 논의', children: [] }] };
+          return null;
+        });
+
+        useFileManagerStore.getState().setSearchQuery('React');
+        useFileManagerStore.getState().setSearchInContent(true);
+        const result = useFileManagerStore.getState().getFilteredDocuments();
+
+        expect(result).toHaveLength(1);
+        expect(result[0].id).toBe('d1');
+      });
+
+      test('searchInContent가 false(기본값)면 제목만 검색한다', () => {
+        useFileManagerStore.setState({
+          documents: [
+            { id: 'd1', title: '마인드맵', createdAt: '2026-01-01', updatedAt: '2026-01-01', nodeCount: 2 },
+          ]
+        });
+        StorageManager.loadDocument.mockReturnValue({
+          id: 'root', text: '마인드맵', children: [{ id: 'c1', text: 'React 학습', children: [] }]
+        });
+
+        useFileManagerStore.getState().setSearchQuery('React');
+        const result = useFileManagerStore.getState().getFilteredDocuments();
+
+        expect(result).toHaveLength(0);
+      });
+    });
+
+    describe('clearSearch', () => {
+      test('검색 상태를 초기화한다', () => {
+        setupDocuments();
+        useFileManagerStore.getState().setSearchQuery('테스트');
+        useFileManagerStore.getState().setDateFilter('today');
+        useFileManagerStore.getState().setSortBy('name');
+
+        useFileManagerStore.getState().clearSearch();
+
+        expect(useFileManagerStore.getState().searchQuery).toBe('');
+        expect(useFileManagerStore.getState().dateFilter).toBe('all');
+        expect(useFileManagerStore.getState().sortBy).toBe('recent');
+        expect(useFileManagerStore.getState().searchInContent).toBe(false);
+      });
     });
   });
 });

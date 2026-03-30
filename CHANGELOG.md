@@ -1,5 +1,44 @@
 # Changelog
 
+## [US-8: 검색 및 필터링] - 2026-03-30
+
+**Branch**: `main`
+
+### Added
+- **Store** (`src/store/`)
+  - `FileManagerStore.js` — searchQuery, dateFilter, sortBy, searchInContent 상태 및 setSearchQuery, setDateFilter, setSortBy, setSearchInContent, clearSearch, getFilteredDocuments 액션 추가. searchInNodeTree 헬퍼 함수 추가
+
+- **Components** (`src/components/Home/`)
+  - `SearchBar.jsx` + `SearchBar.css` — 검색 입력창, 지우기 버튼, 노드 내용 검색 토글
+  - `FilterDropdown.jsx` + `FilterDropdown.css` — 기간 필터(전체/오늘/이번주/이번달) + 정렬(최근순/이름순/생성순) select 드롭다운
+
+### Changed
+- `src/components/Home/DocumentCard.jsx` — highlight prop 추가, highlightText 함수로 검색어 하이라이트(mark 태그)
+- `src/components/Home/RecentDocumentList.jsx` — store의 getFilteredDocuments 사용하도록 변경, 검색 결과 없음 UI 추가
+- `src/components/Home/HomeScreen.jsx` — SearchBar + FilterDropdown 통합 (search-filter-bar)
+- `src/components/Home/HomeScreen.css` — search-filter-bar 스타일 추가
+- `src/types/DocumentTypes.js` — updateDocumentMeta에서 data.text(루트 노드)를 title로 자동 갱신
+
+### Tests
+- `FileManagerStore.test.js` — 19 tests 추가 (검색어 설정, 날짜 필터, 정렬, getFilteredDocuments, 노드 내용 검색, clearSearch)
+- `SearchBar.test.jsx` — 9 tests (렌더링, 입력, 지우기, 내용 검색 토글)
+- `FilterDropdown.test.jsx` — 7 tests (렌더링, 옵션, 변경, 상태 반영)
+- `DocumentCard.test.jsx` — 5 tests 추가 (하이라이트 렌더링, 매칭, 대소문자, 다중 매칭)
+- `RecentDocumentList.test.jsx` — 3 tests 추가 (검색 필터링, 빈 결과, highlight 전달)
+- `HomeScreen.test.jsx` — 2 tests 추가 (SearchBar, FilterDropdown 렌더링)
+- `DocumentTypes.test.js` — 3 tests 추가 (루트 노드 텍스트로 title 갱신, null 시 유지, 빈 문자열 시 유지)
+- Total: 262 tests passing / 19 test suites
+
+### Technical Notes
+- 검색 로직: FileManagerStore.getFilteredDocuments()에서 검색→날짜필터→정렬 순으로 처리
+- 노드 내용 검색: searchInContent 토글 시 StorageManager.loadDocument로 문서 데이터 로드 후 트리 순회
+- 하이라이트: DocumentCard의 highlightText가 대소문자 무관 매칭, 다중 매칭 지원
+- 기존 MAX_RECENT_DOCS 제한 제거 → store 기반 필터링으로 통합
+- updateDocumentMeta가 루트 노드 텍스트를 title에 반영하여 카드 제목이 항상 최신 루트 노드명을 표시
+- Total: 9 files changed (2 new, 7 modified)
+
+---
+
 ## [US-7: 최근 문서 관리] - 2026-03-30
 
 **Branch**: `main`

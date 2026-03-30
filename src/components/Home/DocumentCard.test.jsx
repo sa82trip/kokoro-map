@@ -85,4 +85,69 @@ describe('DocumentCard', () => {
     render(<DocumentCard document={doc} onClick={mockOnClick} onDelete={mockOnDelete} />);
     expect(screen.getByText('30분 전')).toBeInTheDocument();
   });
+
+  describe('검색 하이라이트', () => {
+    test('highlight prop이 없으면 일반 텍스트를 렌더링한다', () => {
+      render(<DocumentCard document={mockDocument} onClick={mockOnClick} onDelete={mockOnDelete} />);
+      const titleEl = screen.getByText('테스트 마인드맵');
+      expect(titleEl.tagName).toBe('H3');
+    });
+
+    test('highlight prop이 있으면 매칭 부분을 mark 태그로 강조한다', () => {
+      render(
+        <DocumentCard
+          document={mockDocument}
+          onClick={mockOnClick}
+          onDelete={mockOnDelete}
+          highlight="마인드"
+        />
+      );
+      const mark = screen.getByText('마인드');
+      expect(mark.tagName).toBe('MARK');
+      // 전체 텍스트 확인
+      const title = mark.closest('.document-card-title');
+      expect(title.textContent).toBe('테스트 마인드맵');
+    });
+
+    test('highlight와 매칭되지 않으면 일반 텍스트를 렌더링한다', () => {
+      render(
+        <DocumentCard
+          document={mockDocument}
+          onClick={mockOnClick}
+          onDelete={mockOnDelete}
+          highlight="없는키워드"
+        />
+      );
+      const titleEl = screen.getByText('테스트 마인드맵');
+      expect(titleEl.tagName).toBe('H3');
+    });
+
+    test('대소문자 무관하게 매칭한다', () => {
+      const doc = { ...mockDocument, title: 'React Study' };
+      render(
+        <DocumentCard
+          document={doc}
+          onClick={mockOnClick}
+          onDelete={mockOnDelete}
+          highlight="react"
+        />
+      );
+      const mark = screen.getByText('React');
+      expect(mark.tagName).toBe('MARK');
+    });
+
+    test('여러 매칭이 있어도 모두 하이라이트된다', () => {
+      const doc = { ...mockDocument, title: '프로젝트 계획 프로젝트' };
+      render(
+        <DocumentCard
+          document={doc}
+          onClick={mockOnClick}
+          onDelete={mockOnDelete}
+          highlight="프로젝트"
+        />
+      );
+      const marks = document.querySelectorAll('mark');
+      expect(marks).toHaveLength(2);
+    });
+  });
 });

@@ -48,6 +48,7 @@ export const createDocumentMeta = (title = '마인드맵', data = null) => {
 // 문서 메타데이터 갱신 (저장 시)
 export const updateDocumentMeta = (meta, data = null) => ({
   ...meta,
+  title: (data && data.text) ? data.text : meta.title,
   updatedAt: new Date().toISOString(),
   nodeCount: data ? countNodes(data) : meta.nodeCount
 });

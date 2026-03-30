@@ -28,13 +28,31 @@ jest.mock('./RecentDocumentList', () => {
   };
 });
 
+// SearchBar 모킹
+jest.mock('./SearchBar', () => {
+  return function MockSearchBar() {
+    return <div data-testid="search-bar">SearchBar</div>;
+  };
+});
+
+// FilterDropdown 모킹
+jest.mock('./FilterDropdown', () => {
+  return function MockFilterDropdown() {
+    return <div data-testid="filter-dropdown">FilterDropdown</div>;
+  };
+});
+
 describe('HomeScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     useFileManagerStore.setState({
       documents: [],
       initialized: true,
-      activeDocumentId: null
+      activeDocumentId: null,
+      searchQuery: '',
+      dateFilter: 'all',
+      sortBy: 'recent',
+      searchInContent: false
     });
   });
 
@@ -63,6 +81,24 @@ describe('HomeScreen', () => {
       </MemoryRouter>
     );
     expect(screen.getByText('최근 문서')).toBeInTheDocument();
+  });
+
+  test('검색바를 렌더링한다', () => {
+    render(
+      <MemoryRouter>
+        <HomeScreen />
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId('search-bar')).toBeInTheDocument();
+  });
+
+  test('필터 드롭다운을 렌더링한다', () => {
+    render(
+      <MemoryRouter>
+        <HomeScreen />
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId('filter-dropdown')).toBeInTheDocument();
   });
 
   test('새 마인드맵 버튼 클릭 시 /editor/new로 이동한다', () => {

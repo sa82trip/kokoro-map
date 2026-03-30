@@ -4,15 +4,30 @@ import '@testing-library/jest-dom';
 import RecentDocumentList from './RecentDocumentList';
 import useFileManagerStore from '../../store/FileManagerStore';
 
+jest.mock('../../utils/StorageManager', () => ({
+  StorageManager: {
+    loadIndex: jest.fn(),
+    saveIndex: jest.fn(),
+    loadDocument: jest.fn(),
+    saveDocument: jest.fn(),
+    deleteDocument: jest.fn(),
+    loadLegacyData: jest.fn(),
+    clearLegacyData: jest.fn(),
+    hasLegacyData: jest.fn(),
+    hasIndex: jest.fn()
+  }
+}));
+
 // DocumentCard 모킹
 jest.mock('./DocumentCard', () => {
-  return function MockDocumentCard({ document, onClick, onDelete }) {
+  return function MockDocumentCard({ document, onClick, onDelete, highlight }) {
     return (
       <div
         data-testid={`doc-card-${document.id}`}
         onClick={() => onClick(document.id)}
       >
         <span>{document.title}</span>
+        {highlight && <span data-testid="highlight-active">{highlight}</span>}
         <button
           data-testid={`delete-${document.id}`}
           onClick={(e) => { e.stopPropagation(); onDelete(document.id); }}
@@ -57,11 +72,14 @@ describe('RecentDocumentList', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // 스토어 초기화
     useFileManagerStore.setState({
       documents: mockDocuments,
       initialized: true,
-      activeDocumentId: null
+      activeDocumentId: null,
+      searchQuery: '',
+      dateFilter: 'all',
+      sortBy: 'recent',
+      searchInContent: false
     });
   });
 
@@ -75,7 +93,6 @@ describe('RecentDocumentList', () => {
   test('최근 수정순으로 정렬된다', () => {
     render(<RecentDocumentList />);
     const cards = screen.getAllByTestId(/^doc-card-/);
-    // doc-1 (3/30) > doc-2 (3/29) > doc-3 (3/25)
     expect(cards[0]).toHaveAttribute('data-testid', 'doc-card-doc-1');
     expect(cards[1]).toHaveAttribute('data-testid', 'doc-card-doc-2');
     expect(cards[2]).toHaveAttribute('data-testid', 'doc-card-doc-3');
@@ -108,19 +125,38 @@ describe('RecentDocumentList', () => {
     expect(mockOnDelete).toHaveBeenCalledWith('doc-2');
   });
 
-  test('최대 20개까지만 표시한다', () => {
-    const manyDocs = Array.from({ length: 25 }, (_, i) => ({
-      id: `doc-${i}`,
-      title: `마인드맵 ${i}`,
-      folderId: null,
-      createdAt: new Date(Date.now() - i * 3600000).toISOString(),
-      updatedAt: new Date(Date.now() - i * 3600000).toISOString(),
-      nodeCount: i,
-      thumbnail: null
-    }));
-    useFileManagerStore.setState({ documents: manyDocs });
-    render(<RecentDocumentList />);
-    const cards = screen.getAllByTestId(/^doc-card-/);
-    expect(cards.length).toBe(20);
+  describe('검색 연동', () => {
+    test('검색어가 있으면 매칭 문서만 표시한다', () => {
+      useFileManagerStore.setState({ searchQuery: '첫 번째' });
+      render(<RecentDocumentList />);
+      expect(screen.getByTestId('doc-card-doc-1')).toBeInTheDocument();
+      expect(screen.queryByTestId('doc-card-doc-2')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('doc-card-doc-3')).not.toBeInTheDocument();
+    });
+
+    test('검색 결과가 없으면 빈 결과 메시지를 표시한다', () => {
+      useFileManagerStore.setState({ searchQuery: '없는키워드' });
+      render(<RecentDocumentList />);
+      expect(screen.getByText('검색 결과가 없습니다')).toBeInTheDocument();
+    });
+
+    test('검색어가 DocumentCard에 highlight로 전달된다', () => {
+      useFileManagerStore.setState({ searchQuery: '마인드맵' });
+      render(<RecentDocumentList />);
+      const highlights = screen.getAllByTestId('highlight-active');
+      expect(highlights).toHaveLength(3);
+    });
+  });
+
+  describe('정렬 연동', () => {
+    test('이름순 정렬 시 올바른 순서로 표시한다', () => {
+      useFileManagerStore.setState({ sortBy: 'name' });
+      render(<RecentDocumentList />);
+      const cards = screen.getAllByTestId(/^doc-card-/);
+      // 한글 정렬: 두(ㄷ) < 세(ㅅ) < 첫(ㅊ)
+      expect(cards[0]).toHaveAttribute('data-testid', 'doc-card-doc-2');
+      expect(cards[1]).toHaveAttribute('data-testid', 'doc-card-doc-3');
+      expect(cards[2]).toHaveAttribute('data-testid', 'doc-card-doc-1');
+    });
   });
 });

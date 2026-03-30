@@ -1,8 +1,42 @@
 import React, { useState } from 'react';
 import './DocumentCard.css';
 
-const DocumentCard = ({ document, onClick, onDelete }) => {
+const DocumentCard = ({ document, onClick, onDelete, highlight }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // 검색어 하이라이트
+  const highlightText = (text, query) => {
+    if (!query) return text;
+
+    const lowerText = text.toLowerCase();
+    const lowerQuery = query.toLowerCase();
+    const index = lowerText.indexOf(lowerQuery);
+
+    if (index === -1) return text;
+
+    const parts = [];
+    let lastIndex = 0;
+    let searchIndex = 0;
+
+    while (searchIndex !== -1) {
+      searchIndex = lowerText.indexOf(lowerQuery, lastIndex);
+      if (searchIndex === -1) break;
+
+      if (searchIndex > lastIndex) {
+        parts.push(text.substring(lastIndex, searchIndex));
+      }
+      parts.push(
+        <mark key={searchIndex}>{text.substring(searchIndex, searchIndex + query.length)}</mark>
+      );
+      lastIndex = searchIndex + query.length;
+    }
+
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+
+    return parts;
+  };
 
   const formatDate = (isoString) => {
     const date = new Date(isoString);
@@ -63,7 +97,7 @@ const DocumentCard = ({ document, onClick, onDelete }) => {
       </div>
 
       <div className="document-card-info">
-        <h3 className="document-card-title">{document.title}</h3>
+        <h3 className="document-card-title">{highlightText(document.title, highlight)}</h3>
         <div className="document-card-meta">
           <span className="document-card-date">{formatDate(document.updatedAt)}</span>
           <span className="document-card-nodes">{document.nodeCount}개 노드</span>

@@ -93,6 +93,32 @@ describe('DocumentTypes', () => {
       updateDocumentMeta(meta, null);
       expect(meta.updatedAt).toBe(originalUpdatedAt);
     });
+
+    test('data가 있으면 루트 노드 텍스트로 title을 갱신한다', () => {
+      const meta = createDocumentMeta('마인드맵');
+      const data = {
+        id: 'root', text: '프로젝트 계획', position: { x: 0, y: 0 },
+        children: [], isRoot: true
+      };
+      const updated = updateDocumentMeta(meta, data);
+      expect(updated.title).toBe('프로젝트 계획');
+    });
+
+    test('data가 null이면 title을 유지한다', () => {
+      const meta = createDocumentMeta('기존 제목');
+      const updated = updateDocumentMeta(meta, null);
+      expect(updated.title).toBe('기존 제목');
+    });
+
+    test('data의 text가 빈 문자열이면 기존 title을 유지한다', () => {
+      const meta = createDocumentMeta('기존 제목');
+      const data = {
+        id: 'root', text: '', position: { x: 0, y: 0 },
+        children: [], isRoot: true
+      };
+      const updated = updateDocumentMeta(meta, data);
+      expect(updated.title).toBe('기존 제목');
+    });
   });
 
   describe('validateDocumentMeta', () => {

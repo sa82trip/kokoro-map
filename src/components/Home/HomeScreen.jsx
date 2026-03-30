@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import RecentDocumentList from './RecentDocumentList';
+import SearchBar from './SearchBar';
+import FilterDropdown from './FilterDropdown';
 import useFileManagerStore from '../../store/FileManagerStore';
 import './HomeScreen.css';
 
@@ -47,6 +49,10 @@ const HomeScreen = () => {
       <main className="home-content">
         <section className="recent-section">
           <h2 className="section-title">최근 문서</h2>
+          <div className="search-filter-bar">
+            <SearchBar />
+            <FilterDropdown />
+          </div>
           <RecentDocumentList
             onOpenDocument={handleOpenDocument}
           />

@@ -79,6 +79,14 @@
   padding: 0 20px;
 }
 
+.search-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 0 20px;
+}
+
 /* 반응형 */
 @media (max-width: 768px) {
   .home-header {
