@@ -28,6 +28,19 @@
 
 ---
 
+## [Vercel 도메인 변경] - 2026-03-31
+
+**Branch**: `main` | **Version**: v1.0.5
+
+### Changed
+- `vercel.json` — 프로젝트명 `kokoromap`으로 설정
+
+### Technical Notes
+- 배포 URL: https://kokoromap.vercel.app/
+- Total: 1 file changed
+
+---
+
 ## [비밀번호 보호 기능] - 2026-03-31
 
 **Branch**: `main` | **Version**: v1.0.3
