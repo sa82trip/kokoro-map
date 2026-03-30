@@ -1,5 +1,37 @@
 # Changelog
 
+## [노드 설정 툴바 UX 개선] - 2026-03-30
+
+### Problem
+노드 선택 시 설정 툴바가 즉시 나타나 노드를 가림. 키보드 탐색 시에도 툴바가 자동 표시됨.
+
+### Solution
+`toolbarNodeId` 상태를 분리하여 선택과 툴바 표시를 독립적으로 제어. 마우스는 재클릭, 키보드는 Space로 툴바 토글.
+
+### Added
+- **Store** (`src/store/`)
+  - `MindMapStore.js` — `toolbarNodeId` 상태, `setToolbarNodeId` 액션 추가
+
+### Changed
+- `MindMapStore.js` — `setSelectedNodeId`에서 다른 노드 선택 시 `toolbarNodeId` 초기화
+- `Node.jsx` — `showToolbar` prop으로 툴바 표시 제어, 선택된 노드 재클릭 시 `onToggleToolbar` 호출
+- `MindMapContainer.jsx` — `toolbarNodeId` 읽기, `showToolbar`/`onToggleToolbar` props 전달, 클릭 외부 시 툴바 닫힘
+- `useKeyboardShortcuts.js` — Space 키 툴바 토글, 화살표 이동 시 툴바 닫힘, Escape 시 툴바 닫힘
+- `KeyboardShortcutsHelp.jsx` — Space 단축키 설명 추가
+
+### Tests
+- `tests/Node.test.jsx` — showToolbar prop 기반 테스트 + 클릭 토글 테스트 2개 추가
+- `src/components/MindMap/Node.test.jsx` — showToolbar prop 기반 테스트 업데이트
+- `tests/KeyboardShortcuts.test.js` — Space 토글, 화살표 툴바 닫힘, Escape 툴바 닫힘, 선택 변경 시 툴바 닫힘 테스트 4개 추가
+- Total: 396 tests passing
+
+### Technical Notes
+- `selectedNodeId`: 노드 선택 상태 (클릭, 화살표)
+- `toolbarNodeId`: 툴바 표시 상태 (재클릭, Space)
+- 두 상태가 독립적으로 동작하며, 선택 변경 시에만 툴바 자동 닫힘
+
+---
+
 ## [US-11: 키보드 단축키] - 2026-03-30
 
 **Branch**: `main`

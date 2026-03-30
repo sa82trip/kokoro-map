@@ -62,6 +62,7 @@ const useKeyboardShortcuts = () => {
       if (showHelp) {
         setShowHelp(false);
       } else {
+        store.setToolbarNodeId(null);
         store.setSelectedNodeId(null);
       }
       return;
@@ -92,6 +93,14 @@ const useKeyboardShortcuts = () => {
     if (!selId || !data) return;
 
     const selectedNode = findNodeById(data, selId);
+
+    // Space: 툴바 토글
+    if (e.key === ' ') {
+      e.preventDefault();
+      const currentToolbar = store.toolbarNodeId;
+      store.setToolbarNodeId(currentToolbar === selId ? null : selId);
+      return;
+    }
 
     // Delete/Backspace: 노드 삭제
     if (e.key === 'Delete' || e.key === 'Backspace') {
@@ -134,10 +143,11 @@ const useKeyboardShortcuts = () => {
       return;
     }
 
-    // 화살표 키: 노드 탐색
+    // 화살표 키: 노드 탐색 (이동 시 툴바 닫기)
     if (e.key === 'ArrowRight') {
       e.preventDefault();
       if (selectedNode?.children?.length > 0) {
+        store.setToolbarNodeId(null);
         store.setSelectedNodeId(selectedNode.children[0].id);
       }
       return;
@@ -147,6 +157,7 @@ const useKeyboardShortcuts = () => {
       e.preventDefault();
       const parent = findParent(data, selId);
       if (parent) {
+        store.setToolbarNodeId(null);
         store.setSelectedNodeId(parent.id);
       }
       return;
@@ -156,6 +167,7 @@ const useKeyboardShortcuts = () => {
       e.preventDefault();
       const prevSibling = findPreviousSibling(data, selId);
       if (prevSibling) {
+        store.setToolbarNodeId(null);
         store.setSelectedNodeId(prevSibling.id);
       }
       return;
@@ -165,6 +177,7 @@ const useKeyboardShortcuts = () => {
       e.preventDefault();
       const nextSibling = findNextSibling(data, selId);
       if (nextSibling) {
+        store.setToolbarNodeId(null);
         store.setSelectedNodeId(nextSibling.id);
       }
       return;

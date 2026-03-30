@@ -1,22 +1,30 @@
 # 마인드맵 프로젝트 - React 마인드맵 에디터
 
 ## 현재 상태
-**Phase**: Sprint 3 진행 중 — US-10, US-11 완료, US-12 진행 예정
+**Phase**: Sprint 3 진행 중 — US-10, US-11 완료, 툴바 UX 개선 완료
 **다음 작업**: US-12 테마 시스템 (다크 모드)
 
 ## 최근 작업
 
-### 2026-03-30: 버그 수정 (선택 시각 + 키보드 노드 생성)
+### 2026-03-30: 노드 설정 툴바 UX 개선
 - **브랜치**: `main`
-- **커밋**: 45252ce
+
+**Data Layer:**
+- `MindMapStore.js` — `toolbarNodeId` 상태 추가, `setSelectedNodeId`에서 다른 노드 선택 시 툴바 자동 닫힘
 
 **UI:**
-- `Node.jsx` — 선택 시각 표시를 `border`에서 `box-shadow ring`으로 개선 (파란색 글로우)
-- `useKeyboardShortcuts.js` — Enter/Tab 키 `calculateNewChildPosition` 인자 수정
+- `Node.jsx` — `showToolbar` prop으로 툴바 표시 제어 (기존 `isSelected`에서 분리)
+- `MindMapContainer.jsx` — `showToolbar`, `onToggleToolbar` props 연결, 클릭 외부 시 툴바 닫힘
+- `useKeyboardShortcuts.js` — Space 키로 툴바 토글, 화살표 이동 시 툴바 닫힘
+- `KeyboardShortcutsHelp.jsx` — Space 단축키 설명 추가
+
+**Interaction:**
+- 클릭 → 노드 선택만, 다시 클릭 → 툴바 열기/닫기
+- 키보드 화살표 → 이동 (툴바 닫힘), Space → 툴바 열기/닫기
+- Escape → 툴바 + 선택 해제
 
 **Tests:**
-- `KeyboardShortcuts.test.js` — 인자 타입 검증 테스트 2개 추가 (Enter, Tab)
-- `Node.test.jsx` — border → box-shadow 테스트 업데이트
+- 396/396 테스트 통과 (신규 8개 추가)
 
 ## 알려진 이슈
 - 없음

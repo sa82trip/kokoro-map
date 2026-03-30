@@ -19,6 +19,7 @@ const useMindMapStore = create((set, get) => ({
   viewport: { x: 0, y: 0 },
   activeDocumentId: null,
   selectedNodeId: null,
+  toolbarNodeId: null,
 
   // Undo/Redo 상태
   undoStack: [],
@@ -550,8 +551,17 @@ const useMindMapStore = create((set, get) => ({
   // 활성 문서 ID 설정
   setActiveDocumentId: (docId) => set({ activeDocumentId: docId }),
 
-  // 노드 선택
-  setSelectedNodeId: (nodeId) => set({ selectedNodeId: nodeId }),
+  // 노드 선택 (다른 노드 선택 시 툴바 닫기)
+  setSelectedNodeId: (nodeId) => set((state) => {
+    const changes = { selectedNodeId: nodeId };
+    if (nodeId !== state.selectedNodeId) {
+      changes.toolbarNodeId = null;
+    }
+    return changes;
+  }),
+
+  // 툴바 표시 노드 설정
+  setToolbarNodeId: (nodeId) => set({ toolbarNodeId: nodeId }),
 
   // 초기화
   reset: () => set({
@@ -565,6 +575,7 @@ const useMindMapStore = create((set, get) => ({
     viewport: { x: 0, y: 0 },
     activeDocumentId: null,
     selectedNodeId: null,
+    toolbarNodeId: null,
     undoStack: [],
     redoStack: [],
     _preDragSnapshot: null

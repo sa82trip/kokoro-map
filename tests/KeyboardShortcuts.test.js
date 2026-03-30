@@ -342,6 +342,80 @@ describe('useKeyboardShortcuts', () => {
     expect(useMindMapStore.getState().mindMapData.children.length).toBe(prevChildrenCount);
   });
 
+  test('Space 키로 툴바 열기', () => {
+    const store = useMindMapStore.getState();
+    store.setSelectedNodeId('child-1');
+
+    renderHook(() => useKeyboardShortcuts());
+
+    act(() => {
+      window.dispatchEvent(createKeyboardEvent(' '));
+    });
+
+    expect(useMindMapStore.getState().toolbarNodeId).toBe('child-1');
+  });
+
+  test('Space 키로 툴바 토글 (다시 누르면 닫기)', () => {
+    const store = useMindMapStore.getState();
+    store.setSelectedNodeId('child-1');
+
+    renderHook(() => useKeyboardShortcuts());
+
+    act(() => {
+      window.dispatchEvent(createKeyboardEvent(' '));
+    });
+    expect(useMindMapStore.getState().toolbarNodeId).toBe('child-1');
+
+    act(() => {
+      window.dispatchEvent(createKeyboardEvent(' '));
+    });
+    expect(useMindMapStore.getState().toolbarNodeId).toBeNull();
+  });
+
+  test('화살표 이동 시 툴바가 닫힌다', () => {
+    const store = useMindMapStore.getState();
+    store.setSelectedNodeId('child-1');
+    store.setToolbarNodeId('child-1');
+
+    renderHook(() => useKeyboardShortcuts());
+
+    act(() => {
+      window.dispatchEvent(createKeyboardEvent('ArrowDown'));
+    });
+
+    expect(useMindMapStore.getState().toolbarNodeId).toBeNull();
+    expect(useMindMapStore.getState().selectedNodeId).toBe('child-2');
+  });
+
+  test('Escape 키로 툴바 닫기', () => {
+    const store = useMindMapStore.getState();
+    store.setSelectedNodeId('child-1');
+    store.setToolbarNodeId('child-1');
+
+    renderHook(() => useKeyboardShortcuts());
+
+    act(() => {
+      window.dispatchEvent(createKeyboardEvent('Escape'));
+    });
+
+    expect(useMindMapStore.getState().toolbarNodeId).toBeNull();
+    expect(useMindMapStore.getState().selectedNodeId).toBeNull();
+  });
+
+  test('다른 노드 선택 시 툴바가 닫힌다', () => {
+    const store = useMindMapStore.getState();
+    store.setSelectedNodeId('child-1');
+    store.setToolbarNodeId('child-1');
+
+    renderHook(() => useKeyboardShortcuts());
+
+    act(() => {
+      store.setSelectedNodeId('child-2');
+    });
+
+    expect(useMindMapStore.getState().toolbarNodeId).toBeNull();
+  });
+
   test('Shift+/ (?) 키로 도움말 토글', () => {
     const { result } = renderHook(() => useKeyboardShortcuts());
 
@@ -475,6 +549,7 @@ describe('KeyboardShortcutsHelp', () => {
     expect(screen.getByText('다시 실행')).toBeInTheDocument();
     expect(screen.getByText('단축키 도움말')).toBeInTheDocument();
     expect(screen.getByText('선택된 노드 삭제')).toBeInTheDocument();
+    expect(screen.getByText('노드 설정 툴바 열기/닫기')).toBeInTheDocument();
     expect(screen.getByText('선택 해제')).toBeInTheDocument();
     expect(screen.getByText('첫 번째 자식으로 이동')).toBeInTheDocument();
     expect(screen.getByText('부모 노드로 이동')).toBeInTheDocument();

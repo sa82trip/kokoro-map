@@ -7,6 +7,7 @@ const SHORTCUT_GROUPS = [
       { keys: ['Enter'], desc: '자식 노드 추가' },
       { keys: ['Tab'], desc: '형제 노드 추가' },
       { keys: ['Delete', 'Backspace'], desc: '선택된 노드 삭제' },
+      { keys: ['Space'], desc: '노드 설정 툴바 열기/닫기' },
       { keys: ['Esc'], desc: '선택 해제' },
     ]
   },

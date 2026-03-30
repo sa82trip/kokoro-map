@@ -208,38 +208,44 @@ describe('Node Component', () => {
 
   // === US-3: 노드 편집 기능 테스트 ===
   describe('US-3: 노드 편집 기능', () => {
-    test('isSelected=true일 때 편집 툴바가 표시되어야 합니다', () => {
-      render(<Node node={mockNode} position={mockNode.position} isSelected={true} />);
+    test('showToolbar=true일 때 편집 툴바가 표시되어야 합니다', () => {
+      render(<Node node={mockNode} position={mockNode.position} isSelected={true} showToolbar={true} />);
 
       expect(screen.getByTestId('node-editor-toolbar')).toBeInTheDocument();
     });
 
-    test('isSelected=false일 때 툴바가 표시되지 않아야 합니다', () => {
-      render(<Node node={mockNode} position={mockNode.position} isSelected={false} />);
+    test('showToolbar=false일 때 툴바가 표시되지 않아야 합니다', () => {
+      render(<Node node={mockNode} position={mockNode.position} isSelected={true} showToolbar={false} />);
+
+      expect(screen.queryByTestId('node-editor-toolbar')).not.toBeInTheDocument();
+    });
+
+    test('선택만 되고 showToolbar가 없으면 툴바가 표시되지 않아야 합니다', () => {
+      render(<Node node={mockNode} position={mockNode.position} isSelected={true} />);
 
       expect(screen.queryByTestId('node-editor-toolbar')).not.toBeInTheDocument();
     });
 
     test('폰트 크기 슬라이더가 렌더링되어야 합니다', () => {
-      render(<Node node={mockNode} position={mockNode.position} isSelected={true} />);
+      render(<Node node={mockNode} position={mockNode.position} isSelected={true} showToolbar={true} />);
 
       expect(screen.getByTestId('font-size-slider')).toBeInTheDocument();
     });
 
     test('Bold 버튼이 렌더링되어야 합니다', () => {
-      render(<Node node={mockNode} position={mockNode.position} isSelected={true} />);
+      render(<Node node={mockNode} position={mockNode.position} isSelected={true} showToolbar={true} />);
 
       expect(screen.getByTestId('bold-button')).toBeInTheDocument();
     });
 
     test('Italic 버튼이 렌더링되어야 합니다', () => {
-      render(<Node node={mockNode} position={mockNode.position} isSelected={true} />);
+      render(<Node node={mockNode} position={mockNode.position} isSelected={true} showToolbar={true} />);
 
       expect(screen.getByTestId('italic-button')).toBeInTheDocument();
     });
 
     test('폰트 크기 변경 시 updateNodeStyle이 호출되어야 합니다', () => {
-      render(<Node node={mockNode} position={mockNode.position} isSelected={true} />);
+      render(<Node node={mockNode} position={mockNode.position} isSelected={true} showToolbar={true} />);
 
       const slider = screen.getByTestId('font-size-slider');
       fireEvent.change(slider, { target: { value: 24 } });
@@ -248,21 +254,21 @@ describe('Node Component', () => {
     });
 
     test('Bold 토글 시 updateNodeStyle이 호출되어야 합니다', () => {
-      render(<Node node={mockNode} position={mockNode.position} isSelected={true} />);
+      render(<Node node={mockNode} position={mockNode.position} isSelected={true} showToolbar={true} />);
 
       fireEvent.click(screen.getByTestId('bold-button'));
       expect(mockUpdateNodeStyle).toHaveBeenCalledWith('test-node', { fontWeight: 'bold' });
     });
 
     test('Italic 토글 시 updateNodeStyle이 호출되어야 합니다', () => {
-      render(<Node node={mockNode} position={mockNode.position} isSelected={true} />);
+      render(<Node node={mockNode} position={mockNode.position} isSelected={true} showToolbar={true} />);
 
       fireEvent.click(screen.getByTestId('italic-button'));
       expect(mockUpdateNodeStyle).toHaveBeenCalledWith('test-node', { fontStyle: 'italic' });
     });
 
     test('텍스트 색상 변경 시 updateNodeStyle이 호출되어야 합니다', () => {
-      render(<Node node={mockNode} position={mockNode.position} isSelected={true} />);
+      render(<Node node={mockNode} position={mockNode.position} isSelected={true} showToolbar={true} />);
 
       fireEvent.click(screen.getByTestId('color-E74C3C'));
       expect(mockUpdateNodeStyle).toHaveBeenCalledWith('test-node', { textColor: '#E74C3C' });
@@ -302,6 +308,45 @@ describe('Node Component', () => {
       const nodeElement = screen.getByTestId('node-container');
       const width = parseInt(nodeElement.style.width);
       expect(width).toBeGreaterThan(120);
+    });
+  });
+
+  // === 툴바 토글 동작 ===
+  describe('툴바 토글 동작', () => {
+    test('선택되지 않은 노드 클릭 시 onSelect가 호출된다', () => {
+      const mockOnSelect = jest.fn();
+      const mockOnToggleToolbar = jest.fn();
+      render(
+        <Node
+          node={mockNode}
+          position={mockNode.position}
+          isSelected={false}
+          onSelect={mockOnSelect}
+          onToggleToolbar={mockOnToggleToolbar}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId('node-container'));
+      expect(mockOnSelect).toHaveBeenCalledWith('test-node');
+      expect(mockOnToggleToolbar).not.toHaveBeenCalled();
+    });
+
+    test('이미 선택된 노드 클릭 시 onToggleToolbar가 호출된다', () => {
+      const mockOnSelect = jest.fn();
+      const mockOnToggleToolbar = jest.fn();
+      render(
+        <Node
+          node={mockNode}
+          position={mockNode.position}
+          isSelected={true}
+          onSelect={mockOnSelect}
+          onToggleToolbar={mockOnToggleToolbar}
+        />
+      );
+
+      fireEvent.click(screen.getByTestId('node-container'));
+      expect(mockOnToggleToolbar).toHaveBeenCalledWith('test-node');
+      expect(mockOnSelect).not.toHaveBeenCalled();
     });
   });
 });

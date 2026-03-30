@@ -6,7 +6,7 @@ import { measureText } from '../../utils/TextMeasurer';
 import DeleteConfirmDialog from './DeleteConfirmDialog';
 import NodeEditorToolbar from './NodeEditorToolbar';
 
-const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelected, onSelect }) => {
+const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelected, onSelect, showToolbar, onToggleToolbar }) => {
   const { updateNodeText, updateNodePosition, updateNodeStyle, saveNodePositions } = useMindMapStore();
   const [isEditing, setIsEditing] = useState(false);
   const [text, setText] = useState(node.text || 'New Node');
@@ -127,10 +127,14 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
     e.stopPropagation();
   };
 
-  // 노드 클릭 → 선택만 (툴바는 isSelected로 제어)
+  // 노드 클릭 → 선택 또는 툴바 토글
   const handleClick = (e) => {
     e.stopPropagation();
-    if (onSelect) onSelect(node.id);
+    if (isSelected && onToggleToolbar) {
+      onToggleToolbar(node.id);
+    } else if (onSelect) {
+      onSelect(node.id);
+    }
   };
 
   // 자식 노드 추가
@@ -230,8 +234,8 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
     >
-      {/* 편집 툴바 — isSelected로만 제어 */}
-      {isSelected && !isDragging && !isEditing && (
+      {/* 편집 툴바 — showToolbar로만 제어 */}
+      {showToolbar && !isDragging && !isEditing && (
         <NodeEditorToolbar
           style={nodeStyle}
           onStyleChange={handleStyleChange}

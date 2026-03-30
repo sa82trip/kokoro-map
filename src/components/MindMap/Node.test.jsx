@@ -177,36 +177,41 @@ describe('Node Component', () => {
 
   // === US-3: 편집 툴바 테스트 ===
   describe('US-3: 편집 툴바', () => {
-    test('isSelected=true 시 툴바가 표시된다', () => {
-      render(<Node node={mockNode} position={mockNode.position} isSelected={true} />);
+    test('showToolbar=true 시 툴바가 표시된다', () => {
+      render(<Node node={mockNode} position={mockNode.position} isSelected={true} showToolbar={true} />);
       expect(screen.getByTestId('node-editor-toolbar')).toBeInTheDocument();
     });
 
-    test('isSelected=false 시 툴바가 표시되지 않는다', () => {
-      render(<Node node={mockNode} position={mockNode.position} isSelected={false} />);
+    test('showToolbar=false 시 툴바가 표시되지 않는다', () => {
+      render(<Node node={mockNode} position={mockNode.position} isSelected={true} showToolbar={false} />);
+      expect(screen.queryByTestId('node-editor-toolbar')).not.toBeInTheDocument();
+    });
+
+    test('선택만 되고 showToolbar가 없으면 툴바가 표시되지 않는다', () => {
+      render(<Node node={mockNode} position={mockNode.position} isSelected={true} />);
       expect(screen.queryByTestId('node-editor-toolbar')).not.toBeInTheDocument();
     });
 
     test('Bold 버튼 클릭 시 updateNodeStyle이 호출된다', () => {
-      render(<Node node={mockNode} position={mockNode.position} isSelected={true} />);
+      render(<Node node={mockNode} position={mockNode.position} isSelected={true} showToolbar={true} />);
       fireEvent.click(screen.getByTestId('bold-button'));
       expect(mockUpdateNodeStyle).toHaveBeenCalledWith('node-1', { fontWeight: 'bold' });
     });
 
     test('Italic 버튼 클릭 시 updateNodeStyle이 호출된다', () => {
-      render(<Node node={mockNode} position={mockNode.position} isSelected={true} />);
+      render(<Node node={mockNode} position={mockNode.position} isSelected={true} showToolbar={true} />);
       fireEvent.click(screen.getByTestId('italic-button'));
       expect(mockUpdateNodeStyle).toHaveBeenCalledWith('node-1', { fontStyle: 'italic' });
     });
 
     test('폰트 크기 슬라이더로 크기를 변경할 수 있다', () => {
-      render(<Node node={mockNode} position={mockNode.position} isSelected={true} />);
+      render(<Node node={mockNode} position={mockNode.position} isSelected={true} showToolbar={true} />);
       fireEvent.change(screen.getByTestId('font-size-slider'), { target: { value: 24 } });
       expect(mockUpdateNodeStyle).toHaveBeenCalledWith('node-1', { fontSize: 24 });
     });
 
     test('텍스트 색상을 변경할 수 있다', () => {
-      render(<Node node={mockNode} position={mockNode.position} isSelected={true} />);
+      render(<Node node={mockNode} position={mockNode.position} isSelected={true} showToolbar={true} />);
       fireEvent.click(screen.getByTestId('color-000000'));
       expect(mockUpdateNodeStyle).toHaveBeenCalledWith('node-1', { textColor: '#000000' });
     });

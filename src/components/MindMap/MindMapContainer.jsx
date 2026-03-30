@@ -63,19 +63,22 @@ const MindMapContainer = ({ data }) => {
   const setViewport = useMindMapStore((state) => state.setViewport);
   const selectedNodeId = useMindMapStore((state) => state.selectedNodeId);
   const setSelectedNodeId = useMindMapStore((state) => state.setSelectedNodeId);
+  const toolbarNodeId = useMindMapStore((state) => state.toolbarNodeId);
+  const setToolbarNodeId = useMindMapStore((state) => state.setToolbarNodeId);
 
   // 패닝 상태
   const [isPanning, setIsPanning] = useState(false);
   const panStartRef = useRef({ x: 0, y: 0 });
   const viewportStartRef = useRef({ x: 0, y: 0 });
 
-  // document 클릭으로 노드 선택 해제 — 모든 hooks는 early return 전에 호출
+  // document 클릭으로 노드 선택 해제 + 툴바 닫기 — 모든 hooks는 early return 전에 호출
   useEffect(() => {
     const handleClickOutside = (e) => {
       const target = e.target;
       if (!target.closest('[data-testid="node-container"]') &&
           !target.closest('[data-testid="node-editor-toolbar"]')) {
         setSelectedNodeId(null);
+        setToolbarNodeId(null);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -125,6 +128,11 @@ const MindMapContainer = ({ data }) => {
     setSelectedNodeId(nodeId);
   };
 
+  const handleToggleToolbar = (nodeId) => {
+    const current = useMindMapStore.getState().toolbarNodeId;
+    setToolbarNodeId(current === nodeId ? null : nodeId);
+  };
+
   const handleAddChild = (parentId, childNode) => {
     addNode(parentId, childNode);
     setSelectedNodeId(parentId);
@@ -134,6 +142,7 @@ const MindMapContainer = ({ data }) => {
     if (isPanning) return;
     if (e.target.classList.contains('mindmap-container')) {
       setSelectedNodeId(null);
+      setToolbarNodeId(null);
     }
   };
 
@@ -155,6 +164,8 @@ const MindMapContainer = ({ data }) => {
           onDelete={handleDeleteNode}
           isSelected={selectedNodeId === node.id}
           onSelect={handleNodeSelect}
+          showToolbar={toolbarNodeId === node.id}
+          onToggleToolbar={handleToggleToolbar}
         />
         {node.children && node.children.map(child => renderNodes(child))}
       </React.Fragment>
