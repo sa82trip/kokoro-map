@@ -182,10 +182,12 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
     alignItems: 'center',
     justifyContent: 'center',
     cursor: isEditing ? 'text' : 'move',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-    transition: isDragging ? 'none' : 'width 0.2s ease, height 0.2s ease, background-color 0.3s ease',
+    boxShadow: isSelected
+      ? '0 0 0 3px #1890ff, 0 0 12px rgba(24, 144, 255, 0.4), 0 4px 12px rgba(0, 0, 0, 0.15)'
+      : '0 4px 12px rgba(0, 0, 0, 0.15)',
+    transition: isDragging ? 'none' : 'width 0.2s ease, height 0.2s ease, background-color 0.3s ease, box-shadow 0.2s ease',
     userSelect: 'none',
-    border: isSelected ? '3px solid #1890ff' : 'none',
+    border: 'none',
     ...(isDragging && {
       transform: 'scale(1.05)',
       boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',

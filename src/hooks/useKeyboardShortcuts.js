@@ -109,7 +109,8 @@ const useKeyboardShortcuts = () => {
       if (selectedNode) {
         const parentColor = selectedNode.color || '#4A90E2';
         const newNode = createChildNode(selId, '새 노드', parentColor);
-        const newPos = calculateNewChildPosition(selectedNode, newNode);
+        const existingCount = selectedNode.children ? selectedNode.children.length : 0;
+        const newPos = calculateNewChildPosition(selectedNode.position || { x: 0, y: 0 }, existingCount);
         newNode.position = newPos;
         store.addNode(selId, newNode);
         store.setSelectedNodeId(newNode.id);
@@ -124,7 +125,8 @@ const useKeyboardShortcuts = () => {
       if (parent) {
         const parentColor = parent.color || '#4A90E2';
         const newNode = createChildNode(parent.id, '새 노드', parentColor);
-        const newPos = calculateNewChildPosition(parent, newNode);
+        const existingCount = parent.children ? parent.children.length : 0;
+        const newPos = calculateNewChildPosition(parent.position || { x: 0, y: 0 }, existingCount);
         newNode.position = newPos;
         store.addNode(parent.id, newNode);
         store.setSelectedNodeId(newNode.id);

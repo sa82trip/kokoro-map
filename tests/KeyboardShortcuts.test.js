@@ -353,6 +353,90 @@ describe('useKeyboardShortcuts', () => {
   });
 });
 
+describe('버그 재현: 키보드로 노드 추가 시 calculateNewChildPosition 호출 방식', () => {
+  let mockData;
+
+  beforeEach(() => {
+    const { result } = renderHook(() => useMindMapStore());
+    act(() => { result.current.reset(); });
+
+    mockData = {
+      ...createRootNode('테스트 마인드맵'),
+      children: [
+        {
+          id: 'child-1',
+          text: '자식 1',
+          color: '#52c41a',
+          position: { x: 300, y: 100 },
+          children: [],
+          isRoot: false
+        }
+      ]
+    };
+
+    act(() => { result.current.setMindMapData(mockData); });
+  });
+
+  const createKeyboardEvent = (key, options = {}) => {
+    return new KeyboardEvent('keydown', { key, bubbles: true, ...options });
+  };
+
+  test('Enter 키: calculateNewChildPosition이 부모 position 객체와 자식 수로 호출되어야 함', () => {
+    const { calculateNewChildPosition } = require('../src/utils/LayoutEngine');
+    calculateNewChildPosition.mockClear();
+
+    const store = useMindMapStore.getState();
+    store.setSelectedNodeId('child-1');
+
+    renderHook(() => useKeyboardShortcuts());
+
+    act(() => {
+      window.dispatchEvent(createKeyboardEvent('Enter'));
+    });
+
+    // calculateNewChildPosition이 (position{x,y}, number)로 호출되었는지 확인
+    expect(calculateNewChildPosition).toHaveBeenCalled();
+    const callArgs = calculateNewChildPosition.mock.calls[0];
+
+    // 첫 번째 인자는 반드시 position 객체 {x, y}여야 함 (노드 객체가 아님)
+    const firstArg = callArgs[0];
+    expect(typeof firstArg.x).toBe('number');
+    expect(typeof firstArg.y).toBe('number');
+    expect(firstArg.x).not.toBeNaN();
+    expect(firstArg.y).not.toBeNaN();
+
+    // 두 번째 인자는 자식 수 (number)
+    const secondArg = callArgs[1];
+    expect(typeof secondArg).toBe('number');
+  });
+
+  test('Tab 키: calculateNewChildPosition이 부모 position 객체와 자식 수로 호출되어야 함', () => {
+    const { calculateNewChildPosition } = require('../src/utils/LayoutEngine');
+    calculateNewChildPosition.mockClear();
+
+    const store = useMindMapStore.getState();
+    store.setSelectedNodeId('child-1');
+
+    renderHook(() => useKeyboardShortcuts());
+
+    act(() => {
+      window.dispatchEvent(createKeyboardEvent('Tab'));
+    });
+
+    expect(calculateNewChildPosition).toHaveBeenCalled();
+    const callArgs = calculateNewChildPosition.mock.calls[0];
+
+    const firstArg = callArgs[0];
+    expect(typeof firstArg.x).toBe('number');
+    expect(typeof firstArg.y).toBe('number');
+    expect(firstArg.x).not.toBeNaN();
+    expect(firstArg.y).not.toBeNaN();
+
+    const secondArg = callArgs[1];
+    expect(typeof secondArg).toBe('number');
+  });
+});
+
 describe('KeyboardShortcutsHelp', () => {
   test('렌더링 및 닫기 버튼 동작', () => {
     const onClose = jest.fn();

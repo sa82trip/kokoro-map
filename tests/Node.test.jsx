@@ -192,18 +192,18 @@ describe('Node Component', () => {
     expect(nodeElement.style.top).toBe('-100px');
   });
 
-  test('선택된 노드는 테두리가 표시되어야 합니다', () => {
+  test('선택된 노드는 box-shadow ring이 표시되어야 합니다', () => {
     render(<Node node={mockNode} position={mockNode.position} isSelected={true} />);
 
     const nodeElement = screen.getByTestId('node-container');
-    expect(nodeElement.style.border).toContain('3px solid #1890ff');
+    expect(nodeElement.style.boxShadow).toContain('1890ff');
   });
 
-  test('선택되지 않은 노드는 테두리가 없어야 합니다', () => {
+  test('선택되지 않은 노드는 ring 효과가 없어야 합니다', () => {
     render(<Node node={mockNode} position={mockNode.position} isSelected={false} />);
 
     const nodeElement = screen.getByTestId('node-container');
-    expect(nodeElement.style.border).toBe('');
+    expect(nodeElement.style.boxShadow).not.toContain('1890ff');
   });
 
   // === US-3: 노드 편집 기능 테스트 ===
