@@ -1,0 +1,81 @@
+.folder-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.folder-dialog {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px 32px;
+  min-width: 360px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.folder-dialog h3 {
+  margin: 0 0 16px;
+  font-size: 18px;
+  color: #1a1a2e;
+}
+
+.folder-dialog-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #dde2e8;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #333;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.folder-dialog-input:focus {
+  border-color: #4A90E2;
+}
+
+.folder-dialog-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.folder-dialog-cancel {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background: #f0f2f5;
+  color: #555;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.folder-dialog-cancel:hover {
+  background: #e4e7eb;
+}
+
+.folder-dialog-confirm {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background: #4A90E2;
+  color: #ffffff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.folder-dialog-confirm:hover {
+  background: #3a7bc8;
+}
+
+.folder-dialog-confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

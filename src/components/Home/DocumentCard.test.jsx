@@ -2,6 +2,19 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import DocumentCard from './DocumentCard';
+import useFileManagerStore from '../../store/FileManagerStore';
+
+// FolderPickerDialog 모킹
+jest.mock('./FolderPickerDialog', () => {
+  return function MockFolderPickerDialog({ docId, onSelect, onCancel }) {
+    return (
+      <div data-testid="folder-picker">
+        <button data-testid="picker-select" onClick={() => onSelect(docId, 'f-1')} />
+        <button data-testid="picker-cancel-btn" onClick={onCancel} />
+      </div>
+    );
+  };
+});
 
 describe('DocumentCard', () => {
   const mockDocument = {
@@ -19,6 +32,11 @@ describe('DocumentCard', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    useFileManagerStore.setState({
+      folders: [
+        { id: 'f-1', name: '작업 폴더', parentId: null }
+      ]
+    });
   });
 
   test('문서 제목을 렌더링한다', () => {
@@ -148,6 +166,26 @@ describe('DocumentCard', () => {
       );
       const marks = document.querySelectorAll('mark');
       expect(marks).toHaveLength(2);
+    });
+  });
+
+  describe('폴더 기능', () => {
+    test('folderId가 있으면 폴더 태그를 표시한다', () => {
+      const doc = { ...mockDocument, folderId: 'f-1' };
+      render(<DocumentCard document={doc} onClick={mockOnClick} onDelete={mockOnDelete} />);
+      expect(screen.getByTestId('folder-tag')).toBeInTheDocument();
+      expect(screen.getByTestId('folder-tag').textContent).toBe('작업 폴더');
+    });
+
+    test('folderId가 null이면 폴더 태그가 없다', () => {
+      render(<DocumentCard document={mockDocument} onClick={mockOnClick} onDelete={mockOnDelete} />);
+      expect(screen.queryByTestId('folder-tag')).not.toBeInTheDocument();
+    });
+
+    test('이동 버튼 클릭 시 FolderPickerDialog가 열린다', () => {
+      render(<DocumentCard document={mockDocument} onClick={mockOnClick} onDelete={mockOnDelete} />);
+      fireEvent.click(screen.getByTestId('move-folder-btn'));
+      expect(screen.getByTestId('folder-picker')).toBeInTheDocument();
     });
   });
 });

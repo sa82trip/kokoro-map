@@ -79,7 +79,9 @@ describe('RecentDocumentList', () => {
       searchQuery: '',
       dateFilter: 'all',
       sortBy: 'recent',
-      searchInContent: false
+      searchInContent: false,
+      folders: [],
+      activeFolderId: null
     });
   });
 
@@ -157,6 +159,27 @@ describe('RecentDocumentList', () => {
       expect(cards[0]).toHaveAttribute('data-testid', 'doc-card-doc-2');
       expect(cards[1]).toHaveAttribute('data-testid', 'doc-card-doc-3');
       expect(cards[2]).toHaveAttribute('data-testid', 'doc-card-doc-1');
+    });
+  });
+
+  describe('폴더 필터링', () => {
+    test('activeFolderId가 설정되면 해당 폴더의 문서만 표시한다', () => {
+      useFileManagerStore.setState({
+        documents: [
+          ...mockDocuments,
+          { id: 'doc-4', title: '폴더 문서', folderId: 'f-1', createdAt: '2026-03-30T10:00:00Z', updatedAt: '2026-03-30T10:00:00Z', nodeCount: 1 }
+        ],
+        activeFolderId: 'f-1'
+      });
+      render(<RecentDocumentList />);
+      expect(screen.getByTestId('doc-card-doc-4')).toBeInTheDocument();
+      expect(screen.queryByTestId('doc-card-doc-1')).not.toBeInTheDocument();
+    });
+
+    test('빈 폴더 선택 시 "이 폴더에 문서가 없습니다" 메시지를 표시한다', () => {
+      useFileManagerStore.setState({ activeFolderId: 'f-1' });
+      render(<RecentDocumentList />);
+      expect(screen.getByText('이 폴더에 문서가 없습니다')).toBeInTheDocument();
     });
   });
 });

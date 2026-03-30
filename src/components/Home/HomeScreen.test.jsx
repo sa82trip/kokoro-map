@@ -42,6 +42,13 @@ jest.mock('./FilterDropdown', () => {
   };
 });
 
+// FolderTree 모킹
+jest.mock('./FolderTree', () => {
+  return function MockFolderTree() {
+    return <div data-testid="folder-tree">FolderTree</div>;
+  };
+});
+
 describe('HomeScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -52,7 +59,9 @@ describe('HomeScreen', () => {
       searchQuery: '',
       dateFilter: 'all',
       sortBy: 'recent',
-      searchInContent: false
+      searchInContent: false,
+      folders: [],
+      activeFolderId: null
     });
   });
 
@@ -99,6 +108,15 @@ describe('HomeScreen', () => {
       </MemoryRouter>
     );
     expect(screen.getByTestId('filter-dropdown')).toBeInTheDocument();
+  });
+
+  test('폴더 트리 사이드바를 렌더링한다', () => {
+    render(
+      <MemoryRouter>
+        <HomeScreen />
+      </MemoryRouter>
+    );
+    expect(screen.getByTestId('folder-tree')).toBeInTheDocument();
   });
 
   test('새 마인드맵 버튼 클릭 시 /editor/new로 이동한다', () => {

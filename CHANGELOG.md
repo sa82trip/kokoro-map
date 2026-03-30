@@ -1,5 +1,63 @@
 # Changelog
 
+## [US-9: 폴더 구조 관리] - 2026-03-30
+
+**Branch**: `main`
+
+### Added
+- **Types** (`src/types/`)
+  - `FolderTypes.js` — Folder 모델, createFolder, updateFolder, validateFolder, getFolderDepth, MAX_FOLDER_DEPTH(3)
+
+- **Utils** (`src/utils/`)
+  - `StorageManager.js` — loadFolders, saveFolders, hasFolders 메서드 추가 (mindmap-docs/folders 키)
+
+- **Store** (`src/store/`)
+  - `FileManagerStore.js` — folders, activeFolderId 상태 추가. createFolder, renameFolder, deleteFolder, moveDocumentToFolder, setActiveFolderId 액션 추가. getDescendantFolderIds 헬퍼. initialize에서 폴더 로드. getFilteredDocuments에 폴더 필터 추가
+
+- **Components** (`src/components/Home/`)
+  - `FolderTree.jsx` + `FolderTree.css` — 사이드바 폴더 트리 (전체 문서, 확장/접힘, 활성 표시, 우클릭 컨텍스트 메뉴, 생성/이름변경 다이얼로그)
+  - `FolderCreateDialog.jsx` + `FolderCreateDialog.css` — 폴더 생성/이름변경 모달 (create/rename 모드, ESC/오버레이 닫기, 빈 이름 비활성화)
+  - `FolderContextMenu.jsx` + `FolderContextMenu.css` — 우클릭 컨텍스트 메뉴 (이름 변경, 삭제)
+  - `FolderPickerDialog.jsx` + `FolderPickerDialog.css` — 문서 이동 다이얼로그 (루트 + 폴더 목록, 현재 위치 표시)
+
+### Changed
+- `src/components/Home/HomeScreen.jsx` — FolderTree import, .home-body flex 래퍼 추가
+- `src/components/Home/HomeScreen.css` — .home-body flex 레이아웃, .home-content overflow-y 추가
+- `src/components/Home/RecentDocumentList.jsx` — activeFolderId 구독, 폴더 빈 상태 "이 폴더에 문서가 없습니다" 추가
+- `src/components/Home/DocumentCard.jsx` — 폴더 태그(folderName), 이동 버튼, FolderPickerDialog 연동
+- `src/components/Home/DocumentCard.css` — .document-card-actions (이동+삭제 버튼 그룹), .document-card-folder-tag 스타일
+
+### Tests
+- `FolderTypes.test.js` — 19 tests (createFolder, updateFolder, validateFolder, getFolderDepth)
+- `StorageManager.test.js` — 5 tests 추가 (loadFolders, saveFolders, hasFolders, 키 검증)
+- `FileManagerStore.test.js` — 16 tests 추가 (createFolder, renameFolder, deleteFolder, moveDocumentToFolder, setActiveFolderId, 폴더 필터링)
+- `FolderCreateDialog.test.jsx` — 9 tests (create/rename 모드, 확인/취소, ESC, Enter, 빈 이름)
+- `FolderContextMenu.test.jsx` — 4 tests (렌더링, 이름 변경, 삭제, 위치)
+- `FolderTree.test.jsx` — 13 tests (전체 문서, 폴더 렌더링, 클릭, 확장, 우클릭, 다이얼로그)
+- `FolderPickerDialog.test.jsx` — 6 tests (렌더링, 폴더 목록, 현재 위치, 선택, 취소)
+- `DocumentCard.test.jsx` — 3 tests 추가 (폴더 태그, 이동 버튼)
+- `RecentDocumentList.test.jsx` — 2 tests 추가 (폴더 필터링, 빈 폴더 상태)
+- `HomeScreen.test.jsx` — 1 test 추가 (FolderTree 렌더링)
+- Total: 340 tests passing / 24 test suites
+
+### 버그 수정 (동일 커밋)
+- FolderTree: createFolder(name) → createFolder(name, parentFolderId) 전달 수정, 컨텍스트 메뉴 "하위 폴더 만들기" 추가
+- FolderPickerDialog: createPortal(dialog, document.body) 적용하여 DocumentCard overflow:hidden 문제 해결
+- Total: 343 tests passing / 24 test suites
+
+### Known Issues
+- FolderPickerDialog에서 폴더 계층 구분 없음 — flat 리스트로 표시되어 루트/하위 폴더 구분 불가
+
+### Technical Notes
+- 폴더 최대 깊이 3단계 제한 (getFolderDepth로 부모 체인 계산)
+- 폴더 삭제 시 자손 폴더도 재귀 삭제 + 고아 문서는 루트(folderId=null)로 이동
+- StorageManager.includes() 대신 indexOf() 사용 (core-js 호환성)
+- FolderTree 내부 상태: expandedFolders(Set), contextMenu, dialogState
+- HomeScreen 레이아웃: header → .home-body(FolderTree | .home-content)
+- Total: 14 files changed (8 new, 6 modified), ~780 insertions(+)
+
+---
+
 ## [US-8: 검색 및 필터링] - 2026-03-30
 
 **Branch**: `main`

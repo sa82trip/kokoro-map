@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import RecentDocumentList from './RecentDocumentList';
 import SearchBar from './SearchBar';
 import FilterDropdown from './FilterDropdown';
+import FolderTree from './FolderTree';
 import useFileManagerStore from '../../store/FileManagerStore';
 import './HomeScreen.css';
 
@@ -46,7 +47,9 @@ const HomeScreen = () => {
         </div>
       </header>
 
-      <main className="home-content">
+      <div className="home-body">
+        <FolderTree />
+        <main className="home-content">
         <section className="recent-section">
           <h2 className="section-title">최근 문서</h2>
           <div className="search-filter-bar">
@@ -58,6 +61,7 @@ const HomeScreen = () => {
           />
         </section>
       </main>
+      </div>
     </div>
   );
 };

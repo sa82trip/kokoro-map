@@ -117,4 +117,35 @@ describe('StorageManager', () => {
       expect(StorageManager.loadDocument('doc-2')).toEqual({ b: 2 });
     });
   });
+
+  describe('폴더 관리', () => {
+    test('폴더가 없으면 빈 배열을 반환한다', () => {
+      expect(StorageManager.loadFolders()).toEqual([]);
+    });
+
+    test('폴더를 저장하고 로드할 수 있다', () => {
+      const folders = [
+        { id: 'f-1', name: '폴더 1', parentId: null },
+        { id: 'f-2', name: '폴더 2', parentId: 'f-1' }
+      ];
+      StorageManager.saveFolders(folders);
+      expect(StorageManager.loadFolders()).toEqual(folders);
+    });
+
+    test('폴더가 mindmap-docs/folders 키에 저장된다', () => {
+      StorageManager.saveFolders([{ id: 'f-1', name: '테스트' }]);
+      expect(localStorage.getItem('mindmap-docs/folders')).toBe('[{"id":"f-1","name":"테스트"}]');
+    });
+
+    test('hasFolders가 폴더 존재 여부를 반환한다', () => {
+      expect(StorageManager.hasFolders()).toBe(false);
+      StorageManager.saveFolders([]);
+      expect(StorageManager.hasFolders()).toBe(true);
+    });
+
+    test('saveFolders가 true를 반환한다', () => {
+      const result = StorageManager.saveFolders([]);
+      expect(result).toBe(true);
+    });
+  });
 });

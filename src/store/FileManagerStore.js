@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { StorageManager } from '../utils/StorageManager';
 import { createDocumentMeta, updateDocumentMeta } from '../types/DocumentTypes';
+import { createFolder as createFolderData, getFolderDepth, MAX_FOLDER_DEPTH } from '../types/FolderTypes';
 
 // 노드 트리 내 키워드 검색 헬퍼
 const searchInNodeTree = (node, query) => {
@@ -14,6 +15,16 @@ const searchInNodeTree = (node, query) => {
   return false;
 };
 
+// 폴더 자손 ID 수집 헬퍼
+const getDescendantFolderIds = (folderId, folders) => {
+  const children = folders.filter(f => f.parentId === folderId);
+  let ids = [folderId];
+  children.forEach(child => {
+    ids = ids.concat(getDescendantFolderIds(child.id, folders));
+  });
+  return ids;
+};
+
 const useFileManagerStore = create((set, get) => ({
   // 상태
   documents: [],          // DocumentMeta[]
@@ -25,6 +36,10 @@ const useFileManagerStore = create((set, get) => ({
   dateFilter: 'all',      // 'all' | 'today' | 'week' | 'month'
   sortBy: 'recent',       // 'recent' | 'name' | 'created'
   searchInContent: false, // 노드 내용도 검색할지
+
+  // 폴더 상태
+  folders: [],            // Folder[]
+  activeFolderId: null,   // string | null (null = 전체 문서)
 
   // 초기화 (앱 시작 시 1회 호출)
   initialize: () => {
@@ -40,7 +55,8 @@ const useFileManagerStore = create((set, get) => ({
 
     // 인덱스 로드
     const docs = StorageManager.loadIndex();
-    set({ documents: docs, initialized: true });
+    const folders = StorageManager.loadFolders();
+    set({ documents: docs, folders, initialized: true });
   },
 
   // 레거시 데이터 마이그레이션
@@ -175,8 +191,13 @@ const useFileManagerStore = create((set, get) => ({
 
   // 검색/필터/정렬이 적용된 문서 목록 반환
   getFilteredDocuments: () => {
-    const { documents, searchQuery, dateFilter, sortBy, searchInContent } = get();
+    const { documents, searchQuery, dateFilter, sortBy, searchInContent, activeFolderId } = get();
     let result = [...documents];
+
+    // 폴더 필터
+    if (activeFolderId !== null) {
+      result = result.filter(doc => doc.folderId === activeFolderId);
+    }
 
     // 검색 필터
     if (searchQuery) {
@@ -223,6 +244,89 @@ const useFileManagerStore = create((set, get) => ({
     }
 
     return result;
+  },
+
+  // 폴더 생성
+  createFolder: (name, parentId = null) => {
+    const { folders } = get();
+
+    // 깊이 검증 (부모 폴더의 깊이가 MAX_FOLDER_DEPTH-1 이하인지 확인)
+    if (parentId !== null) {
+      const parentDepth = getFolderDepth(parentId, folders);
+      if (parentDepth >= MAX_FOLDER_DEPTH - 1) {
+        return null;
+      }
+    }
+
+    const order = folders.filter(f => f.parentId === parentId).length;
+    const folder = { ...createFolderData(name, parentId), order };
+
+    const updatedFolders = [...folders, folder];
+    StorageManager.saveFolders(updatedFolders);
+    set({ folders: updatedFolders });
+
+    return folder.id;
+  },
+
+  // 폴더 이름 변경
+  renameFolder: (folderId, newName) => {
+    const { folders } = get();
+
+    const updatedFolders = folders.map(f =>
+      f.id === folderId ? { ...f, name: newName } : f
+    );
+
+    StorageManager.saveFolders(updatedFolders);
+    set({ folders: updatedFolders });
+  },
+
+  // 폴더 삭제 (하위 폴더 및 문서 정리)
+  deleteFolder: (folderId) => {
+    const { folders, documents, activeFolderId } = get();
+
+    // 삭제할 폴더 ID 목록 (자손 포함)
+    const deleteIds = getDescendantFolderIds(folderId, folders);
+
+    // 폴더에서 삭제
+    const updatedFolders = folders.filter(f => deleteIds.indexOf(f.id) === -1);
+
+    // 고아 문서를 루트로 이동
+    const updatedDocs = documents.map(doc =>
+      deleteIds.indexOf(doc.folderId) !== -1 ? { ...doc, folderId: null } : doc
+    );
+
+    StorageManager.saveFolders(updatedFolders);
+    StorageManager.saveIndex(updatedDocs);
+
+    set({
+      folders: updatedFolders,
+      documents: updatedDocs,
+      activeFolderId: deleteIds.indexOf(activeFolderId) !== -1 ? null : activeFolderId
+    });
+  },
+
+  // 문서를 폴더로 이동
+  moveDocumentToFolder: (docId, folderId) => {
+    const { documents, folders } = get();
+
+    // 폴더 존재 검증 (null은 루트이므로 허용)
+    if (folderId !== null && !folders.find(f => f.id === folderId)) {
+      return false;
+    }
+
+    const updatedDocs = documents.map(doc =>
+      doc.id === docId ? { ...doc, folderId } : doc
+    );
+
+    StorageManager.saveIndex(updatedDocs);
+    set({ documents: updatedDocs });
+
+    return true;
+  },
+
+  // 활성 폴더 설정
+  setActiveFolderId: (folderId) => {
+    set({ activeFolderId: folderId });
   }
 }));
 

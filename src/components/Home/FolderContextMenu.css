@@ -1,0 +1,34 @@
+.folder-context-menu {
+  position: fixed;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 1100;
+  min-width: 160px;
+  overflow: hidden;
+}
+
+.folder-context-menu-item {
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  border-bottom: 1px solid #f0f2f5;
+  transition: background 0.15s;
+}
+
+.folder-context-menu-item:last-child {
+  border-bottom: none;
+}
+
+.folder-context-menu-item:hover {
+  background: #f5f7fa;
+}
+
+.folder-context-menu-item.danger {
+  color: #ff4d4f;
+}
+
+.folder-context-menu-item.danger:hover {
+  background: #fff1f0;
+}

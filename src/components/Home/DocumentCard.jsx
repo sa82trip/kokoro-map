@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
+import useFileManagerStore from '../../store/FileManagerStore';
+import FolderPickerDialog from './FolderPickerDialog';
 import './DocumentCard.css';
 
 const DocumentCard = ({ document, onClick, onDelete, highlight }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showMoveDialog, setShowMoveDialog] = useState(false);
+  const folders = useFileManagerStore((state) => state.folders);
+  const moveDocumentToFolder = useFileManagerStore((state) => state.moveDocumentToFolder);
 
   // 검색어 하이라이트
   const highlightText = (text, query) => {
@@ -74,6 +79,21 @@ const DocumentCard = ({ document, onClick, onDelete, highlight }) => {
     setShowDeleteConfirm(false);
   };
 
+  const handleMoveClick = (e) => {
+    e.stopPropagation();
+    setShowMoveDialog(true);
+  };
+
+  const handleMoveSelect = (docId, folderId) => {
+    moveDocumentToFolder(docId, folderId);
+    setShowMoveDialog(false);
+  };
+
+  // 폴더 이름 조회
+  const folderName = document.folderId
+    ? (folders.find(f => f.id === document.folderId) || {}).name
+    : null;
+
   return (
     <div className="document-card" onClick={() => onClick(document.id)}>
       <div className="document-card-thumbnail">
@@ -102,18 +122,33 @@ const DocumentCard = ({ document, onClick, onDelete, highlight }) => {
           <span className="document-card-date">{formatDate(document.updatedAt)}</span>
           <span className="document-card-nodes">{document.nodeCount}개 노드</span>
         </div>
+        {folderName && (
+          <span className="document-card-folder-tag" data-testid="folder-tag">{folderName}</span>
+        )}
       </div>
 
-      <button
-        className="document-card-delete"
-        onClick={handleDeleteClick}
-        aria-label="문서 삭제"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
-      </button>
+      <div className="document-card-actions">
+        <button
+          className="document-card-move"
+          onClick={handleMoveClick}
+          aria-label="폴더 이동"
+          data-testid="move-folder-btn"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+          </svg>
+        </button>
+        <button
+          className="document-card-delete"
+          onClick={handleDeleteClick}
+          aria-label="문서 삭제"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
 
       {showDeleteConfirm && (
         <div className="document-card-confirm" onClick={(e) => e.stopPropagation()}>
@@ -123,6 +158,15 @@ const DocumentCard = ({ document, onClick, onDelete, highlight }) => {
             <button className="confirm-delete" onClick={handleConfirmDelete}>삭제</button>
           </div>
         </div>
+      )}
+
+      {showMoveDialog && (
+        <FolderPickerDialog
+          docId={document.id}
+          currentFolderId={document.folderId}
+          onSelect={handleMoveSelect}
+          onCancel={() => setShowMoveDialog(false)}
+        />
       )}
     </div>
   );

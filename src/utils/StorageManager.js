@@ -4,6 +4,7 @@
 const STORAGE_PREFIX = 'mindmap-docs';
 const INDEX_KEY = `${STORAGE_PREFIX}/index`;
 const DOC_KEY_PREFIX = `${STORAGE_PREFIX}/`;
+const FOLDERS_KEY = `${STORAGE_PREFIX}/folders`;
 const LEGACY_KEY = 'mindmap-app-data';
 
 export const StorageManager = {
@@ -100,6 +101,37 @@ export const StorageManager = {
   hasIndex: () => {
     try {
       return localStorage.getItem(INDEX_KEY) !== null;
+    } catch (e) {
+      return false;
+    }
+  },
+
+  // 폴더 목록 로드
+  loadFolders: () => {
+    try {
+      const saved = localStorage.getItem(FOLDERS_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.warn('폴더 목록 로드 실패:', e);
+      return [];
+    }
+  },
+
+  // 폴더 목록 저장
+  saveFolders: (folders) => {
+    try {
+      localStorage.setItem(FOLDERS_KEY, JSON.stringify(folders));
+      return true;
+    } catch (e) {
+      console.warn('폴더 목록 저장 실패:', e);
+      return false;
+    }
+  },
+
+  // 폴더 데이터 존재 여부
+  hasFolders: () => {
+    try {
+      return localStorage.getItem(FOLDERS_KEY) !== null;
     } catch (e) {
       return false;
     }

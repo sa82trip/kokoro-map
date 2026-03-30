@@ -6,6 +6,7 @@ import './RecentDocumentList.css';
 const RecentDocumentList = ({ onOpenDocument, onDeleteDocument }) => {
   const documents = useFileManagerStore((state) => state.documents);
   const searchQuery = useFileManagerStore((state) => state.searchQuery);
+  const activeFolderId = useFileManagerStore((state) => state.activeFolderId);
   const getFilteredDocuments = useFileManagerStore((state) => state.getFilteredDocuments);
 
   const filteredDocuments = getFilteredDocuments();
@@ -36,6 +37,19 @@ const RecentDocumentList = ({ onOpenDocument, onDeleteDocument }) => {
         </svg>
         <p>아직 생성된 마인드맵이 없습니다</p>
         <span>새 마인드맵 버튼을 눌러 시작해보세요</span>
+      </div>
+    );
+  }
+
+  // 폴더에 문서가 없을 때
+  if (activeFolderId !== null && filteredDocuments.length === 0 && !searchQuery) {
+    return (
+      <div className="recent-documents-empty">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#c0c8d4" strokeWidth="1.5">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+        </svg>
+        <p>이 폴더에 문서가 없습니다</p>
+        <span>다른 폴더를 선택하거나 새 문서를 만들어보세요</span>
       </div>
     );
   }

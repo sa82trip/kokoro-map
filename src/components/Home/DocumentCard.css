@@ -70,11 +70,35 @@
   font-size: 11px;
 }
 
+/* 폴더 태그 */
+.document-card-folder-tag {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 8px;
+  background: #e8f0fe;
+  color: #4A90E2;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
 /* 삭제 버튼 */
-.document-card-delete {
+.document-card-actions {
   position: absolute;
   top: 8px;
   right: 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.document-card:hover .document-card-actions {
+  opacity: 1;
+}
+
+.document-card-move,
+.document-card-delete {
   width: 28px;
   height: 28px;
   border: none;
@@ -84,17 +108,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s ease, background 0.2s ease;
+  transition: background 0.2s ease;
   color: #666;
-}
-
-.document-card:hover .document-card-delete {
-  opacity: 1;
 }
 
 .document-card-delete:hover {
   background: #ff4d4f;
+  color: #fff;
+}
+
+.document-card-move:hover {
+  background: #4A90E2;
   color: #fff;
 }
 
