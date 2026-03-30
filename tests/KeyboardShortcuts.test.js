@@ -372,6 +372,59 @@ describe('useKeyboardShortcuts', () => {
     expect(useMindMapStore.getState().toolbarNodeId).toBeNull();
   });
 
+  test('F2 키로 편집 모드 진입', () => {
+    const store = useMindMapStore.getState();
+    store.setSelectedNodeId('child-1');
+
+    renderHook(() => useKeyboardShortcuts());
+
+    act(() => {
+      window.dispatchEvent(createKeyboardEvent('F2'));
+    });
+
+    expect(useMindMapStore.getState().editingNodeId).toBe('child-1');
+  });
+
+  test('C 키로 편집 모드 진입', () => {
+    const store = useMindMapStore.getState();
+    store.setSelectedNodeId('child-1');
+
+    renderHook(() => useKeyboardShortcuts());
+
+    act(() => {
+      window.dispatchEvent(createKeyboardEvent('c'));
+    });
+
+    expect(useMindMapStore.getState().editingNodeId).toBe('child-1');
+  });
+
+  test('Shift+C 키로 편집 모드 진입', () => {
+    const store = useMindMapStore.getState();
+    store.setSelectedNodeId('child-1');
+
+    renderHook(() => useKeyboardShortcuts());
+
+    act(() => {
+      window.dispatchEvent(createKeyboardEvent('C'));
+    });
+
+    expect(useMindMapStore.getState().editingNodeId).toBe('child-1');
+  });
+
+  test('F2 키 입력 시 툴바가 닫힌다', () => {
+    const store = useMindMapStore.getState();
+    store.setSelectedNodeId('child-1');
+    store.setToolbarNodeId('child-1');
+
+    renderHook(() => useKeyboardShortcuts());
+
+    act(() => {
+      window.dispatchEvent(createKeyboardEvent('F2'));
+    });
+
+    expect(useMindMapStore.getState().toolbarNodeId).toBeNull();
+  });
+
   test('화살표 이동 시 툴바가 닫힌다', () => {
     const store = useMindMapStore.getState();
     store.setSelectedNodeId('child-1');
@@ -550,6 +603,7 @@ describe('KeyboardShortcutsHelp', () => {
     expect(screen.getByText('단축키 도움말')).toBeInTheDocument();
     expect(screen.getByText('선택된 노드 삭제')).toBeInTheDocument();
     expect(screen.getByText('노드 설정 툴바 열기/닫기')).toBeInTheDocument();
+    expect(screen.getByText('노드 이름 변경')).toBeInTheDocument();
     expect(screen.getByText('선택 해제')).toBeInTheDocument();
     expect(screen.getByText('첫 번째 자식으로 이동')).toBeInTheDocument();
     expect(screen.getByText('부모 노드로 이동')).toBeInTheDocument();

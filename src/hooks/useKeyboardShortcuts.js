@@ -102,6 +102,14 @@ const useKeyboardShortcuts = () => {
       return;
     }
 
+    // F2 / C: 선택된 노드 이름 변경 (편집 모드 진입)
+    if (e.key === 'F2' || e.key === 'c' || e.key === 'C') {
+      e.preventDefault();
+      store.setToolbarNodeId(null);
+      store.setEditingNodeId(selId);
+      return;
+    }
+
     // Delete/Backspace: 노드 삭제
     if (e.key === 'Delete' || e.key === 'Backspace') {
       e.preventDefault();

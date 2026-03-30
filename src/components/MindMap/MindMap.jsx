@@ -5,6 +5,7 @@ import KeyboardShortcutsHelp from './KeyboardShortcutsHelp';
 import useMindMapStore from '../../store/MindMapStore';
 import useFileManagerStore from '../../store/FileManagerStore';
 import useKeyboardShortcuts from '../../hooks/useKeyboardShortcuts';
+import { version } from '../../../package.json';
 import '../../styles/MindMap.css';
 
 const MindMap = ({ initialData = null }) => {
@@ -59,6 +60,13 @@ const MindMap = ({ initialData = null }) => {
       <Toolbar />
       <MindMapContainer data={mindMapData} />
       {showHelp && <KeyboardShortcutsHelp onClose={() => setShowHelp(false)} />}
+      <div style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0,
+        display: 'flex', justifyContent: 'center',
+        padding: '6px 0', zIndex: 50, pointerEvents: 'none'
+      }}>
+        <span style={{ fontSize: 11, color: '#999' }}>v{version}</span>
+      </div>
     </div>
   );
 };

@@ -1,5 +1,36 @@
 # Changelog
 
+## [노드 이름 변경 단축키 + 버전 표시] - 2026-03-31
+
+**Branch**: `main` | **Version**: v1.0.1
+
+### Added
+- **Store** (`src/store/MindMapStore.js`)
+  - `editingNodeId` 상태, `setEditingNodeId` 액션 추가
+- **Hooks** (`src/hooks/useKeyboardShortcuts.js`)
+  - F2 / C 키 노드 이름 변경 (편집 모드 진입) 단축키 추가
+- **Components** (`src/components/MindMap/`)
+  - `Node.jsx` — store `editingNodeId` 감지하여 편집 모드 자동 진입
+  - `KeyboardShortcutsHelp.jsx` — F2 / C 단축키 도움말 항목 추가
+  - `MindMap.jsx` — 화면 하단 버전 표시 (fixed bottom)
+- **Components** (`src/components/Home/`)
+  - `HomeScreen.jsx` + `HomeScreen.css` — 하단 footer 버전 표시
+
+### Changed
+- `CLAUDE.md` — 커밋 시 버전 업 지침 추가 (Semantic Versioning)
+
+### Tests
+- `tests/KeyboardShortcuts.test.js` — 3 tests 추가 (F2 편집, C 편집, Shift+C 편집)
+- Total: 36 keyboard shortcut tests passing, 463 total tests
+
+### Technical Notes
+- F2/C 단축키 → store.setEditingNodeId(selectedNodeId) → Node.jsx useEffect 감지 → 로컬 isEditing=true
+- 편집 모드 진입 시 툴바 자동 닫힘
+- 버전은 package.json에서 import하여 자동 표시
+- Total: 8 files changed
+
+---
+
 ## [US-14: PNG 내보내기] - 2026-03-31
 
 **Branch**: `main`

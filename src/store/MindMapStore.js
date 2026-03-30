@@ -28,6 +28,7 @@ const useMindMapStore = create((set, get) => ({
   activeDocumentId: null,
   selectedNodeId: null,
   toolbarNodeId: null,
+  editingNodeId: null,
 
   // Undo/Redo 상태
   undoStack: [],
@@ -612,6 +613,7 @@ const useMindMapStore = create((set, get) => ({
 
   // 툴바 표시 노드 설정
   setToolbarNodeId: (nodeId) => set({ toolbarNodeId: nodeId }),
+  setEditingNodeId: (nodeId) => set({ editingNodeId: nodeId }),
 
   // 초기화
   reset: () => set({
@@ -634,6 +636,7 @@ const useMindMapStore = create((set, get) => ({
     activeDocumentId: null,
     selectedNodeId: null,
     toolbarNodeId: null,
+    editingNodeId: null,
     undoStack: [],
     redoStack: [],
     _preDragSnapshot: null

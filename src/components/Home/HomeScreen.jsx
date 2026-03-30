@@ -5,6 +5,7 @@ import SearchBar from './SearchBar';
 import FilterDropdown from './FilterDropdown';
 import FolderTree from './FolderTree';
 import useFileManagerStore from '../../store/FileManagerStore';
+import { version } from '../../../package.json';
 import './HomeScreen.css';
 
 const HomeScreen = () => {
@@ -62,6 +63,10 @@ const HomeScreen = () => {
         </section>
       </main>
       </div>
+
+      <footer className="home-footer">
+        <span className="version-text">v{version}</span>
+      </footer>
     </div>
   );
 };

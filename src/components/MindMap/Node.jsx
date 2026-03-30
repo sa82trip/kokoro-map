@@ -7,7 +7,7 @@ import DeleteConfirmDialog from './DeleteConfirmDialog';
 import NodeEditorToolbar from './NodeEditorToolbar';
 
 const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelected, onSelect, showToolbar, onToggleToolbar }) => {
-  const { updateNodeText, updateNodePosition, updateNodeStyle, saveNodePositions, zoomLevel } = useMindMapStore();
+  const { updateNodeText, updateNodePosition, updateNodeStyle, saveNodePositions, zoomLevel, editingNodeId, setEditingNodeId } = useMindMapStore();
   const [isEditing, setIsEditing] = useState(false);
   const [text, setText] = useState(node.text || 'New Node');
   const [position, setPosition] = useState(initialPosition || { x: 0, y: 0 });
@@ -33,6 +33,14 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
       inputRef.current.select();
     }
   }, [isEditing]);
+
+  // F2 단축키로 편집 모드 진입 (store editingNodeId → 로컬 isEditing)
+  useEffect(() => {
+    if (editingNodeId === node.id && !isEditing) {
+      setIsEditing(true);
+      setEditingNodeId(null);
+    }
+  }, [editingNodeId, node.id, isEditing, setEditingNodeId]);
 
   // node.text 외부 변경 동기화
   useEffect(() => {
