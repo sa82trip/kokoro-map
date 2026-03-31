@@ -14,12 +14,15 @@ const useMindMapStore = create((set, get) => ({
   error: null,
   validationErrors: [],
   layoutConfig: { horizontalGap: 100, verticalGap: 30 },
-  connectionStyle: 'bezier',
-  connectionColor: '#b0b8c8',
-  connectionArrow: false,
-  connectionDashed: false,
-  connectionWidth: 2,
-  connectionColorMode: 'global',
+  connectionConfig: {
+    style: 'bezier',
+    color: '#b0b8c8',
+    arrow: false,
+    dashed: false,
+    thickness: 2,
+    inheritColor: false,
+    colorMode: 'global'
+  },
   viewport: { x: 0, y: 0 },
   zoomLevel: 1.0,
   maxZoom: 3.0,
@@ -501,40 +504,69 @@ const useMindMapStore = create((set, get) => ({
     });
   },
 
-  // 연결선 스타일 변경
+  // 연결line 설정 업데이트 (전체)
+  setConnectionConfig: (config) => {
+    const current = get().connectionConfig || {
+      style: 'bezier',
+      color: '#b0b8c8',
+      arrow: false,
+      dashed: false,
+      thickness: 2,
+      inheritColor: false,
+      colorMode: 'global'
+    };
+
+    const newConfig = { ...current, ...config };
+
+    // 값 검증
+    if (newConfig.style && newConfig.style !== 'bezier' && newConfig.style !== 'straight') {
+      newConfig.style = current.style;
+    }
+    if (newConfig.color && (!/^#[0-9A-Fa-f]{6}$/.test(newConfig.color))) {
+      newConfig.color = current.color;
+    }
+    if (newConfig.thickness && typeof newConfig.thickness === 'number') {
+      newConfig.thickness = Math.min(5, Math.max(1, Math.round(newConfig.thickness)));
+    }
+    if (newConfig.colorMode && newConfig.colorMode !== 'global' && newConfig.colorMode !== 'branch') {
+      newConfig.colorMode = current.colorMode;
+    }
+    if (newConfig.arrow !== undefined) {
+      newConfig.arrow = !!newConfig.arrow;
+    }
+    if (newConfig.dashed !== undefined) {
+      newConfig.dashed = !!newConfig.dashed;
+    }
+    if (newConfig.inheritColor !== undefined) {
+      newConfig.inheritColor = !!newConfig.inheritColor;
+    }
+
+    set({ connectionConfig: newConfig });
+  },
+
+  // 개별 설정 업데이트 (기존 메서드 호환성)
   setConnectionStyle: (style) => {
-    if (style !== 'bezier' && style !== 'straight') return;
-    set({ connectionStyle: style });
+    get().setConnectionConfig({ style });
   },
 
-  // 연결선 색상 변경
   setConnectionColor: (color) => {
-    if (typeof color !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(color)) return;
-    set({ connectionColor: color });
+    get().setConnectionConfig({ color });
   },
 
-  // 연결선 화살표 표시
   setConnectionArrow: (enabled) => {
-    if (typeof enabled !== 'boolean') return;
-    set({ connectionArrow: enabled });
+    get().setConnectionConfig({ arrow: enabled });
   },
 
-  // 연결선 점선 스타일
   setConnectionDashed: (enabled) => {
-    if (typeof enabled !== 'boolean') return;
-    set({ connectionDashed: enabled });
+    get().setConnectionConfig({ dashed: enabled });
   },
 
-  // 연결선 두께 (1~5)
   setConnectionWidth: (width) => {
-    if (typeof width !== 'number') return;
-    set({ connectionWidth: Math.min(5, Math.max(1, Math.round(width))) });
+    get().setConnectionConfig({ thickness: width });
   },
 
-  // 연결선 색상 모드 ('global' | 'branch')
   setConnectionColorMode: (mode) => {
-    if (mode !== 'global' && mode !== 'branch') return;
-    set({ connectionColorMode: mode });
+    get().setConnectionConfig({ colorMode: mode });
   },
 
   // 전체 레이아웃 재조정
@@ -622,12 +654,15 @@ const useMindMapStore = create((set, get) => ({
     error: null,
     validationErrors: [],
     layoutConfig: { horizontalGap: 100, verticalGap: 30 },
-    connectionStyle: 'bezier',
-    connectionColor: '#b0b8c8',
-    connectionArrow: false,
-    connectionDashed: false,
-    connectionWidth: 2,
-    connectionColorMode: 'global',
+    connectionConfig: {
+      style: 'bezier',
+      color: '#b0b8c8',
+      arrow: false,
+      dashed: false,
+      thickness: 2,
+      inheritColor: false,
+      colorMode: 'global'
+    },
     viewport: { x: 0, y: 0 },
     zoomLevel: 1.0,
     maxZoom: 3.0,

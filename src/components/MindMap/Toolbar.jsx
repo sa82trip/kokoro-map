@@ -17,18 +17,8 @@ const Toolbar = () => {
     updateMindMapTitle,
     applyAutoLayout,
     resetLayout,
-    connectionStyle,
-    setConnectionStyle,
-    connectionColor,
-    setConnectionColor,
-    connectionArrow,
-    setConnectionArrow,
-    connectionDashed,
-    setConnectionDashed,
-    connectionWidth,
-    setConnectionWidth,
-    connectionColorMode,
-    setConnectionColorMode,
+    connectionConfig,
+    setConnectionConfig,
     layoutConfig,
     setLayoutConfig,
     resetViewport,
@@ -435,26 +425,26 @@ const Toolbar = () => {
             <div style={{ display: 'flex', gap: 4 }}>
               <button
                 data-testid="btn-connection-bezier"
-                onClick={() => setConnectionStyle('bezier')}
+                onClick={() => setConnectionConfig({ style: 'bezier' })}
                 style={{
                   ...buttonBase,
                   fontSize: 12,
                   padding: '4px 10px',
-                  background: connectionStyle === 'bezier' ? '#4A90E2' : '#f0f0f0',
-                  color: connectionStyle === 'bezier' ? '#fff' : '#333'
+                  background: connectionConfig.style === 'bezier' ? '#4A90E2' : '#f0f0f0',
+                  color: connectionConfig.style === 'bezier' ? '#fff' : '#333'
                 }}
               >
                 곡선
               </button>
               <button
                 data-testid="btn-connection-straight"
-                onClick={() => setConnectionStyle('straight')}
+                onClick={() => setConnectionConfig({ style: 'straight' })}
                 style={{
                   ...buttonBase,
                   fontSize: 12,
                   padding: '4px 10px',
-                  background: connectionStyle === 'straight' ? '#4A90E2' : '#f0f0f0',
-                  color: connectionStyle === 'straight' ? '#fff' : '#333'
+                  background: connectionConfig.style === 'straight' ? '#4A90E2' : '#f0f0f0',
+                  color: connectionConfig.style === 'straight' ? '#fff' : '#333'
                 }}
               >
                 직선
@@ -467,23 +457,23 @@ const Toolbar = () => {
             <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>연결선 색상</div>
             <div style={{
               display: 'flex', gap: 2, flexWrap: 'wrap', maxWidth: 220,
-              opacity: connectionColorMode === 'branch' ? 0.3 : 1,
-              pointerEvents: connectionColorMode === 'branch' ? 'none' : 'auto'
+              opacity: connectionConfig.colorMode === 'branch' ? 0.3 : 1,
+              pointerEvents: connectionConfig.colorMode === 'branch' ? 'none' : 'auto'
             }}>
               {COLOR_PALETTE.slice(0, 16).map((color) => (
                 <div
                   key={color}
                   data-testid={`conn-color-${color.replace('#', '')}`}
-                  onClick={() => setConnectionColor(color)}
+                  onClick={() => setConnectionConfig({ color })}
                   style={{
                     width: 16, height: 16, borderRadius: '50%', cursor: 'pointer',
                     background: color,
-                    border: connectionColor === color ? '2px solid #1890ff' : '1px solid #ccc',
+                    border: connectionConfig.color === color ? '2px solid #1890ff' : '1px solid #ccc',
                   }}
                 />
               ))}
             </div>
-            {connectionColorMode === 'branch' && (
+            {connectionConfig.colorMode === 'branch' && (
               <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>노드 색상 상속 모드</div>
             )}
           </div>
@@ -494,26 +484,26 @@ const Toolbar = () => {
             <div style={{ display: 'flex', gap: 4 }}>
               <button
                 data-testid="btn-arrow-off"
-                onClick={() => setConnectionArrow(false)}
+                onClick={() => setConnectionConfig({ arrow: false })}
                 style={{
                   ...buttonBase,
                   fontSize: 12,
                   padding: '4px 10px',
-                  background: !connectionArrow ? '#4A90E2' : '#f0f0f0',
-                  color: !connectionArrow ? '#fff' : '#333'
+                  background: !connectionConfig.arrow ? '#4A90E2' : '#f0f0f0',
+                  color: !connectionConfig.arrow ? '#fff' : '#333'
                 }}
               >
                 없음
               </button>
               <button
                 data-testid="btn-arrow-on"
-                onClick={() => setConnectionArrow(true)}
+                onClick={() => setConnectionConfig({ arrow: true })}
                 style={{
                   ...buttonBase,
                   fontSize: 12,
                   padding: '4px 10px',
-                  background: connectionArrow ? '#4A90E2' : '#f0f0f0',
-                  color: connectionArrow ? '#fff' : '#333'
+                  background: connectionConfig.arrow ? '#4A90E2' : '#f0f0f0',
+                  color: connectionConfig.arrow ? '#fff' : '#333'
                 }}
               >
                 표시
@@ -527,26 +517,26 @@ const Toolbar = () => {
             <div style={{ display: 'flex', gap: 4 }}>
               <button
                 data-testid="btn-dashed-off"
-                onClick={() => setConnectionDashed(false)}
+                onClick={() => setConnectionConfig({ dashed: false })}
                 style={{
                   ...buttonBase,
                   fontSize: 12,
                   padding: '4px 10px',
-                  background: !connectionDashed ? '#4A90E2' : '#f0f0f0',
-                  color: !connectionDashed ? '#fff' : '#333'
+                  background: !connectionConfig.dashed ? '#4A90E2' : '#f0f0f0',
+                  color: !connectionConfig.dashed ? '#fff' : '#333'
                 }}
               >
                 실선
               </button>
               <button
                 data-testid="btn-dashed-on"
-                onClick={() => setConnectionDashed(true)}
+                onClick={() => setConnectionConfig({ dashed: true })}
                 style={{
                   ...buttonBase,
                   fontSize: 12,
                   padding: '4px 10px',
-                  background: connectionDashed ? '#4A90E2' : '#f0f0f0',
-                  color: connectionDashed ? '#fff' : '#333'
+                  background: connectionConfig.dashed ? '#4A90E2' : '#f0f0f0',
+                  color: connectionConfig.dashed ? '#fff' : '#333'
                 }}
               >
                 점선
@@ -557,14 +547,14 @@ const Toolbar = () => {
           {/* 연결선 두께 */}
           <div style={{ marginBottom: 12 }}>
             <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>
-              연결선 두께: {connectionWidth}px
+              연결선 두께: {connectionConfig.thickness}px
             </div>
             <input
               data-testid="connection-width-slider"
               type="range"
               min={1} max={5} step={1}
-              value={connectionWidth}
-              onChange={(e) => setConnectionWidth(Number(e.target.value))}
+              value={connectionConfig.thickness}
+              onChange={(e) => setConnectionConfig({ thickness: Number(e.target.value) })}
               style={{ width: '100%' }}
             />
           </div>
@@ -575,30 +565,49 @@ const Toolbar = () => {
             <div style={{ display: 'flex', gap: 4 }}>
               <button
                 data-testid="btn-color-mode-global"
-                onClick={() => setConnectionColorMode('global')}
+                onClick={() => setConnectionConfig({ colorMode: 'global' })}
                 style={{
                   ...buttonBase,
                   fontSize: 12,
                   padding: '4px 10px',
-                  background: connectionColorMode === 'global' ? '#4A90E2' : '#f0f0f0',
-                  color: connectionColorMode === 'global' ? '#fff' : '#333'
+                  background: connectionConfig.colorMode === 'global' ? '#4A90E2' : '#f0f0f0',
+                  color: connectionConfig.colorMode === 'global' ? '#fff' : '#333'
                 }}
               >
                 전역
               </button>
               <button
                 data-testid="btn-color-mode-branch"
-                onClick={() => setConnectionColorMode('branch')}
+                onClick={() => setConnectionConfig({ colorMode: 'branch' })}
                 style={{
                   ...buttonBase,
                   fontSize: 12,
                   padding: '4px 10px',
-                  background: connectionColorMode === 'branch' ? '#4A90E2' : '#f0f0f0',
-                  color: connectionColorMode === 'branch' ? '#fff' : '#333'
+                  background: connectionConfig.colorMode === 'branch' ? '#4A90E2' : '#f0f0f0',
+                  color: connectionConfig.colorMode === 'branch' ? '#fff' : '#333'
                 }}
               >
                 브랜치
               </button>
+            </div>
+          </div>
+
+          {/* 색상 상속 */}
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12 }}>
+              <input
+                data-testid="inherit-color-checkbox"
+                type="checkbox"
+                checked={connectionConfig.inheritColor}
+                onChange={(e) => setConnectionConfig({ inheritColor: e.target.checked })}
+                style={{ cursor: 'pointer' }}
+              />
+              <span style={{ color: '#666' }}>부모 노드 색상 상속</span>
+            </label>
+            <div style={{ fontSize: 11, color: '#999', marginTop: 4 }}>
+              {connectionConfig.inheritColor
+                ? "자식 노드가 부모 노드의 색상을 사용합니다"
+                : "연결선에 전역 색상을 사용합니다"}
             </div>
           </div>
 

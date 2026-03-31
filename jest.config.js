@@ -27,6 +27,7 @@ module.exports = {
   verbose: true,
   testTimeout: 10000,
   transformIgnorePatterns: [
-    '/node_modules/'
+    '/node_modules/',
+    '\\core-js/'
   ]
 };

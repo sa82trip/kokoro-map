@@ -17,7 +17,15 @@ const getNodeSize = (node) => {
 };
 
 // 부모-자식 연결선 렌더링
-const renderConnections = (node, connectionStyle = 'bezier', connectionColor = '#b0b8c8', connectionArrow = false, connectionDashed = false, connectionWidth = 2, connectionColorMode = 'global', zoomLevel = 1.0) => {
+const renderConnections = (node, connectionConfig, zoomLevel = 1.0) => {
+  const {
+    style: connectionStyle = 'bezier',
+    color: connectionColor = '#b0b8c8',
+    arrow: connectionArrow = false,
+    dashed: connectionDashed = false,
+    thickness: connectionWidth = 2,
+    colorMode: connectionColorMode = 'global'
+  } = connectionConfig || {};
   if (!node || !node.children || node.children.length === 0) return { markerDefs: new Map(), paths: [] };
 
   const markerDefs = new Map();
@@ -60,9 +68,9 @@ const renderConnections = (node, connectionStyle = 'bezier', connectionColor = '
       ? `M ${x1} ${y1} L ${x2} ${y2}`
       : `M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`;
 
-    const lineColor = connectionColorMode === 'branch'
+    const lineColor = connectionConfig.colorMode === 'branch'
       ? (node.color || '#4A90E2')
-      : connectionColor;
+      : (connectionConfig.inheritColor ? (node.color || '#4A90E2') : connectionConfig.color);
 
     const markerId = `arrowhead-${lineColor.replace('#', '')}`;
     if (connectionArrow && !markerDefs.has(markerId)) {
@@ -95,7 +103,7 @@ const renderConnections = (node, connectionStyle = 'bezier', connectionColor = '
       />
     );
 
-    const childResult = renderConnections(child, connectionStyle, connectionColor, connectionArrow, connectionDashed, connectionWidth, connectionColorMode, zoomLevel);
+    const childResult = renderConnections(child, connectionConfig, zoomLevel);
     childResult.markerDefs.forEach((v, k) => { if (!markerDefs.has(k)) markerDefs.set(k, v); });
     paths.push(...childResult.paths);
   });
@@ -105,12 +113,7 @@ const renderConnections = (node, connectionStyle = 'bezier', connectionColor = '
 
 const MindMapContainer = ({ data }) => {
   const { addNode, deleteNode } = useMindMapStore();
-  const connectionStyle = useMindMapStore((state) => state.connectionStyle);
-  const connectionColor = useMindMapStore((state) => state.connectionColor);
-  const connectionArrow = useMindMapStore((state) => state.connectionArrow);
-  const connectionDashed = useMindMapStore((state) => state.connectionDashed);
-  const connectionWidth = useMindMapStore((state) => state.connectionWidth);
-  const connectionColorMode = useMindMapStore((state) => state.connectionColorMode);
+  const connectionConfig = useMindMapStore((state) => state.connectionConfig);
   const viewport = useMindMapStore((state) => state.viewport);
   const setViewport = useMindMapStore((state) => state.setViewport);
   const selectedNodeId = useMindMapStore((state) => state.selectedNodeId);
@@ -232,7 +235,7 @@ const MindMapContainer = ({ data }) => {
     );
   };
 
-  const { markerDefs, paths } = renderConnections(data, connectionStyle, connectionColor, connectionArrow, connectionDashed, connectionWidth, connectionColorMode, zoomLevel);
+  const { markerDefs, paths } = renderConnections(data, connectionConfig, zoomLevel);
 
   return (
     <div

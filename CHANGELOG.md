@@ -1,8 +1,37 @@
 # Changelog
 
-## [비밀번호 방식 개선: 시간 기반 + 세션 연장] - 2026-03-31
+## [연결선 고급 스타일] - 2026-03-31
 
-**Branch**: `main` | **Version**: v1.0.5
+**Branch**: `main` | **Version**: v1.0.6
+
+### Added
+- **Connection UI** (`src/components/MindMap/Toolbar.jsx`)
+  - 설정 패널에 연결선 스타일 제어기 추가 (422-613라인)
+  - 실시간 연결선 스타일 변경 기능
+  - 곡선/직선 스타일 선택 버튼
+  - 화살표 토글 (표시/없음)
+  - 점선 스타일 토글 (실선/점선)
+  - 연결선 두께 슬라이더 (1-5px)
+  - 색상 모드 선택 (전역/브랜치)
+  - 색상 상속 체크박스
+
+### Changed
+- `src/store/MindMapStore.js` — 연결선 설정 관리 API 강화
+  - `setConnectionConfig()` 메서드 개선 (값 검증 추가)
+  - 연결선 스타일 유효성 검증 (bezier/straight만 허용)
+  - 색상 형식 검증 (#HEX 6자리)
+  - 두께 범위 검증 (1-5px)
+  - 색상 모드 검증 (global/branch만 허용)
+- `tests/connections.test.js` — 연결련 기능 테스트 10개 추가
+  - 모든 설정 변경 시나리오 테스트
+  - 비동기 상태 업데이트 처리
+  - 자식 노드 추가 후 연결선 생성 확인
+
+### Technical Notes
+- 연결선 설정은 `connectionConfig` 상태로 관리
+- UI에서 변경된 설정은 즉시 적용되고 저장됨
+- 화살표 활성화 시 SVG marker 동적 생성
+- Total: 2 files changed, +220 lines added
 
 ### Problem
 1. 세션이 5분만에 리셋되어 잦은 재인증 필요

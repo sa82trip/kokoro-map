@@ -23,7 +23,7 @@ jest.mock('./FileManagerStore', () => {
 Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
 Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 768 });
 
-describe('MindMapStore - connectionStyle', () => {
+describe('MindMapStore - connectionConfig', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     useMindMapStore.setState({
@@ -31,7 +31,15 @@ describe('MindMapStore - connectionStyle', () => {
       loading: false,
       error: null,
       validationErrors: [],
-      connectionStyle: 'bezier',
+      connectionConfig: {
+        style: 'bezier',
+        color: '#b0b8c8',
+        arrow: false,
+        dashed: false,
+        thickness: 2,
+        inheritColor: false,
+        colorMode: 'global'
+      },
       activeDocumentId: null,
       undoStack: [],
       redoStack: [],
@@ -41,23 +49,23 @@ describe('MindMapStore - connectionStyle', () => {
 
   test('기본 연결선 스타일은 bezier이다', () => {
     const state = useMindMapStore.getState();
-    expect(state.connectionStyle).toBe('bezier');
+    expect(state.connectionConfig.style).toBe('bezier');
   });
 
   test('연결선 스타일을 straight로 변경할 수 있다', () => {
-    useMindMapStore.getState().setConnectionStyle('straight');
-    expect(useMindMapStore.getState().connectionStyle).toBe('straight');
+    useMindMapStore.getState().setConnectionConfig({ style: 'straight' });
+    expect(useMindMapStore.getState().connectionConfig.style).toBe('straight');
   });
 
   test('연결선 스타일을 bezier로 변경할 수 있다', () => {
-    useMindMapStore.getState().setConnectionStyle('straight');
-    useMindMapStore.getState().setConnectionStyle('bezier');
-    expect(useMindMapStore.getState().connectionStyle).toBe('bezier');
+    useMindMapStore.getState().setConnectionConfig({ style: 'straight' });
+    useMindMapStore.getState().setConnectionConfig({ style: 'bezier' });
+    expect(useMindMapStore.getState().connectionConfig.style).toBe('bezier');
   });
 
   test('유효하지 않은 스타일은 무시된다', () => {
-    useMindMapStore.getState().setConnectionStyle('invalid');
-    expect(useMindMapStore.getState().connectionStyle).toBe('bezier');
+    useMindMapStore.getState().setConnectionConfig({ style: 'invalid' });
+    expect(useMindMapStore.getState().connectionConfig.style).toBe('bezier');
   });
 });
 
