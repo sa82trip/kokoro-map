@@ -7,7 +7,7 @@ import { DEFAULT_NODE_STYLE } from '../../types/NodeTypes';
 import { calculateAutoLayout } from '../../utils/LayoutEngine';
 import MobileToolbar from './MobileToolbar';
 import { useIsMobile, useTouchSupport } from '../../components/MobileDetector';
-import { IS_IOS } from '../../components/MobileDetector';
+import { useViewport } from '../../components/MobileDetector';
 import { useTouch } from '../../hooks/useTouch';
 
 const NODE_HEIGHT = 80;
@@ -127,8 +127,34 @@ const MindMapContainer = ({ data }) => {
   const zoomLevel = useMindMapStore((state) => state.zoomLevel);
 
   // 모바일 감지
-  const { isMobile, deviceType } = useIsMobile();
+  const { isMobile, deviceType, isIOS } = useIsMobile();
   const hasTouchSupport = useTouchSupport();
+  const { screenSize } = useViewport();
+
+  // 초기 로딩 상태에서는 UI를 보여주지 않음
+  if (isMobile === false && deviceType === 'desktop' && screenSize.width === 0) {
+    return (
+      <div className="loading-container" style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        background: 'linear-gradient(to bottom right, #f5f7fa, #c3cfe2)',
+        zIndex: 100
+      }}>
+        <div className="loading-spinner" />
+        <p style={{ marginTop: 20, color: '#666' }}>로딩 중...</p>
+        <p style={{ marginTop: 10, fontSize: 12, color: '#999' }}>
+          모바일 기기에서 접속 중입니다
+        </p>
+      </div>
+    );
+  }
 
   // 터치 드래그 상태
   const [isDragging, setIsDragging] = useState(false);

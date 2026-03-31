@@ -11,10 +11,23 @@ const MOBILE_BREAKPOINTS = {
 };
 
 export const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(false);
-  const [deviceType, setDeviceType] = useState('desktop'); // 'phone', 'tablet', 'desktop'
-  const [screenSize, setScreenSize] = useState({ width: 0, height: 0 });
-  const [isIOS, setIsIOS] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => {
+    // SSR 시에는 false로 초기화, 클라이언트에서 재설정
+    return false;
+  });
+  const [deviceType, setDeviceType] = useState(() => {
+    // SSR 시에는 desktop으로 초기화
+    return 'desktop';
+  });
+  const [screenSize, setScreenSize] = useState(() => ({
+    // SSR 시에는 0으로 초기화
+    width: 0,
+    height: 0
+  }));
+  const [isIOS, setIsIOS] = useState(() => {
+    // SSR 시에는 false로 초기화
+    return false;
+  });
 
   useEffect(() => {
     const checkMobile = () => {
@@ -72,7 +85,10 @@ export const useIsMobile = () => {
 };
 
 export const useTouchSupport = () => {
-  const [hasTouchSupport, setHasTouchSupport] = useState(false);
+  const [hasTouchSupport, setHasTouchSupport] = useState(() => {
+    // SSR 시에는 false로 초기화
+    return false;
+  });
 
   useEffect(() => {
     const hasTouch = 'ontouchstart' in window ||
@@ -102,12 +118,14 @@ export const useTouchSupport = () => {
 };
 
 export const useViewport = () => {
-  const [viewport, setViewport] = useState({
+  const [viewport, setViewport] = useState(() => ({
+    // SSR 시에는 기본값으로 초기화
     width: 0,
     height: 0,
     isPortrait: true,
-    isLandscape: false
-  });
+    isLandscape: false,
+    aspectRatio: 0
+  }));
 
   useEffect(() => {
     const updateViewport = () => {

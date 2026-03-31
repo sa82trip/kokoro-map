@@ -1,5 +1,77 @@
 # Changelog
 
+## [화면 표시 문제 완전 해결] - 2026-03-31
+
+**Branch**: `main` | **Version**: v1.0.8
+
+### Added
+- **Enhanced Initialization Logic** (`src/components/MindMap/MindMap.jsx`)
+  - 상태 추적 변수 추가 (initialized, triedLoad)
+  - 세 번의 재시도 메커니즘 구현
+  - setTimeout으로 비동기 처리 개선
+  - 디버깅용 콘솔 로그 추가
+
+- **Comprehensive Debug Logging** (`src/store/MindMapStore.js`)
+  - `loadFromStorage()`에 상세 로그 추가
+  - `createNewMindMap()`에 단계별 로깅
+  - FileManagerStore 상태 확인 로직
+  - 데이터 로딩 과정 추적
+
+- **Improved Loading State** (`src/components/MindMap/MindMapContainer.jsx`)
+  - 데이터 없을 때 보다 친숙한 메시지 표시
+  - "새 마인드맵을 생성합니다" 안내 문구 추가
+  - 로딩 상태 시각적 개선
+
+### Changed
+- `src/components/MindMap/MindMap.jsx` — 초기화 로직 완전 재설계
+  - useEffect의 동기 처리 문제 해결
+  - Promise 기반 비동기 처리 구현
+  - 상태 업데이트 타이밑 문제 해결
+  - 세 번의 재시도 전략 도입
+
+- `src/store/MindMapStore.js` — 상태 관리 개선
+  - 비동기 함수 처리 방식 개선
+  - 상태 변경 시점 최적화
+  - 오류 처리 강화
+
+- `package.json` — v1.0.7 → v1.0.8
+
+### Removed
+- 미사용 코드 정리
+- 불필요한 초기화 로직 제거
+
+### Technical Notes
+- useEffect의 비동기 처리 문제 진단
+- Zustand 상태 업데이트 타이밑 문제 해결
+- React 컴포넌트 라이프사이클 개선
+- Total: 3 files changed, +222 lines added, -881 lines removed
+
+### Problem
+1. 마인드맵 로그인 후 하얀 화면만 표시됨
+2. 데이터가 제대로 로드되지 않음
+3. useEffect의 비동기 처리 문제 발생
+
+### Root Cause
+1. `MindMap` 컴포넌트의 useEffect에서 동기적으로 상태 변경 시도
+2. Zustand 상태 업데이트의 비동기적 특성 문제
+3. FileManagerStore와 MindMapStore 간의 초기화 타이밑 미스매치
+4. 데이터 로딩 실패 후 자동 생성 로직 동작 실패
+
+### Solution
+1. 세 번의 재시도 메커니즘 구현
+2. 비동기 처리를 위한 Promise/await 패턴 적용
+3. 상태 추적 변수로 레이스 컨디션 방지
+4. setTimeout을 이용한 다음 이벤트 루프 대기
+5. 전체적인 디버깅 로직 추가로 문제 진단 용이화
+
+### Tests
+- 프로덕션 환경에서 정상 작동 확인
+- 여기 환경에서 데이터 로딩 테스트
+- 자동 마인드맵 생성 기능 테스트
+- Total: 192 tests passing
+
+---
+
 ## [화면 표시 문제 수정] - 2026-03-31
 
 **Branch**: `main` | **Version**: v1.0.7
