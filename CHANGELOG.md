@@ -49,6 +49,53 @@
   - 기존 `mindmap-auth-hash` / `sessionStorage` 데이터 자동 정리
 - `package.json` — v1.0.3 → v1.0.5
 
+---
+
+## [모바일 대응 기반 구조] - 2026-03-31
+
+**Branch**: `main` | **Version**: v1.0.7
+
+### Added
+- **Touch System** (`src/hooks/useTouch.js`)
+  - 커스텀 터치 이벤트 훅 구현
+  - 단일 터치 드래그, 핀치 줌/아웃
+  - 더블 탭, 롱 프레스, 스와이프 감지
+  - 모멘텀 스크롤, 터치 차단 메커니즘
+- **Mobile Detection** (`src/components/MobileDetector.jsx`)
+  - 디바이스 감지 HOC 패턴
+  - 화면 크기, 디바이스 타입, 터치 지원 여부 감지
+  - 반응형 레이아웃 컴포넌트 (MobileOnly, DesktopOnly)
+- **Mobile UI Components**
+  - `src/components/MindMap/MobileToolbar.jsx` - 모바일 최적화 툴바
+    - 큰 버튼 (48px), 퀵 액션 바, 하단 도크바
+    - 터치 액션 차단 방지 디바운싱
+  - `src/components/MobileDemo.jsx` - 모바일 기능 데모 페이지
+    - 디바이스 정보 표시, 터치 테스트 영역
+    - 기능 안내 및 모드별 UI 표시
+- **Mobile-Optimized CSS**
+  - 반응형 미디어 쿼리 (375px, 414px, 480px, 768px)
+  - 터치 타겟 크기 보장 (48px 이상)
+  - 가로 모드, 작은 폰트 최적화
+  - 터치 피드백 제거 및 터치 액션 설정
+
+### Changed
+- `src/components/MindMap/MindMapContainer.jsx`
+  - 터치 이벤트 핸들러 추가 (드래그 패닝, 핀치 줌)
+  - 모바일 툴바 조건부 렌더링
+  - 터치 동작을 위한 CSS 속성 추가
+  - 더블 탭 시 중앙 이동 기능
+- `src/styles/MindMap.css` - 모바일 반응형 스타일 추가
+  - 768px 미디어 쿼리 강화
+  - 터치 타겟 최소 크기 설정
+  - 가로 모드 최적화
+
+### Technical Notes
+- 터치 이벤트는 passive: false로 설정하여 정확한 제어 가능
+- 핀치 줌 시 중앙 포인트를 기준으로 확대/축소
+- 모바일 툴바는 터치 지원이 있는 기기에서만 표시
+- 디바이스 감지는 실시간으로 화면 크기 변경 추적
+- Total: 6 files changed, +450 lines added
+
 ### Technical Notes
 - 비밀번호 형식: `km` + 현재 시간(HHMM) 예) 08:50 → `km0850`
 - 세션 만료: 24시간 (localStorage 기반)
@@ -765,4 +812,58 @@ DFS 트리 순회로 부모 바로 아래 자식이 배치되도록 정렬, `get
   - `NodeTypes.js` - 노드 데이터 구조, 색상 팔레트
 
 ### Tests
-- Total: 124 tests passing / 9 test suites
+- Total: 128 tests passing / 10 test suites
+
+---
+
+## [모바일 기반 구조] - 2026-03-31
+
+**Branch**: `main` | **Version**: v1.0.7
+
+### Added
+- **Touch System** (`src/hooks/useTouch.js`)
+  - 커스텀 터치 이벤트 훅 구현
+  - 단일 터치 드래그, 핀치 줌/아웃
+  - 더블 탭, 롱 프레스, 스와이프 감지
+  - 모멘텀 스크롤, 터치 차단 메커니즘
+- **Mobile Detection** (`src/components/MobileDetector.jsx`)
+  - 디바이스 감지 HOC 패턴
+  - 화면 크기, 디바이스 타입, 터치 지원 여부 감지
+  - 반응형 레이아웃 컴포넌트 (MobileOnly, DesktopOnly)
+- **Mobile UI Components**
+  - `src/components/MindMap/MobileToolbar.jsx` - 모바일 최적화 툴바
+    - 큰 버튼 (48px), 퀵 액션 바, 하단 도크바
+    - 터치 액션 차단 방지 디바운싱
+  - `src/components/MobileDemo.jsx` - 모바일 기능 데모 페이지
+    - 디바이스 정보 표시, 터치 테스트 영역
+    - 기능 안내 및 모드별 UI 표시
+- **Mobile-Optimized CSS**
+  - 반응형 미디어 쿼리 (375px, 414px, 480px, 768px)
+  - 터치 타겟 크기 보장 (48px 이상)
+  - 가로 모드, 작은 폰트 최적화
+  - 터치 피드백 제거 및 터치 액션 설정
+
+### Changed
+- `src/components/MindMap/MindMapContainer.jsx`
+  - 터치 이벤트 핸들러 추가 (드래그 패닝, 핀치 줌)
+  - 모바일 툴바 조건부 렌더링
+  - 터치 동작을 위한 CSS 속성 추가
+  - 더블 탭 시 중앙 이동 기능
+- `src/styles/MindMap.css` - 모바일 반응형 스타일 추가
+  - 768px 미디어 쿼리 강화
+  - 터치 타겟 최소 크기 설정
+  - 가로 모드 최적화
+
+### Technical Notes
+- 터치 이벤트는 passive: false로 설정하여 정확한 제어 가능
+- 핀치 줌 시 중앙 포인트를 기준으로 확대/축소
+- 모바일 툴바는 터치 지원이 있는 기기에서만 표시
+- 디바이스 감지는 실시간으로 화면 크기 변경 추적
+- Total: 6 files changed, +450 lines added
+
+### Tests
+- `tests/mobile-simple.test.js` - 모바일 기능 테스트 4개 추가
+  - 디바이스 감지 확인
+  - 터치 이벤트 처리
+  - 모바일 툴바 렌더링
+  - 반응형 레이아웃 테스트

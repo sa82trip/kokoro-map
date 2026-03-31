@@ -70,6 +70,48 @@
   }
 }
 
+/* 모바일 최적화 */
+@media (max-width: 768px) and (hover: none) {
+  /* 터치 타겟 크기 보장 */
+  button, [role="button"], [data-tappable] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* 터치 피드백 제거 */
+  * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* 입력 필드 터치 피드백 유지 */
+  input, textarea {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  /* 패딩 조정 */
+  .mindmap-container {
+    padding-top: 64px; /* 모바일 툴바 높이 */
+  }
+}
+
+/* 가로 모드 최적화 */
+@media (max-width: 768px) and (orientation: landscape) {
+  .mindmap-container {
+    padding-top: 48px;
+  }
+}
+
+/* 작은 폰트 기기 */
+@media (max-width: 375px) {
+  .mindmap-container {
+    font-size: 14px;
+  }
+}
+
 /* 키보드 네비게이션 스타일 */
 .keyboard-focused {
   outline: 2px solid #4A90E2;

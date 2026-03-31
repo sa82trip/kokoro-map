@@ -5,6 +5,9 @@ import { measureText } from '../../utils/TextMeasurer';
 import { DEFAULT_NODE_STYLE } from '../../types/NodeTypes';
 
 import { calculateAutoLayout } from '../../utils/LayoutEngine';
+import MobileToolbar from './MobileToolbar';
+import { useIsMobile, useTouchSupport } from '../../components/MobileDetector';
+import { useTouch } from '../../hooks/useTouch';
 
 const NODE_HEIGHT = 80;
 
@@ -122,10 +125,133 @@ const MindMapContainer = ({ data }) => {
   const setToolbarNodeId = useMindMapStore((state) => state.setToolbarNodeId);
   const zoomLevel = useMindMapStore((state) => state.zoomLevel);
 
+  // 모바일 감지
+  const { isMobile, deviceType } = useIsMobile();
+  const hasTouchSupport = useTouchSupport();
+
+  // 터치 드래그 상태
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+  const lastTapRef = useRef(0);
+
+  // 핀치 줌 상태
+  const [isPinching, setIsPinching] = useState(false);
+  const pinchStartRef = useRef({ distance: 0, scale: 1 });
+
   // 패닝 상태
   const [isPanning, setIsPanning] = useState(false);
   const panStartRef = useRef({ x: 0, y: 0 });
   const viewportStartRef = useRef({ x: 0, y: 0 });
+
+  // 터치 이벤트 핸들러
+  const handleTouchStart = (e) => {
+    if (!hasTouchSupport || e.touches.length > 2) return;
+
+    e.preventDefault();
+
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+
+      // 더블 탭 체크
+      const now = Date.now();
+      if (now - lastTapRef.current < 300) {
+        // 더블 탭 시 중앙으로 이동
+        resetViewport();
+        return;
+      }
+      lastTapRef.current = now;
+
+      // 단일 터치 시작
+      dragStartRef.current = { x: touch.clientX, y: touch.clientY };
+    } else if (e.touches.length === 2) {
+      // 핀치 줌 시작
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const distance = Math.sqrt(
+        Math.pow(touch2.clientX - touch1.clientX, 2) +
+        Math.pow(touch2.clientY - touch1.clientY, 2)
+      );
+
+      pinchStartRef.current = {
+        distance,
+        scale: zoomLevel
+      };
+      setIsPinching(true);
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (!hasTouchSupport) return;
+
+    e.preventDefault();
+
+    if (e.touches.length === 1 && !isPinching) {
+      // 터치 드래그
+      const touch = e.touches[0];
+      const dx = touch.clientX - dragStartRef.current.x;
+      const dy = touch.clientY - dragStartRef.current.y;
+
+      if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+        setIsDragging(true);
+        setViewport({
+          x: viewport.x + dx / zoomLevel,
+          y: viewport.y + dy / zoomLevel
+        });
+        dragStartRef.current = { x: touch.clientX, y: touch.clientY };
+      }
+    } else if (e.touches.length === 2 && isPinching) {
+      // 핀치 줌
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const distance = Math.sqrt(
+        Math.pow(touch2.clientX - touch1.clientX, 2) +
+        Math.pow(touch2.clientY - touch1.clientY, 2)
+      );
+
+      const scaleRatio = distance / pinchStartRef.current.distance;
+      const newZoom = Math.max(0.25, Math.min(3.0, pinchStartRef.current.scale * scaleRatio));
+
+      // 줌 포인트 계산 (터치 중앙)
+      const centerX = (touch1.clientX + touch2.clientX) / 2;
+      const centerY = (touch1.clientY + touch2.clientY) / 2;
+
+      // 뷰포트 조정
+      const newViewport = {
+        x: viewport.x + (centerX - window.innerWidth / 2) * (1 / zoomLevel - 1 / newZoom),
+        y: viewport.y + (centerY - window.innerHeight / 2) * (1 / zoomLevel - 1 / newZoom)
+      };
+
+      setViewport(newViewport);
+      setZoomLevel(newZoom);
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!hasTouchSupport) return;
+
+    setIsDragging(false);
+    setIsPinching(false);
+  };
+
+  // 터치 이벤트 리스너
+  useEffect(() => {
+    if (hasTouchSupport) {
+      const container = document.getElementById('mindmap-container');
+      if (container) {
+        container.addEventListener('touchstart', handleTouchStart, { passive: false });
+        container.addEventListener('touchmove', handleTouchMove, { passive: false });
+        container.addEventListener('touchend', handleTouchEnd, { passive: false });
+      }
+
+      return () => {
+        if (container) {
+          container.removeEventListener('touchstart', handleTouchStart);
+          container.removeEventListener('touchmove', handleTouchMove);
+          container.removeEventListener('touchend', handleTouchEnd);
+        }
+      };
+    }
+  }, [hasTouchSupport, viewport, zoomLevel]);
 
   // document 클릭으로 노드 선택 해제 + 툴바 닫기 — 모든 hooks는 early return 전에 호출
   useEffect(() => {
@@ -246,11 +372,15 @@ const MindMapContainer = ({ data }) => {
         height: '100vh',
         overflow: 'hidden',
         background: 'linear-gradient(to bottom right, #f5f7fa, #c3cfe2)',
-        paddingTop: 52,
-        cursor: isPanning ? 'grabbing' : 'grab'
+        paddingTop: isMobile ? 64 : 52,
+        cursor: isPanning ? 'grabbing' : 'grab',
+        touchAction: hasTouchSupport ? 'none' : 'auto'
       }}
       onMouseDown={handleCanvasMouseDown}
       onClick={handleContainerClick}
+      onTouchStart={hasTouchSupport ? handleTouchStart : undefined}
+      onTouchMove={hasTouchSupport ? handleTouchMove : undefined}
+      onTouchEnd={hasTouchSupport ? handleTouchEnd : undefined}
     >
       <div
         data-testid="canvas-viewport"
@@ -283,6 +413,12 @@ const MindMapContainer = ({ data }) => {
           {renderNodes(data)}
         </div>
       </div>
+      </div>
+
+      {/* 모바일 툴바 */}
+      {isMobile && hasTouchSupport && (
+        <MobileToolbar mindMapData={data} />
+      )}
     </div>
   );
 };
