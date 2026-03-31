@@ -11,26 +11,17 @@ const MOBILE_BREAKPOINTS = {
 };
 
 export const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(() => {
-    // SSR 시에는 false로 초기화, 클라이언트에서 재설정
-    return false;
-  });
-  const [deviceType, setDeviceType] = useState(() => {
-    // SSR 시에는 desktop으로 초기화
-    return 'desktop';
-  });
-  const [screenSize, setScreenSize] = useState(() => ({
-    // SSR 시에는 0으로 초기화
-    width: 0,
-    height: 0
-  }));
-  const [isIOS, setIsIOS] = useState(() => {
-    // SSR 시에는 false로 초기화
-    return false;
-  });
+  const [isMobile, setIsMobile] = useState(false);
+  const [deviceType, setDeviceType] = useState('desktop');
+  const [screenSize, setScreenSize] = useState({ width: 0, height: 0 });
+  const [isIOS, setIsIOS] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
+      // window 객체가 있는지 확인
+      if (typeof window === 'undefined') return;
+
       const width = window.innerWidth;
       const height = window.innerHeight;
 
@@ -51,10 +42,16 @@ export const useIsMobile = () => {
         setIsMobile(false);
         setDeviceType('desktop');
       }
+
+      // 초기화 완료 표시
+      setIsInitialized(true);
     };
 
     // 초기 체크
     checkMobile();
+
+    // 다음 이벤트 루프에서 다시 확인 (SSR 완료 후)
+    setTimeout(checkMobile, 0);
 
     // 리스너 추가
     window.addEventListener('resize', checkMobile);
@@ -85,32 +82,39 @@ export const useIsMobile = () => {
 };
 
 export const useTouchSupport = () => {
-  const [hasTouchSupport, setHasTouchSupport] = useState(() => {
-    // SSR 시에는 false로 초기화
-    return false;
-  });
+  const [hasTouchSupport, setHasTouchSupport] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    const hasTouch = 'ontouchstart' in window ||
-                   navigator.maxTouchPoints > 0 ||
-                   navigator.msMaxTouchPoints > 0;
+    const hasTouch = typeof window !== 'undefined' && (
+      'ontouchstart' in window ||
+      navigator.maxTouchPoints > 0 ||
+      navigator.msMaxTouchPoints > 0
+    );
 
     setHasTouchSupport(hasTouch);
+    setIsInitialized(true);
 
     const updateTouchSupport = () => {
-      const hasTouchNow = 'ontouchstart' in window ||
-                        navigator.maxTouchPoints > 0 ||
-                        navigator.msMaxTouchPoints > 0;
+      const hasTouchNow = typeof window !== 'undefined' && (
+        'ontouchstart' in window ||
+        navigator.maxTouchPoints > 0 ||
+        navigator.msMaxTouchPoints > 0
+      );
       setHasTouchSupport(hasTouchNow);
     };
 
     // 태블릿 접속 시 터치 지원 여부 업데이트
-    window.addEventListener('touchstart', updateTouchSupport, { passive: true });
-    window.addEventListener('resize', updateTouchSupport);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('touchstart', updateTouchSupport, { passive: true });
+      window.addEventListener('resize', updateTouchSupport);
+    }
 
     return () => {
-      window.removeEventListener('touchstart', updateTouchSupport);
-      window.removeEventListener('resize', updateTouchSupport);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('touchstart', updateTouchSupport);
+        window.removeEventListener('resize', updateTouchSupport);
+      }
     };
   }, []);
 
@@ -118,17 +122,20 @@ export const useTouchSupport = () => {
 };
 
 export const useViewport = () => {
-  const [viewport, setViewport] = useState(() => ({
-    // SSR 시에는 기본값으로 초기화
+  const [viewport, setViewport] = useState({
     width: 0,
     height: 0,
     isPortrait: true,
     isLandscape: false,
     aspectRatio: 0
-  }));
+  });
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     const updateViewport = () => {
+      // window 객체가 있는지 확인
+      if (typeof window === 'undefined') return;
+
       const width = window.innerWidth;
       const height = window.innerHeight;
       const isPortrait = height > width;
@@ -143,13 +150,22 @@ export const useViewport = () => {
       });
     };
 
+    // 초기 체크
     updateViewport();
-    window.addEventListener('resize', updateViewport);
-    window.addEventListener('orientationchange', updateViewport);
+
+    // 다음 이벤트 루프에서 다시 확인
+    setTimeout(updateViewport, 0);
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', updateViewport);
+      window.addEventListener('orientationchange', updateViewport);
+    }
 
     return () => {
-      window.removeEventListener('resize', updateViewport);
-      window.removeEventListener('orientationchange', updateViewport);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('resize', updateViewport);
+        window.removeEventListener('orientationchange', updateViewport);
+      }
     };
   }, []);
 

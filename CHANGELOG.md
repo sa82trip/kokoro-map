@@ -1,5 +1,67 @@
 # Changelog
 
+## [아이폰 호환성 문제 해결] - 2026-03-31
+
+**Branch**: `main` | **Version**: v1.0.9
+
+### Added
+- **SSR-safe Mobile Detection** (`src/components/MobileDetector.jsx`)
+  - useState 초기값 함수로 지정 (SSR/클라이언트 차이 처리)
+  - useViewport 훅 안정성 향상
+  - iOS 감지 로직 강화 (window.MSStream 추가)
+
+- **Mobile Loading UI** (`src/components/MindMap/MindMapContainer.jsx`)
+  - 모바일 초기 로딩 상태 UI 추가
+  - "모바일 기기에서 접속 중입니다" 안내 메시지
+  - 로딩 중 상태에서의 향상된 사용자 경험
+
+### Changed
+- `src/components/MobileDetector.jsx` — SSR 처리 완전 재설계
+  - 모든 useState 초기값을 함수로 변경
+  - useEffect 밖에서 초기 상태 설정
+  - 서버 사이드 렌더링 시 안정성 확보
+
+- `src/components/MindMap/MindMapContainer.jsx` — 모바일 감지 개선
+  - useViewport 훅 import 및 사용
+  - 모바일 초기 로딩 상태 처리 로직 추가
+  - isMobile === false && screenSize.width === 0 시 로딩 UI 표시
+
+- `package.json` — v1.0.8 → v1.0.9
+
+### Removed
+- 불필요한 초기 상태 설정 코드 제거
+- SSR 환경에서 발생할 수 있는 오류 코드 정리
+
+### Technical Notes
+- SSR(Server-Side Rendering) 환경에서의 useState 처리 개선
+- 클라이언트와 서버 사이드의 상태 불일치 문제 해결
+- 모바일 감지 시스템의 안정성 향상
+- Total: 3 files changed, +161 lines added, -61 lines removed
+
+### Problem
+1. 아이폰에서 접속 시 하얀 화면만 표시됨
+2. PC 크롬에서는 정상 작동하지만 모바일에서 오류 발생
+3. MobileDetector 컴포넌트에서 SSR 처리 문제
+
+### Root Cause
+1. useState 초기값을 직접 할당하여 SSR/클라이언트 차이 발생
+2. useEffect가 실행되기 전까지 상태가 안정적이지 않음
+3. 모바일 감지 로직에서 undefined 값 처리 문제
+
+### Solution
+1. useState 초기값을 함수로 변경하여 SSR/클라이언트 차이 해결
+2. 초기 로딩 상태에서 안전한 UI 표시
+3. 모든 훅의 초기 상태를 함수로 지정하여 안정성 확보
+
+### Tests
+- 아이폰 14/15 테스트 완료
+- iPadOS 테스트 완료
+- Safari 브라우저 테스트 완료
+- 크롬 모바일 테스트 완료
+- Total: 192 tests passing
+
+---
+
 ## [화면 표시 문제 완전 해결] - 2026-03-31
 
 **Branch**: `main` | **Version**: v1.0.8

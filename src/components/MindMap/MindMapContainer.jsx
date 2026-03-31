@@ -132,7 +132,7 @@ const MindMapContainer = ({ data }) => {
   const { screenSize } = useViewport();
 
   // 초기 로딩 상태에서는 UI를 보여주지 않음
-  if (isMobile === false && deviceType === 'desktop' && screenSize.width === 0) {
+  if (!isInitialized || screenSize.width === 0) {
     return (
       <div className="loading-container" style={{
         position: 'absolute',
@@ -150,11 +150,14 @@ const MindMapContainer = ({ data }) => {
         <div className="loading-spinner" />
         <p style={{ marginTop: 20, color: '#666' }}>로딩 중...</p>
         <p style={{ marginTop: 10, fontSize: 12, color: '#999' }}>
-          모바일 기기에서 접속 중입니다
+          {isIOS ? '아이폰에서 로딩 중입니다...' : '화면 크기를 감지 중입니다...'}
         </p>
       </div>
     );
   }
+
+  // 초기화 상태
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // 터치 드래그 상태
   const [isDragging, setIsDragging] = useState(false);
@@ -259,6 +262,13 @@ const MindMapContainer = ({ data }) => {
     setIsDragging(false);
     setIsPinching(false);
   };
+
+  // 초기화 확인
+  useEffect(() => {
+    if (screenSize.width > 0) {
+      setIsInitialized(true);
+    }
+  }, [screenSize]);
 
   // 터치 이벤트 리스너
   useEffect(() => {
