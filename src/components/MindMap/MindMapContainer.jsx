@@ -296,6 +296,7 @@ const MindMapContainer = ({ data }) => {
 
   // 데이터가 없을 때 로딩 상태 표시
   if (!data) {
+    console.log('MindMapContainer: No data available, showing loading state');
     return (
       <div className="loading-container" style={{
         position: 'absolute',
@@ -312,6 +313,9 @@ const MindMapContainer = ({ data }) => {
       }}>
         <div className="loading-spinner" />
         <p style={{ marginTop: 20, color: '#666' }}>마인드맵 로딩 중...</p>
+        <p style={{ marginTop: 10, fontSize: 12, color: '#999' }}>
+          데이터가 없으면 새 마인드맵을 생성합니다
+        </p>
       </div>
     );
   }

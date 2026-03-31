@@ -22,12 +22,51 @@ const MindMap = ({ initialData = null }) => {
 
   // 초기 데이터 설정: FileManagerStore 초기화 → localStorage 로드 → initialData fallback → 새 마인드맵 생성
   useEffect(() => {
-    useFileManagerStore.getState().initialize();
-    const loaded = loadFromStorage();
-    if (!loaded) {
-      // 데이터가 없으면 새 마인드맵 생성
-      createNewMindMap();
-    }
+    console.log('MindMap: Starting initialization');
+
+    // 상태 추적 변수
+    let initialized = false;
+    let triedLoad = false;
+
+    const checkAndInitialize = () => {
+      const fileManager = useFileManagerStore.getState();
+
+      // 이미 초기화되었고 로드를 시도했으면 종료
+      if (initialized && triedLoad) {
+        console.log('MindMap: Already initialized and loaded');
+        return;
+      }
+
+      if (!initialized) {
+        console.log('MindMap: Initializing FileManager');
+        fileManager.initialize();
+        initialized = true;
+      }
+
+      if (!triedLoad) {
+        console.log('MindMap: Attempting to load from storage');
+        const loaded = loadFromStorage();
+        console.log('MindMap: Load result:', loaded);
+        triedLoad = true;
+
+        // 데이터가 없으면 새 마인드맵 생성 (setTimeout으로 다음 이벤트 루프에서 실행)
+        if (!loaded) {
+          setTimeout(() => {
+            console.log('MindMap: Creating new mind map');
+            createNewMindMap();
+          }, 0);
+        }
+      }
+    };
+
+    // 즉시 실행
+    checkAndInitialize();
+
+    // 다음 이벤트 루프에서 다시 확인 (상태 업데이트 대기)
+    setTimeout(checkAndInitialize, 0);
+
+    // 100ms 후 마지막으로 확인
+    setTimeout(checkAndInitialize, 100);
   }, []);
 
   // 데이터 로딩 상태 처리

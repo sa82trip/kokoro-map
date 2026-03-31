@@ -144,16 +144,29 @@ const useMindMapStore = create((set, get) => ({
     // 로딩 시작
     setLoading(true);
 
+    console.log('MindMapStore.loadFromStorage: Starting');
+    console.log('FileManager state:', {
+      initialized: fm.initialized,
+      activeDocumentId: fm.activeDocumentId,
+      documents: fm.documents
+    });
+
     // FileManagerStore가 초기화되지 않았으면 초기화
     if (!fm.initialized) {
+      console.log('FileManager not initialized, calling initialize()');
       fm.initialize();
     }
 
     // 활성 문서가 있으면 로드
     if (fm.activeDocumentId) {
+      console.log(`Active document ID: ${fm.activeDocumentId}`);
       const savedData = fm.loadDocument(fm.activeDocumentId);
+      console.log('Loaded data:', savedData);
+
       if (savedData) {
         const validation = validateMindMap(savedData);
+        console.log('Validation result:', validation);
+
         if (validation.isValid) {
           const migrateNode = (node) => {
             const withStyle = { ...node, style: node.style || { ...DEFAULT_NODE_STYLE } };
@@ -163,6 +176,8 @@ const useMindMapStore = create((set, get) => ({
             return withStyle;
           };
           const migrated = migrateNode(savedData);
+          console.log('Migrated data:', migrated);
+
           set({
             mindMapData: migrated,
             error: null,
@@ -173,17 +188,25 @@ const useMindMapStore = create((set, get) => ({
           });
           get()._saveToStorage(migrated);
           setLoading(false);
+          console.log('Data loaded and set successfully');
           return true;
+        } else {
+          console.error('Validation failed:', validation.errors);
         }
       }
     }
 
     // 첫 번째 문서 로드 시도
     if (fm.documents && fm.documents.length > 0) {
+      console.log('Trying to load first document');
       const firstDoc = fm.documents[0];
       const savedData = fm.loadDocument(firstDoc.id);
+      console.log('First document data:', savedData);
+
       if (savedData) {
         const validation = validateMindMap(savedData);
+        console.log('First document validation:', validation);
+
         if (validation.isValid) {
           const migrateNode = (node) => {
             const withStyle = { ...node, style: node.style || { ...DEFAULT_NODE_STYLE } };
@@ -193,6 +216,8 @@ const useMindMapStore = create((set, get) => ({
             return withStyle;
           };
           const migrated = migrateNode(savedData);
+          console.log('Migrated first document:', migrated);
+
           set({
             mindMapData: migrated,
             error: null,
@@ -203,11 +228,15 @@ const useMindMapStore = create((set, get) => ({
           });
           get()._saveToStorage(migrated);
           setLoading(false);
+          console.log('First document loaded and set successfully');
           return true;
+        } else {
+          console.error('First document validation failed:', validation.errors);
         }
       }
     }
 
+    console.log('No documents found or load failed, returning false');
     setLoading(false);
     return false;
   },
@@ -215,14 +244,24 @@ const useMindMapStore = create((set, get) => ({
   // 새 마인드맵 생성
   createNewMindMap: (title = '마인드맵') => {
     const { setLoading } = get();
+    console.log('MindMapStore.createNewMindMap: Creating new mind map with title:', title);
     setLoading(true);
 
     const newRoot = createRootNode(title);
+    console.log('Created root node:', newRoot);
+
     const layouted = calculateAutoLayout(newRoot);
+    console.log('Layouted data:', layouted);
 
     const data = layouted || newRoot;
     const fm = useFileManagerStore.getState();
+    console.log('FileManager state before creating document:', {
+      initialized: fm.initialized,
+      documents: fm.documents
+    });
+
     const docId = fm.createDocument(title, data);
+    console.log('Created document with ID:', docId);
 
     set({
       mindMapData: data,
@@ -234,9 +273,11 @@ const useMindMapStore = create((set, get) => ({
       _preDragSnapshot: null
     });
 
+    console.log('State set, saving to storage');
     // 저장 완료 후 로딩 상태 종료
     get()._saveToStorage(data);
     setLoading(false);
+    console.log('New mind map created successfully');
   },
 
   // 자동 레이아웃 적용
