@@ -62,14 +62,16 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
     if (!isDragging) return;
 
     const updatePosition = (clientX, clientY) => {
-      const vp = useMindMapStore.getState().viewport || { x: 0, y: 0 };
+      const state = useMindMapStore.getState();
+      const vp = state.viewport || { x: 0, y: 0 };
+      const z = state.zoomLevel;
       const newPosition = {
         x: clientX - dragOffsetRef.current.x - vp.x,
         y: clientY - dragOffsetRef.current.y - vp.y
       };
       if (isNaN(newPosition.x) || isNaN(newPosition.y)) return;
       setPosition(newPosition);
-      updateNodePosition(node.id, newPosition);
+      updateNodePosition(node.id, { x: newPosition.x / z, y: newPosition.y / z });
     };
 
     // 노드 드래그 중 플래그 설정
@@ -183,7 +185,9 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
     }
 
     childNode.direction = childDirection;
-    childNode.position = calculateNewChildPosition(position, existingCount, undefined, childDirection);
+    const z = useMindMapStore.getState().zoomLevel;
+    const docPos = { x: position.x / z, y: position.y / z };
+    childNode.position = calculateNewChildPosition(docPos, existingCount, undefined, childDirection);
     if (onAddChild) onAddChild(node.id, childNode);
   };
 

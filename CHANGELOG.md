@@ -1,5 +1,52 @@
 # Changelog
 
+## [노드 드래그 시 선 분리 버그 수정] - 2026-04-01
+
+**Branch**: `main` | **Version**: v1.1.9
+
+### Problem
+노드를 드래그하면 연결선이 노드에서 분리됨. 모든 배율에서 재현, 배율이 작을수록 심함.
+
+### Root Cause
+1. Node.jsx `updatePosition`이 scaled-space 좌표를 Store에 그대로 저장
+2. `renderConnections`가 Store 값을 다시 `* zoomLevel` 곱함 → 선 끝점이 노드보다 `zoomLevel`배 더 이동
+3. `handleAddChild`도 scaled-space 위치로 자식 위치 계산 → zoom ≠ 1에서 자식 위치 부정확
+
+### Solution
+1. `updateNodePosition` 호출 시 `newPosition / zoomLevel`로 document-space 변환하여 저장
+2. `handleAddChild`에서 `position / zoomLevel`로 document-space 변환 후 위치 계산
+3. 로컬 상태는 scaled-space 유지 (CSS `left`용), Store만 document-space로 통일
+
+### Changed
+- `src/components/MindMap/Node.jsx` — updatePosition에 zoomLevel 나눗셈 추가, handleAddChild에 document-space 변환 추가
+- `package.json` — v1.1.8 → v1.1.9
+
+### Technical Notes
+- 2 files changed
+- renderNodes/renderConnections의 `* zoomLevel` JS 스케일링은 그대로 유지
+- Store의 모든 position을 document-space로 통일하여 렌더링 일관성 확보
+
+---
+
+## [SPA 라우팅 404 수정] - 2026-04-01
+
+**Branch**: `main` | **Version**: v1.1.8
+
+### Problem
+Vercel 배포 후 `/editor/:id` 경로에서 새로고침 시 404 Not Found 발생.
+
+### Root Cause
+vercel.json에 SPA rewrite 규칙이 없어 서버가 경로별 파일을 찾음.
+
+### Solution
+vercel.json에 `{ "source": "/(.*)", "destination": "/index.html" }` rewrite 규칙 추가.
+
+### Changed
+- `vercel.json` — SPA rewrite 규칙 추가
+- `package.json` — v1.1.7 → v1.1.8
+
+---
+
 ## [모바일 노드 터치 드래그 수정] - 2026-03-31
 
 **Branch**: `main` | **Version**: v1.1.7
