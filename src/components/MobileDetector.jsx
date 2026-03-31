@@ -201,4 +201,8 @@ export const DeviceSpecific = ({ children, phone, tablet, desktop }) => {
   return children || null;
 };
 
-export default MobileDetector;
+// 모바일 감지 컴포넌트 (사용하지 않음 - 기능들은 hooks로 제공)
+// const MobileDetector = () => null;
+
+// 이 파일은 hooks와 유틸리티 함수만을 export합니다
+export { useIsMobile, useTouchSupport, useViewport, withMobileDetection, MobileOnly, DesktopOnly, DeviceSpecific, IS_IOS };
