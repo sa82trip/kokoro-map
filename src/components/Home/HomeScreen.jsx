@@ -12,20 +12,26 @@ const HomeScreen = () => {
   const navigate = useNavigate();
   const initialize = useFileManagerStore((state) => state.initialize);
   const [loading, setLoading] = React.useState(true);
+  const [initCalled, setInitCalled] = React.useState(false);
 
   useEffect(() => {
-    const init = async () => {
-      console.log('HomeScreen: Initializing...');
-      try {
-        await initialize();
-        console.log('HomeScreen: Initialization complete');
-      } catch (error) {
-        console.error('HomeScreen: Initialization error', error);
-      }
-      setLoading(false);
-    };
-    init();
-  }, [initialize]);
+    // initialize 함수가 이미 호출되지 않았을 때만 실행
+    if (!initCalled) {
+      setInitCalled(true);
+
+      const init = async () => {
+        console.log('HomeScreen: Initializing...');
+        try {
+          await initialize();
+          console.log('HomeScreen: Initialization complete');
+        } catch (error) {
+          console.error('HomeScreen: Initialization error', error);
+        }
+        setLoading(false);
+      };
+      init();
+    }
+  }, [initialize, initCalled]);
 
   if (loading) {
     return (

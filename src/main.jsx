@@ -18,11 +18,26 @@ window.addEventListener('unhandledrejection', (event) => {
 
 console.log('App starting...');
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
+// 앱 렌더링 전 DOM 요소 확인
+const rootElement = document.getElementById('root');
+if (!rootElement) {
+  console.error('Root element not found!');
+  document.body.innerHTML = `
+    <div style="padding: 20px; font-family: -apple-system, sans-serif;">
+      <h1 style="color: red;">오류 발생</h1>
+      <p>root 요소를 찾을 수 없습니다.</p>
+      <p id="debug-info"></p>
+    </div>
+  `;
+  document.getElementById('debug-info').textContent =
+    `document.body: ${document.body ? '존재함' : '없음'}`;
+} else {
+  const root = ReactDOM.createRoot(rootElement);
+
+  // 앱을 StrictMode 없이 렌더링하여 문제 단순화
+  root.render(
     <BrowserRouter>
       <App />
     </BrowserRouter>
-  </React.StrictMode>
-);
+  );
+}
