@@ -13,10 +13,19 @@ const MindMapEditor = () => {
   const fileManager = useFileManagerStore();
   const [loading, setLoading] = React.useState(true);
 
+  // 클라이언트 사이드에서만 초기화
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      setLoading(false);
+      return;
+    }
+
     const loadDocument = async () => {
       try {
-        fileManager.initialize();
+        // 이미 초기화되어 있지 않을만 실행
+        if (!useFileManagerStore.getState().initialized) {
+          await fileManager.initialize();
+        }
 
         if (docId === 'new') {
           // 새 문서 생성

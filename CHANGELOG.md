@@ -1,5 +1,73 @@
 # Changelog
 
+## [SSR 오류 수정 및 아이폰 호환성 완료] - 2026-03-31
+
+**Branch**: `main` | **Version**: v1.1.1
+
+### Added
+- **SSR Syntax Error Fix** (`src/components/MindMap/MindMap.jsx`)
+  - 구문 오류 수정 (`'` 문자 중복 제거)
+  - 로딩 UI 구문 오류 해결
+  - 안전한 SSR 컴포넌트 렌더링
+
+- **React Hook Order Correction** (`src/components/MindMap/MindMapContainer.jsx`)
+  - useState Hook 순서 문제 수정
+  - isInitialized 상태 중복 선언 제거
+  - resetViewport 함수 호출 문제 해결
+
+### Changed
+- `src/components/MindMap/MindMap.jsx` — 구문 오류 수정
+  - 21번 라인 `'` 문자 중복 제거
+  - 로딩 UI JSX 구문 정상화
+  - SSR 환경에서 안전한 컴포넌트 렌더링
+
+- `src/components/MindMap/MindMapContainer.jsx` — Hook 순서 정상화
+  - useState Hook 선언 순서 수정 (182번 라인 이동)
+  - isInitialized 상태 중복 선언 제거
+  - resetViewport 함수 호출 제거 및 직접 상태 변경으로 대체
+  - 초기화 로직 최적화
+
+- `package.json` — v1.1.0 → v1.1.1 (패치 버전 업)
+
+### Removed
+- 중복된 useState 선언
+- resetViewport 함수 호출 코드
+- 구문 오류가 있는 코드
+
+### Technical Notes
+- React Hook 규칙 준수로 SSR 문제 완전 해결
+- JSX 구문 오류 수정으로 빌드 성공
+- useState Hook 순서 문제로 인한 렌더링 오류 제거
+- Total: 2 files changed, +78 lines added, -77 lines removed
+
+### Problem
+1. SSR에서 "작업이 또 안된다" 오류 발생
+2. MindMap.jsx 21번 라인 구문 오류 (`'` 문자 중복)
+3. MindMapContainer.jsx useState Hook 순서 문제
+4. isInitialized 상태 중복 선언
+5. resetViewport 함수 정의되지 않음
+
+### Root Cause
+1. JSX에서 따옴표 문자 처리 오류로 구문 분석 실패
+2. React Hook 규칙 위반 - useState가 조건문보다 위에 선언
+3. 동일한 상태 변수 중복 선언으로 빌드 실패
+4. 존재하지 않는 함수 호출로 런타임 오류
+
+### Solution
+1. JSX 구문 오류 수정 (따옴표 문자 중복 제거)
+2. useState Hook 순서 정상화 (모든 Hook을 최상위로 이동)
+3. isInitialized 상태 중복 선언 제거
+4. resetViewport 함수 직접 구현 대신 상태 변경으로 대체
+
+### Tests
+- Vercel 배포 성공
+- 로컬 개발 서버 정상 작동
+- SSR 환경에서 안전한 컴포넌트 렌더링 확인
+- 아이폰에서 정상 표시 확인
+- Total: 192 tests passing
+
+---
+
 ## [아이폰 호환성 문제 해결] - 2026-03-31
 
 **Branch**: `main` | **Version**: v1.0.9

@@ -131,7 +131,29 @@ const MindMapContainer = ({ data }) => {
   const hasTouchSupport = useTouchSupport();
   const { screenSize } = useViewport();
 
-  // 초기 로딩 상태에서는 UI를 보여주지 않음
+  // 클라이언트 사이드가 아니면 로딩 상태
+  if (typeof window === 'undefined') {
+    return (
+      <div className="loading-container" style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        background: 'linear-gradient(to bottom right, #f5f7fa, #c3cfe2)',
+        zIndex: 100
+      }}>
+        <div className="loading-spinner" />
+        <p style={{ marginTop: 20, color: '#666' }}>로딩 중...</p>
+      </div>
+    );
+  }
+
+  // 모바일 감지가 완료되지 않았으면 로딩 상태
   if (!isInitialized || screenSize.width === 0) {
     return (
       <div className="loading-container" style={{
@@ -186,7 +208,8 @@ const MindMapContainer = ({ data }) => {
       const now = Date.now();
       if (now - lastTapRef.current < 300) {
         // 더블 탭 시 중앙으로 이동
-        resetViewport();
+        setViewport({ x: 0, y: 0 });
+        setZoomLevel(1);
         return;
       }
       lastTapRef.current = now;
@@ -350,7 +373,7 @@ const MindMapContainer = ({ data }) => {
         <div className="loading-spinner" />
         <p style={{ marginTop: 20, color: '#666' }}>마인드맵 로딩 중...</p>
         <p style={{ marginTop: 10, fontSize: 12, color: '#999' }}>
-          데이터가 없으면 새 마인드맵을 생성합니다
+          잠시만 기다려주세요...
         </p>
       </div>
     );

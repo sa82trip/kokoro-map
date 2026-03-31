@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 
-// iOS 감지 변수 (전역적으로 사용 가능)
-// Note: SSR 환경에서 navigator는 undefined이므로 useEffect에서 사용해야 함
-export const IS_IOS = typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent || navigator.vendor || window.opera) && !window.MSStream;
+// 모바일 감지 유틸리티 가져오기
+import { detectIOS, detectMobile, detectTouchSupport } from '../utils/mobileDetection';
+
+// iOS 감지 변수 (전역적으로 사용 가능) - 클라이언트 사이드에서만 실행
+export const IS_IOS = typeof window !== 'undefined' ? detectIOS() : false;
 
 const MOBILE_BREAKPOINTS = {
   PHONE: 480,
@@ -19,42 +21,46 @@ export const useIsMobile = () => {
 
   useEffect(() => {
     const checkMobile = () => {
-      // window 객체가 있는지 확인
-      if (typeof window === 'undefined') return;
+      try {
+        // 클라이언트 사이드가 아닐 경우 종료
+        if (typeof window === 'undefined') return;
 
-      const width = window.innerWidth;
-      const height = window.innerHeight;
+        const width = window.innerWidth;
+        const height = window.innerHeight;
 
-      // iOS 감지
-      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-      const isIOSDevice = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
-      setIsIOS(isIOSDevice);
+        // 유틸리티 함수로 감지
+        const isIOSDevice = detectIOS();
+        setIsIOS(isIOSDevice);
 
-      setScreenSize({ width, height });
+        setScreenSize({ width, height });
 
-      if (width <= MOBILE_BREAKPOINTS.PHONE) {
-        setIsMobile(true);
-        setDeviceType('phone');
-      } else if (width <= MOBILE_BREAKPOINTS.TABLET) {
-        setIsMobile(true);
-        setDeviceType('tablet');
-      } else {
-        setIsMobile(false);
-        setDeviceType('desktop');
+        if (width <= MOBILE_BREAKPOINTS.PHONE) {
+          setIsMobile(true);
+          setDeviceType('phone');
+        } else if (width <= MOBILE_BREAKPOINTS.TABLET) {
+          setIsMobile(true);
+          setDeviceType('tablet');
+        } else {
+          setIsMobile(false);
+          setDeviceType('desktop');
+        }
+
+        // 초기화 완료 표시
+        setIsInitialized(true);
+      } catch (error) {
+        console.error('Mobile detection error:', error);
+        setIsInitialized(true);
       }
-
-      // 초기화 완료 표시
-      setIsInitialized(true);
     };
 
     // 초기 체크
     checkMobile();
 
-    // 다음 이벤트 루프에서 다시 확인 (SSR 완료 후)
+    // 다음 이벤트 루프에서 다시 확인
     setTimeout(checkMobile, 0);
 
     // 리스너 추가
-    window.addEventListener('resize', checkMobile);
+    window.addEventListener('resize', checkMobile, { passive: true });
 
     // 방향 변경 감지
     const handleOrientationChange = () => {
