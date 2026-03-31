@@ -1,3 +1,6 @@
 {
-  "name": "kokoromap"
+  "name": "kokoromap",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
