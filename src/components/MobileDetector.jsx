@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 
+// iOS 감지 변수 (전역적으로 사용 가능)
+// Note: SSR 환경에서 navigator는 undefined이므로 useEffect에서 사용해야 함
+export const IS_IOS = typeof window !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent || navigator.vendor || window.opera) && !window.MSStream;
+
 const MOBILE_BREAKPOINTS = {
   PHONE: 480,
   TABLET: 768,
@@ -198,6 +202,3 @@ export const DeviceSpecific = ({ children, phone, tablet, desktop }) => {
 };
 
 export default MobileDetector;
-
-// iOS 감지 변수 (전역적으로 사용 가능)
-export const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent || navigator.vendor || window.opera) && !window.MSStream;
