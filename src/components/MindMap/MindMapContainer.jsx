@@ -294,7 +294,27 @@ const MindMapContainer = ({ data }) => {
     };
   }, [isPanning, setViewport]);
 
-  if (!data) return null;
+  // 데이터가 없을 때 로딩 상태 표시
+  if (!data) {
+    return (
+      <div className="loading-container" style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        background: 'linear-gradient(to bottom right, #f5f7fa, #c3cfe2)',
+        zIndex: 100
+      }}>
+        <div className="loading-spinner" />
+        <p style={{ marginTop: 20, color: '#666' }}>마인드맵 로딩 중...</p>
+      </div>
+    );
+  }
 
   // 캔버스 배경 드래그 → 패닝
   const handleCanvasMouseDown = (e) => {

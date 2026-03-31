@@ -139,6 +139,10 @@ const useMindMapStore = create((set, get) => ({
   // localStorage에서 데이터 로드
   loadFromStorage: () => {
     const fm = useFileManagerStore.getState();
+    const { setLoading } = get();
+
+    // 로딩 시작
+    setLoading(true);
 
     // FileManagerStore가 초기화되지 않았으면 초기화
     if (!fm.initialized) {
@@ -168,6 +172,7 @@ const useMindMapStore = create((set, get) => ({
             _preDragSnapshot: null
           });
           get()._saveToStorage(migrated);
+          setLoading(false);
           return true;
         }
       }
@@ -197,16 +202,21 @@ const useMindMapStore = create((set, get) => ({
             _preDragSnapshot: null
           });
           get()._saveToStorage(migrated);
+          setLoading(false);
           return true;
         }
       }
     }
 
+    setLoading(false);
     return false;
   },
 
   // 새 마인드맵 생성
   createNewMindMap: (title = '마인드맵') => {
+    const { setLoading } = get();
+    setLoading(true);
+
     const newRoot = createRootNode(title);
     const layouted = calculateAutoLayout(newRoot);
 
@@ -223,6 +233,10 @@ const useMindMapStore = create((set, get) => ({
       redoStack: [],
       _preDragSnapshot: null
     });
+
+    // 저장 완료 후 로딩 상태 종료
+    get()._saveToStorage(data);
+    setLoading(false);
   },
 
   // 자동 레이아웃 적용
