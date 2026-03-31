@@ -1,5 +1,136 @@
 # Changelog
 
+## [모바일 노드 터치 드래그 수정] - 2026-03-31
+
+**Branch**: `main` | **Version**: v1.1.7
+
+### Problem
+모바일에서 노드를 터치하여 드래그하면 노드와 캔버스가 동시에 움직여 조작 불가.
+
+### Root Cause
+1. Node의 `onTouchStart`에서 `stopPropagation()` 호출 → 컨테이너의 `touchStart`는 차단됨
+2. 하지만 `touchMove` 이벤트는 document 레벨 리스너로 처리되어 컨테이너까지 버블링
+3. 결과적으로 노드 드래그와 캔버스 패닝이 동시에 발생
+
+### Solution
+1. Zustand store에 `isNodeDragging` 플래그 추가
+2. Node 드래그 시작 시 `setIsNodeDragging(true)`, 종료 시 `false`
+3. MindMapContainer의 `handleTouchMove`에서 `isNodeDragging` 체크 → true면 패닝 스킵
+
+### Changed
+- `src/store/MindMapStore.js` — `isNodeDragging` 상태, `setIsNodeDragging` 액션 추가
+- `src/components/MindMap/Node.jsx` — 드래그 useEffect에서 플래그 설정/해제
+- `src/components/MindMap/MindMapContainer.jsx` — `handleTouchMove`에 `isNodeDragging` 가드 추가
+- `package.json` — v1.1.6 → v1.1.7
+
+### Technical Notes
+- 빌드 성공: 800ms
+- stopPropagation + store 플래그 이중 보호로 이벤트 충돌 완전 해결
+
+---
+
+## [모바일 가독성/UX 향상] - 2026-03-31
+
+**Branch**: `main` | **Version**: v1.1.6
+
+### Problem
+아이폰/모바일에서 마인드맵 노드가 너무 크게 표시되어 한눈에 파악 어려움. 액션 버튼이 24px로 터치 조작 불가.
+
+### Root Cause
+1. LayoutEngine이 노드 크기(200x80)와 갭(100/30px)을 고정값으로 사용
+2. Node 액션 버튼이 hover 기반이라 모바일에서 표시 안 됨
+3. 줌 컨트롤 버튼이 32px로 Apple HIG 44px 최소 미달
+4. CSS `transform: scale(0.8)`로 전체를 축소하는 crude approach
+
+### Solution
+1. LayoutEngine에 nodeWidth/nodeHeight를 options로 전달 가능하게 변경
+2. 모바일 기기 크기별 자동 레이아웃 설정 (initializeMobileLayout)
+3. 모바일에서 액션 버튼을 isSelected 기준으로 표시 + 36px 확대
+4. CSS scale(0.8) 제거, 대신 LayoutEngine에서 직접 소형 노드 배치
+
+### Added
+- **LayoutEngine** (`src/utils/LayoutEngine.js`)
+  - `DEFAULT_OPTIONS`에 `nodeWidth`, `nodeHeight` 추가
+  - `getDims()` 헬퍼로 options에서 노드 크기 읽기
+
+- **MindMapStore** (`src/store/MindMapStore.js`)
+  - `initializeMobileLayout(screenWidth)` 액션
+  - 기기별 자동 설정: ≤375px(120×50), ≤480px(140×56), ≤768px(160×64)
+  - `setLayoutConfig`에 nodeWidth/nodeHeight 검증 추가
+
+- **MindMapContainer** (`src/components/MindMap/MindMapContainer.jsx`)
+  - 모바일 초기화 useEffect (initializeMobileLayout + applyAutoLayout)
+  - 모바일 초기 zoom 자동 설정 (0.75~0.85)
+
+- **Node** (`src/components/MindMap/Node.jsx`)
+  - `useIsMobile()` 모바일 감지
+  - 액션 버튼 모바일 36px / 데스크탑 24px
+  - 모바일: hover 대신 isSelected 시 버튼 표시
+  - 텍스트 패딩 모바일 `'4px 10px'`
+
+### Changed
+- `src/styles/ZoomControls.css` — 모바일 media query로 버튼 44px 확대
+- `src/styles/MindMap.css` — scale(0.8) 제거, safe-area-inset 추가
+
+### Technical Notes
+- 빌드 성공: 819ms
+- 기존 데스크탑 동작 변경 없음 (DEFAULT_OPTIONS 기본값 동일)
+
+---
+
+## [MindMapContainer Rules of Hooks 수정] - 2026-03-31
+
+**Branch**: `main` | **Version**: v1.1.3
+
+### Problem
+마인드맵 에디터 진입 시 무한 로딩 화면 발생
+
+### Root Cause
+1. `useState`, `useRef`, `useEffect`가 conditional return 앞뒤로 흩어져 있어 React Rules of Hooks 위반
+2. `isInitialized`를 `false`로 초기화 후 early return → `setIsInitialized(true)`를 호출하는 useEffect가 실행되지 않아 무한 로딩
+3. `useViewport()`가 `{ width, height, ... }`를 리턴하는데 `const { screenSize } = useViewport()`로 잘못 destructuring
+
+### Solution
+- 모든 hooks를 conditional return 앞으로 이동하여 Rules of Hooks 준수
+- `useViewport()` 대신 `useIsMobile()`에서 `screenSize` 직접 사용
+- 불필요한 SSR 체크 및 isInitialized 체크 간소화
+
+### Changed
+- `src/components/MindMap/MindMapContainer.jsx` — 전체 구조 재작성
+- `package.json` — v1.1.2 → v1.1.3
+
+### Technical Notes
+- 빌드 성공: 118 modules, 837ms
+
+---
+
+## [MindMapContainer TDZ 에러 수정] - 2026-03-31
+
+**Branch**: `main` | **Version**: v1.1.2
+
+### Problem
+마인드맵 에디터 진입 시 `ReferenceError: Cannot access 'k' before initialization` 크래시 발생
+
+### Root Cause
+1. `MindMapContainer.jsx`에서 `isInitialized` 변수를 157번째 줄에서 사용했으나 `useState` 선언이 182번째 줄에 있었음 (TDZ 에러)
+2. `setZoomLevel`이 store에서 destructuring되지 않아 터치 줌 기능 미작동
+3. `IS_IOS` 오타로 디버그 로그 에러 발생
+
+### Solution
+- `useState(false)` 선언을 early return 조건문 앞으로 이동
+- `setZoomLevel` store selector 추가
+- `IS_IOS` → `isIOS` 수정
+
+### Changed
+- `src/components/MindMap/MindMapContainer.jsx` — isInitialized useState 선언 위치 이동, setZoomLevel 추가, IS_IOS 오타 수정
+- `package.json` — v1.1.1 → v1.1.2
+
+### Technical Notes
+- 빌드 성공: 119 modules, 836ms
+- TDZ 에러가 프로덕션 빌드에서 `k` 변수로 minified되어 원인 파악이 어려웠음
+
+---
+
 ## [SSR 오류 수정 및 아이폰 호환성 완료] - 2026-03-31
 
 **Branch**: `main` | **Version**: v1.1.1

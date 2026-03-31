@@ -108,3 +108,27 @@
 .zoom-controls.toolbar {
   margin-left: auto;
 }
+
+/* 모바일 터치 타겟 확대 */
+@media (max-width: 768px) {
+  .zoom-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+  }
+
+  .zoom-reset {
+    width: 36px;
+    height: 36px;
+  }
+
+  .zoom-level {
+    min-width: 70px;
+    font-size: 13px;
+  }
+
+  .zoom-controls {
+    padding: 6px;
+    border-radius: 12px;
+  }
+}

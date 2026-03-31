@@ -7,8 +7,6 @@ import { DEFAULT_NODE_STYLE } from '../../types/NodeTypes';
 import { calculateAutoLayout } from '../../utils/LayoutEngine';
 import MobileToolbar from './MobileToolbar';
 import { useIsMobile, useTouchSupport } from '../../components/MobileDetector';
-import { useViewport } from '../../components/MobileDetector';
-import { useTouch } from '../../hooks/useTouch';
 
 const NODE_HEIGHT = 80;
 
@@ -116,6 +114,9 @@ const renderConnections = (node, connectionConfig, zoomLevel = 1.0) => {
 };
 
 const MindMapContainer = ({ data }) => {
+  // ===== 모든 Hooks는 conditional return 전에 선언 =====
+
+  // Zustand store
   const { addNode, deleteNode } = useMindMapStore();
   const connectionConfig = useMindMapStore((state) => state.connectionConfig);
   const viewport = useMindMapStore((state) => state.viewport);
@@ -125,58 +126,11 @@ const MindMapContainer = ({ data }) => {
   const toolbarNodeId = useMindMapStore((state) => state.toolbarNodeId);
   const setToolbarNodeId = useMindMapStore((state) => state.setToolbarNodeId);
   const zoomLevel = useMindMapStore((state) => state.zoomLevel);
+  const setZoomLevel = useMindMapStore((state) => state.setZoomLevel);
 
-  // 모바일 감지
-  const { isMobile, deviceType, isIOS } = useIsMobile();
+  // 모바일 감지 (useIsMobile이 screenSize를 포함)
+  const { isMobile, deviceType, isIOS, screenSize } = useIsMobile();
   const hasTouchSupport = useTouchSupport();
-  const { screenSize } = useViewport();
-
-  // 클라이언트 사이드가 아니면 로딩 상태
-  if (typeof window === 'undefined') {
-    return (
-      <div className="loading-container" style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        background: 'linear-gradient(to bottom right, #f5f7fa, #c3cfe2)',
-        zIndex: 100
-      }}>
-        <div className="loading-spinner" />
-        <p style={{ marginTop: 20, color: '#666' }}>로딩 중...</p>
-      </div>
-    );
-  }
-
-  // 모바일 감지가 완료되지 않았으면 로딩 상태
-  if (!isInitialized || screenSize.width === 0) {
-    return (
-      <div className="loading-container" style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        background: 'linear-gradient(to bottom right, #f5f7fa, #c3cfe2)',
-        zIndex: 100
-      }}>
-        <div className="loading-spinner" />
-        <p style={{ marginTop: 20, color: '#666' }}>로딩 중...</p>
-        <p style={{ marginTop: 10, fontSize: 12, color: '#999' }}>
-          {isIOS ? '아이폰에서 로딩 중입니다...' : '화면 크기를 감지 중입니다...'}
-        </p>
-      </div>
-    );
-  }
 
   // 초기화 상태
   const [isInitialized, setIsInitialized] = useState(false);
@@ -195,11 +149,10 @@ const MindMapContainer = ({ data }) => {
   const panStartRef = useRef({ x: 0, y: 0 });
   const viewportStartRef = useRef({ x: 0, y: 0 });
 
-  // 터치 이벤트 핸들러
+  // 터치 이벤트 핸들러 — React synthetic events + touch-action: none
+  // getState()로 최신 상태를 읽어 stale closure 방지
   const handleTouchStart = (e) => {
     if (!hasTouchSupport || e.touches.length > 2) return;
-
-    e.preventDefault();
 
     if (e.touches.length === 1) {
       const touch = e.touches[0];
@@ -207,17 +160,14 @@ const MindMapContainer = ({ data }) => {
       // 더블 탭 체크
       const now = Date.now();
       if (now - lastTapRef.current < 300) {
-        // 더블 탭 시 중앙으로 이동
         setViewport({ x: 0, y: 0 });
         setZoomLevel(1);
         return;
       }
       lastTapRef.current = now;
 
-      // 단일 터치 시작
       dragStartRef.current = { x: touch.clientX, y: touch.clientY };
     } else if (e.touches.length === 2) {
-      // 핀치 줌 시작
       const touch1 = e.touches[0];
       const touch2 = e.touches[1];
       const distance = Math.sqrt(
@@ -225,9 +175,10 @@ const MindMapContainer = ({ data }) => {
         Math.pow(touch2.clientY - touch1.clientY, 2)
       );
 
+      const state = useMindMapStore.getState();
       pinchStartRef.current = {
         distance,
-        scale: zoomLevel
+        scale: state.zoomLevel
       };
       setIsPinching(true);
     }
@@ -236,10 +187,12 @@ const MindMapContainer = ({ data }) => {
   const handleTouchMove = (e) => {
     if (!hasTouchSupport) return;
 
-    e.preventDefault();
+    const state = useMindMapStore.getState();
+
+    // 노드 드래그 중이면 캔버스 패닝 무시
+    if (state.isNodeDragging) return;
 
     if (e.touches.length === 1 && !isPinching) {
-      // 터치 드래그
       const touch = e.touches[0];
       const dx = touch.clientX - dragStartRef.current.x;
       const dy = touch.clientY - dragStartRef.current.y;
@@ -247,13 +200,12 @@ const MindMapContainer = ({ data }) => {
       if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
         setIsDragging(true);
         setViewport({
-          x: viewport.x + dx / zoomLevel,
-          y: viewport.y + dy / zoomLevel
+          x: state.viewport.x + dx / state.zoomLevel,
+          y: state.viewport.y + dy / state.zoomLevel
         });
         dragStartRef.current = { x: touch.clientX, y: touch.clientY };
       }
     } else if (e.touches.length === 2 && isPinching) {
-      // 핀치 줌
       const touch1 = e.touches[0];
       const touch2 = e.touches[1];
       const distance = Math.sqrt(
@@ -264,56 +216,50 @@ const MindMapContainer = ({ data }) => {
       const scaleRatio = distance / pinchStartRef.current.distance;
       const newZoom = Math.max(0.25, Math.min(3.0, pinchStartRef.current.scale * scaleRatio));
 
-      // 줌 포인트 계산 (터치 중앙)
       const centerX = (touch1.clientX + touch2.clientX) / 2;
       const centerY = (touch1.clientY + touch2.clientY) / 2;
 
-      // 뷰포트 조정
-      const newViewport = {
-        x: viewport.x + (centerX - window.innerWidth / 2) * (1 / zoomLevel - 1 / newZoom),
-        y: viewport.y + (centerY - window.innerHeight / 2) * (1 / zoomLevel - 1 / newZoom)
-      };
-
-      setViewport(newViewport);
+      setViewport({
+        x: state.viewport.x + (centerX - window.innerWidth / 2) * (1 / state.zoomLevel - 1 / newZoom),
+        y: state.viewport.y + (centerY - window.innerHeight / 2) * (1 / state.zoomLevel - 1 / newZoom)
+      });
       setZoomLevel(newZoom);
     }
   };
 
-  const handleTouchEnd = (e) => {
+  const handleTouchEnd = () => {
     if (!hasTouchSupport) return;
 
     setIsDragging(false);
     setIsPinching(false);
   };
 
-  // 초기화 확인
+  // 초기화 확인 — screenSize가 설정되면 초기화 완료
   useEffect(() => {
-    if (screenSize.width > 0) {
+    if (screenSize && screenSize.width > 0) {
       setIsInitialized(true);
     }
   }, [screenSize]);
 
-  // 터치 이벤트 리스너
+  // 모바일 레이아웃 초기화 — 최초 1회만 실행
+  const mobileInitRef = useRef(false);
   useEffect(() => {
-    if (hasTouchSupport) {
-      const container = document.getElementById('mindmap-container');
-      if (container) {
-        container.addEventListener('touchstart', handleTouchStart, { passive: false });
-        container.addEventListener('touchmove', handleTouchMove, { passive: false });
-        container.addEventListener('touchend', handleTouchEnd, { passive: false });
-      }
+    if (mobileInitRef.current) return;
+    if (!isMobile || !screenSize || screenSize.width <= 0) return;
 
-      return () => {
-        if (container) {
-          container.removeEventListener('touchstart', handleTouchStart);
-          container.removeEventListener('touchmove', handleTouchMove);
-          container.removeEventListener('touchend', handleTouchEnd);
-        }
-      };
-    }
-  }, [hasTouchSupport, viewport, zoomLevel]);
+    mobileInitRef.current = true;
+    const store = useMindMapStore.getState();
+    store.initializeMobileLayout(screenSize.width);
+    store.applyAutoLayout();
 
-  // document 클릭으로 노드 선택 해제 + 툴바 닫기 — 모든 hooks는 early return 전에 호출
+    // 모바일 초기 zoom 설정
+    const targetZoom = screenSize.width <= 375 ? 0.75
+                     : screenSize.width <= 480 ? 0.8
+                     : 0.85;
+    setZoomLevel(targetZoom);
+  }, [isMobile, screenSize]);
+
+  // document 클릭으로 노드 선택 해제 + 툴바 닫기
   useEffect(() => {
     const handleClickOutside = (e) => {
       const target = e.target;
@@ -353,9 +299,10 @@ const MindMapContainer = ({ data }) => {
     };
   }, [isPanning, setViewport]);
 
+  // ===== Hooks 선언 끝 — 이후 conditional returns =====
+
   // 데이터가 없을 때 로딩 상태 표시
   if (!data) {
-    console.log('MindMapContainer: No data available, showing loading state');
     return (
       <div className="loading-container" style={{
         position: 'absolute',
@@ -447,17 +394,6 @@ const MindMapContainer = ({ data }) => {
 
   const { markerDefs, paths } = renderConnections(data, connectionConfig, zoomLevel);
 
-  // 디버깅: 컴포넌트 상태 로그
-  console.log('MindMapContainer rendering:', {
-    isMobile,
-    hasTouchSupport,
-    IS_IOS,
-    data: !!data,
-    viewport,
-    zoomLevel,
-    connectionConfig
-  });
-
   return (
     <div
       className="mindmap-container"
@@ -467,26 +403,19 @@ const MindMapContainer = ({ data }) => {
         height: '100vh',
         overflow: 'hidden',
         background: 'linear-gradient(to bottom right, #f5f7fa, #c3cfe2)',
-        paddingTop: isMobile ? 64 : 52,
+        paddingTop: isMobile ? 104 : 52,
         cursor: isPanning ? 'grabbing' : 'grab',
-        touchAction: hasTouchSupport ? 'manipulation' : 'auto',
+        touchAction: 'none',
         WebkitTouchCallout: 'none',
         WebkitUserSelect: 'none',
         userSelect: 'none'
       }}
       onMouseDown={handleCanvasMouseDown}
       onClick={handleContainerClick}
-      onTouchStart={hasTouchSupport ? (e) => {
-        e.preventDefault();
-        handleTouchStart(e);
-      } : undefined}
-      onTouchMove={hasTouchSupport ? (e) => {
-        if (e.touches.length === 1) {
-          e.preventDefault();
-        }
-        handleTouchMove(e);
-      } : undefined}
-      onTouchEnd={hasTouchSupport ? handleTouchEnd : undefined}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
     >
       <div
         data-testid="canvas-viewport"

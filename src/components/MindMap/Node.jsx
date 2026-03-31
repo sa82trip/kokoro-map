@@ -5,9 +5,12 @@ import { calculateNewChildPosition } from '../../utils/LayoutEngine';
 import { measureText } from '../../utils/TextMeasurer';
 import DeleteConfirmDialog from './DeleteConfirmDialog';
 import NodeEditorToolbar from './NodeEditorToolbar';
+import { useIsMobile } from '../MobileDetector';
 
 const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelected, onSelect, showToolbar, onToggleToolbar }) => {
   const { updateNodeText, updateNodePosition, updateNodeStyle, saveNodePositions, zoomLevel, editingNodeId, setEditingNodeId } = useMindMapStore();
+  const setIsNodeDragging = useMindMapStore((state) => state.setIsNodeDragging);
+  const { isMobile } = useIsMobile();
   const [isEditing, setIsEditing] = useState(false);
   const [text, setText] = useState(node.text || 'New Node');
   const [position, setPosition] = useState(initialPosition || { x: 0, y: 0 });
@@ -54,32 +57,49 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
     }
   }, [initialPosition?.x, initialPosition?.y]);
 
-  // document 레벨 마우스 이벤트로 드래그
+  // document 레벨 마우스/터치 이벤트로 드래그
   useEffect(() => {
     if (!isDragging) return;
 
-    const handleMouseMove = (e) => {
+    const updatePosition = (clientX, clientY) => {
       const vp = useMindMapStore.getState().viewport || { x: 0, y: 0 };
       const newPosition = {
-        x: e.clientX - dragOffsetRef.current.x - vp.x,
-        y: e.clientY - dragOffsetRef.current.y - vp.y
+        x: clientX - dragOffsetRef.current.x - vp.x,
+        y: clientY - dragOffsetRef.current.y - vp.y
       };
       if (isNaN(newPosition.x) || isNaN(newPosition.y)) return;
       setPosition(newPosition);
       updateNodePosition(node.id, newPosition);
     };
 
-    const handleMouseUp = () => {
+    // 노드 드래그 중 플래그 설정
+    useMindMapStore.getState().setIsNodeDragging(true);
+
+    const handleMouseMove = (e) => updatePosition(e.clientX, e.clientY);
+    const handleTouchMove = (e) => {
+      e.preventDefault();
+      const touch = e.touches[0];
+      updatePosition(touch.clientX, touch.clientY);
+    };
+
+    const handleEnd = () => {
       setIsDragging(false);
       saveNodePositions();
+      useMindMapStore.getState().setIsNodeDragging(false);
     };
 
     document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleEnd);
+    document.addEventListener('touchcancel', handleEnd);
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleEnd);
+      document.removeEventListener('touchcancel', handleEnd);
     };
   }, [isDragging, node.id, updateNodePosition, saveNodePositions]);
 
@@ -231,10 +251,13 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
     lineHeight: 1.2,
   };
 
+  const actionBtnSize = isMobile ? 36 : 24;
+  const actionBtnOffset = -actionBtnSize / 2;
+
   const actionBtnBase = {
     position: 'absolute',
-    width: 24,
-    height: 24,
+    width: actionBtnSize,
+    height: actionBtnSize,
     borderRadius: '50%',
     display: 'flex',
     alignItems: 'center',
@@ -242,7 +265,7 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
     cursor: 'pointer',
     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
     transition: 'all 0.2s ease',
-    fontSize: '16px',
+    fontSize: isMobile ? '20px' : '16px',
     color: 'white',
     fontWeight: 'bold',
     lineHeight: 1,
@@ -258,6 +281,19 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onMouseDown={handleMouseDown}
+      onTouchStart={(e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (isEditing) return;
+
+        const touch = e.touches[0];
+        const vp = useMindMapStore.getState().viewport || { x: 0, y: 0 };
+        setIsDragging(true);
+        dragOffsetRef.current = {
+          x: touch.clientX - position.x - vp.x,
+          y: touch.clientY - position.y - vp.y
+        };
+        e.stopPropagation();
+      }}
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}
     >
@@ -293,14 +329,14 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
           }}
         />
       ) : (
-        <div style={{ ...textStyle, cursor: 'pointer', padding: '0 8px' }}>
+        <div style={{ ...textStyle, cursor: 'pointer', padding: isMobile ? '4px 10px' : '0 8px' }}>
           {text}
         </div>
       )}
 
-      {isHovered && (
+      {(isMobile ? isSelected : isHovered) && (
         <div
-          style={{ ...actionBtnBase, right: -12, top: '50%', transform: 'translateY(-50%)', backgroundColor: '#52c41a' }}
+          style={{ ...actionBtnBase, right: actionBtnOffset, top: '50%', transform: `scale(${zoomLevel}) translateY(-50%)`, backgroundColor: '#52c41a' }}
           onClick={handleAddChild}
           onMouseDown={(e) => e.stopPropagation()}
           title="자식 노드 추가"
@@ -309,10 +345,10 @@ const Node = ({ node, position: initialPosition, onAddChild, onDelete, isSelecte
         </div>
       )}
 
-      {isHovered && !node.isRoot && (
+      {(isMobile ? isSelected : isHovered) && !node.isRoot && (
         <div
           data-testid="delete-button"
-          style={{ ...actionBtnBase, left: -12, top: '50%', transform: 'translateY(-50%)', backgroundColor: '#e74c3c' }}
+          style={{ ...actionBtnBase, left: actionBtnOffset, top: '50%', transform: `scale(${zoomLevel}) translateY(-50%)`, backgroundColor: '#e74c3c' }}
           onClick={handleDeleteClick}
           onMouseDown={(e) => e.stopPropagation()}
           title="노드 삭제"

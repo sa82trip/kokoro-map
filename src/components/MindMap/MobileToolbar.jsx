@@ -34,10 +34,36 @@ const MobileToolbar = ({ mindMapData }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [saveFeedback, setSaveFeedback] = useState(false);
   const [showExportDialog, setShowExportDialog] = useState(false);
-  const [showQuickActions, setShowQuickActions] = useState(false);
   const titleInputRef = useRef(null);
 
   const title = mindMapData?.text || '마인드맵';
+
+  const handleTitleClick = () => {
+    setTitleText(title);
+    setIsEditingTitle(true);
+    setTimeout(() => titleInputRef.current?.focus(), 0);
+  };
+
+  const handleTitleSubmit = () => {
+    const trimmed = titleText.trim();
+    if (trimmed && trimmed !== title) {
+      updateMindMapTitle(trimmed);
+    }
+    setIsEditingTitle(false);
+  };
+
+  const handleTitleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleTitleSubmit();
+    } else if (e.key === 'Escape') {
+      setIsEditingTitle(false);
+    }
+  };
+
+  const confirmNewMindMap = () => {
+    createNewMindMap();
+    setShowNewConfirm(false);
+  };
 
   // 터치 이벤트 핸들러
   const handleTouchAction = (action) => {
@@ -71,18 +97,14 @@ const MobileToolbar = ({ mindMapData }) => {
         break;
       case 'settings':
         setShowSettings(!showSettings);
-        setShowQuickActions(false);
         break;
       case 'layout':
         applyAutoLayout();
-        setShowQuickActions(false);
         break;
       case 'reset':
         resetLayout();
-        setShowQuickActions(false);
         break;
       case 'zoom':
-        setShowQuickActions(!showQuickActions);
         setShowSettings(false);
         break;
       default:
@@ -167,7 +189,6 @@ const MobileToolbar = ({ mindMapData }) => {
     top: 0,
     left: 0,
     right: 0,
-    height: 64, // 모바일을 위해 높이 증가
     display: 'flex',
     flexDirection: 'column',
     background: 'rgba(255, 255, 255, 0.98)',
@@ -215,18 +236,13 @@ const MobileToolbar = ({ mindMapData }) => {
   };
 
   const quickActionsStyle = {
-    position: 'absolute',
-    bottom: 64,
-    left: 0,
-    right: 0,
-    background: 'rgba(255, 255, 255, 0.98)',
-    borderTop: '1px solid #e0e4ea',
-    boxShadow: '0 -2px 8px rgba(0, 0, 0, 0.1)',
-    display: showQuickActions ? 'flex' : 'none',
+    display: 'flex',
     flexDirection: 'row',
     gap: 4,
     padding: '8px',
-    zIndex: 999
+    background: 'rgba(255, 255, 255, 0.98)',
+    borderTop: '1px solid #e0e4ea',
+    overflowX: 'auto'
   };
 
   const settingsPanelStyle = {

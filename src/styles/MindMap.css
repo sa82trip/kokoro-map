@@ -60,11 +60,6 @@
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {
-  .mindmap-wrapper {
-    transform: scale(0.8);
-    transform-origin: center top;
-  }
-
   .mindmap-container {
     touch-action: none;
   }
@@ -94,7 +89,10 @@
 
   /* 패딩 조정 */
   .mindmap-container {
-    padding-top: 64px; /* 모바일 툴바 높이 */
+    padding-top: 104px; /* 모바일 툴바 높이 (header + quickActions) */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
   }
 }
 

@@ -32,6 +32,7 @@ const useMindMapStore = create((set, get) => ({
   selectedNodeId: null,
   toolbarNodeId: null,
   editingNodeId: null,
+  isNodeDragging: false,
 
   // Undo/Redo 상태
   undoStack: [],
@@ -624,6 +625,26 @@ const useMindMapStore = create((set, get) => ({
     get().setConnectionConfig({ colorMode: mode });
   },
 
+  // 모바일 레이아웃 초기화
+  initializeMobileLayout: (screenWidth) => {
+    const current = get().layoutConfig;
+    // 사용자가 이미 커스텀한 경우 건드리지 않음
+    if (current.nodeWidth && current.nodeWidth !== 200) return;
+
+    let mobileConfig;
+    if (screenWidth <= 375) {
+      mobileConfig = { nodeWidth: 120, nodeHeight: 50, horizontalGap: 40, verticalGap: 16 };
+    } else if (screenWidth <= 480) {
+      mobileConfig = { nodeWidth: 140, nodeHeight: 56, horizontalGap: 50, verticalGap: 18 };
+    } else if (screenWidth <= 768) {
+      mobileConfig = { nodeWidth: 160, nodeHeight: 64, horizontalGap: 60, verticalGap: 20 };
+    } else {
+      return; // 데스크탑은 변경 없음
+    }
+
+    set({ layoutConfig: { ...current, ...mobileConfig } });
+  },
+
   // 전체 레이아웃 재조정
   resetLayout: () => {
     const { mindMapData } = get();
@@ -649,6 +670,12 @@ const useMindMapStore = create((set, get) => ({
     }
     if (config.verticalGap !== undefined) {
       newConfig.verticalGap = Math.min(500, Math.max(20, config.verticalGap));
+    }
+    if (config.nodeWidth !== undefined) {
+      newConfig.nodeWidth = Math.min(300, Math.max(80, config.nodeWidth));
+    }
+    if (config.nodeHeight !== undefined) {
+      newConfig.nodeHeight = Math.min(120, Math.max(30, config.nodeHeight));
     }
 
     return { layoutConfig: newConfig };
@@ -701,6 +728,7 @@ const useMindMapStore = create((set, get) => ({
   // 툴바 표시 노드 설정
   setToolbarNodeId: (nodeId) => set({ toolbarNodeId: nodeId }),
   setEditingNodeId: (nodeId) => set({ editingNodeId: nodeId }),
+  setIsNodeDragging: (dragging) => set({ isNodeDragging: dragging }),
 
   // 초기화
   reset: () => set({

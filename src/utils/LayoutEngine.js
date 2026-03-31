@@ -6,7 +6,15 @@ const NODE_HEIGHT = 80;
 const DEFAULT_OPTIONS = {
   horizontalGap: 100,
   verticalGap: 30,
+  nodeWidth: NODE_WIDTH,
+  nodeHeight: NODE_HEIGHT,
 };
+
+// options에서 nodeWidth/nodeHeight를 안전하게 가져오는 헬퍼
+const getDims = (options) => ({
+  nw: (options && options.nodeWidth) || DEFAULT_OPTIONS.nodeWidth,
+  nh: (options && options.nodeHeight) || DEFAULT_OPTIONS.nodeHeight,
+});
 
 /**
  * 루트의 직계 자식에 direction(left/right)을 교대로 할당
@@ -40,18 +48,19 @@ const assignDirections = (rootNode) => {
  * (자식 노드들이 차지하는 공간 + 간격)
  */
 const getSubtreeHeight = (node, options) => {
-  const verticalGap = (options && options.verticalGap) || DEFAULT_OPTIONS.verticalGap;
+  const { nh } = getDims(options);
   if (!node.children || node.children.length === 0) {
-    return NODE_HEIGHT;
+    return nh;
   }
 
   const childrenHeight = node.children.reduce(
     (sum, child) => sum + getSubtreeHeight(child, options),
     0
   );
+  const verticalGap = (options && options.verticalGap) || DEFAULT_OPTIONS.verticalGap;
   const gaps = (node.children.length - 1) * verticalGap;
 
-  return Math.max(NODE_HEIGHT, childrenHeight + gaps);
+  return Math.max(nh, childrenHeight + gaps);
 };
 
 /**
@@ -59,10 +68,11 @@ const getSubtreeHeight = (node, options) => {
  * direction에 따라 왼쪽 또는 오른쪽으로 확장
  */
 const layoutNode = (node, x, y, availableHeight, options, direction = 'right') => {
+  const { nw, nh } = getDims(options);
   const horizontalGap = (options && options.horizontalGap) || DEFAULT_OPTIONS.horizontalGap;
   const verticalGap = (options && options.verticalGap) || DEFAULT_OPTIONS.verticalGap;
 
-  node.position = { x, y: y + availableHeight / 2 - NODE_HEIGHT / 2 };
+  node.position = { x, y: y + availableHeight / 2 - nh / 2 };
 
   if (!node.children || node.children.length === 0) return;
 
@@ -81,8 +91,8 @@ const layoutNode = (node, x, y, availableHeight, options, direction = 'right') =
     const childHeight = getSubtreeHeight(child, options);
     const childDir = child.direction || dir;
     const childX = childDir === 'left'
-      ? x - NODE_WIDTH - horizontalGap
-      : x + NODE_WIDTH + horizontalGap;
+      ? x - nw - horizontalGap
+      : x + nw + horizontalGap;
     layoutNode(child, childX, currentY, childHeight, options, childDir);
     currentY += childHeight + verticalGap;
   });
@@ -92,6 +102,7 @@ const layoutNode = (node, x, y, availableHeight, options, direction = 'right') =
  * 한 방향의 자식 그룹을 배치
  */
 const layoutDirectionGroup = (children, parentPosition, startY, options, direction) => {
+  const { nw } = getDims(options);
   const horizontalGap = (options && options.horizontalGap) || DEFAULT_OPTIONS.horizontalGap;
   const verticalGap = (options && options.verticalGap) || DEFAULT_OPTIONS.verticalGap;
 
@@ -100,8 +111,8 @@ const layoutDirectionGroup = (children, parentPosition, startY, options, directi
   children.forEach(child => {
     const childHeight = getSubtreeHeight(child, options);
     const childX = direction === 'left'
-      ? parentPosition.x - NODE_WIDTH - horizontalGap
-      : parentPosition.x + NODE_WIDTH + horizontalGap;
+      ? parentPosition.x - nw - horizontalGap
+      : parentPosition.x + nw + horizontalGap;
     layoutNode(child, childX, currentY, childHeight, options, direction);
     currentY += childHeight + verticalGap;
   });
@@ -115,6 +126,7 @@ export const calculateAutoLayout = (rootNode, options) => {
   if (!rootNode) return null;
 
   const mergedOptions = Object.assign({}, DEFAULT_OPTIONS, options);
+  const { nw, nh } = getDims(mergedOptions);
 
   // 깊은 복사
   const layouted = JSON.parse(JSON.stringify(rootNode));
@@ -123,7 +135,7 @@ export const calculateAutoLayout = (rootNode, options) => {
   assignDirections(layouted);
 
   // 루트 노드를 화면 중앙에 배치
-  const centerX = Math.max(NODE_WIDTH, window.innerWidth / 2 - NODE_WIDTH / 2);
+  const centerX = Math.max(nw, window.innerWidth / 2 - nw / 2);
 
   // 좌/우 자식 분리
   const rightChildren = layouted.children.filter(c => (c.direction || 'right') === 'right');
@@ -135,21 +147,21 @@ export const calculateAutoLayout = (rootNode, options) => {
   const leftHeight = leftChildren.reduce((sum, c) => sum + getSubtreeHeight(c, mergedOptions), 0)
     + Math.max(0, leftChildren.length - 1) * mergedOptions.verticalGap;
 
-  const totalHeight = Math.max(rightHeight, leftHeight, NODE_HEIGHT);
+  const totalHeight = Math.max(rightHeight, leftHeight, nh);
   const startY = Math.max(20, window.innerHeight / 2 - totalHeight / 2);
 
   // 루트 위치 설정
-  layouted.position = { x: centerX, y: startY + totalHeight / 2 - NODE_HEIGHT / 2 };
+  layouted.position = { x: centerX, y: startY + totalHeight / 2 - nh / 2 };
 
   // 오른쪽 자식 배치
   if (rightChildren.length > 0) {
-    const rightStartY = layouted.position.y + NODE_HEIGHT / 2 - rightHeight / 2;
+    const rightStartY = layouted.position.y + nh / 2 - rightHeight / 2;
     layoutDirectionGroup(rightChildren, layouted.position, rightStartY, mergedOptions, 'right');
   }
 
   // 왼쪽 자식 배치
   if (leftChildren.length > 0) {
-    const leftStartY = layouted.position.y + NODE_HEIGHT / 2 - leftHeight / 2;
+    const leftStartY = layouted.position.y + nh / 2 - leftHeight / 2;
     layoutDirectionGroup(leftChildren, layouted.position, leftStartY, mergedOptions, 'left');
   }
 
@@ -161,13 +173,14 @@ export const calculateAutoLayout = (rootNode, options) => {
  * direction에 따라 부모의 왼쪽 또는 오른쪽에 배치
  */
 export const calculateNewChildPosition = (parentPosition, existingChildrenCount, options, direction) => {
+  const { nw, nh } = getDims(options);
   const horizontalGap = (options && options.horizontalGap) || DEFAULT_OPTIONS.horizontalGap;
   const verticalGap = (options && options.verticalGap) || DEFAULT_OPTIONS.verticalGap;
   const dir = direction || 'right';
   return {
     x: dir === 'left'
-      ? parentPosition.x - NODE_WIDTH - horizontalGap
-      : parentPosition.x + NODE_WIDTH + horizontalGap,
-    y: parentPosition.y + existingChildrenCount * (NODE_HEIGHT + verticalGap)
+      ? parentPosition.x - nw - horizontalGap
+      : parentPosition.x + nw + horizontalGap,
+    y: parentPosition.y + existingChildrenCount * (nh + verticalGap)
   };
 };
