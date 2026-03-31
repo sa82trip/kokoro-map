@@ -555,6 +555,19 @@ const MobileToolbar = ({ mindMapData }) => {
         document.body
       )}
 
+      {/* 배율 조절 - 플로팅 */}
+      {createPortal(
+        <div style={{
+          position: 'fixed',
+          bottom: 20,
+          right: 16,
+          zIndex: 900
+        }}>
+          <ZoomControls />
+        </div>,
+        document.body
+      )}
+
       {/* ExportDialog */}
       {showExportDialog && createPortal(
         <ExportDialog

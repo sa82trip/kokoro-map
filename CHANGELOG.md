@@ -1,5 +1,28 @@
 # Changelog
 
+## [모바일 배율 조절 UI 추가] - 2026-04-01
+
+**Branch**: `main` | **Version**: v1.2.0
+
+### Problem
+모바일에서 배율 조절(ZoomControls) 버튼이 보이지 않음. MobileToolbar에 import만 되어 있고 렌더링되지 않았음.
+
+### Root Cause
+1. `MobileToolbar.jsx`에서 `ZoomControls` 컴포넌트를 import했으나 JSX에서 사용하지 않음
+2. 데스크톱 `Toolbar.jsx`에만 ZoomControls가 렌더링됨
+
+### Solution
+1. `MobileToolbar.jsx`에 `createPortal`로 화면 하단 우측에 플로팅 ZoomControls 추가
+
+### Changed
+- `MobileToolbar.jsx` — ZoomControls를 createPortal로 body 하단 우측에 렌더링
+
+### Tests
+- `ZoomControls.test.jsx` - 5 tests passing
+- Total: 5 tests passing
+
+---
+
 ## [노드 드래그 시 선 분리 버그 수정] - 2026-04-01
 
 **Branch**: `main` | **Version**: v1.1.9
