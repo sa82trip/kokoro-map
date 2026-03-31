@@ -20,12 +20,13 @@ const MindMap = ({ initialData = null }) => {
 
   const { showHelp, setShowHelp } = useKeyboardShortcuts();
 
-  // 초기 데이터 설정: FileManagerStore 초기화 → localStorage 로드 → initialData fallback
+  // 초기 데이터 설정: FileManagerStore 초기화 → localStorage 로드 → initialData fallback → 새 마인드맵 생성
   useEffect(() => {
     useFileManagerStore.getState().initialize();
     const loaded = loadFromStorage();
-    if (!loaded && initialData) {
-      setMindMapData(initialData);
+    if (!loaded) {
+      // 데이터가 없으면 새 마인드맵 생성
+      createNewMindMap();
     }
   }, []);
 
