@@ -11,10 +11,32 @@ import './HomeScreen.css';
 const HomeScreen = () => {
   const navigate = useNavigate();
   const initialize = useFileManagerStore((state) => state.initialize);
+  const [loading, setLoading] = React.useState(true);
 
   useEffect(() => {
-    initialize();
-  }, []);
+    const init = async () => {
+      console.log('HomeScreen: Initializing...');
+      try {
+        await initialize();
+        console.log('HomeScreen: Initialization complete');
+      } catch (error) {
+        console.error('HomeScreen: Initialization error', error);
+      }
+      setLoading(false);
+    };
+    init();
+  }, [initialize]);
+
+  if (loading) {
+    return (
+      <div className="home-screen">
+        <div className="loading-container">
+          <div className="loading-spinner" />
+          <p>로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleNewDocument = () => {
     navigate('/editor/new');

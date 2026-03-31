@@ -27,32 +27,59 @@ const PasswordGuard = ({ children }) => {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  // 디버깅: 컴포넌트 마운트 상태 로그
   useEffect(() => {
+    console.log('PasswordGuard: Component mounted');
     checkAuth();
   }, []);
 
+  // 인증 상태 변화 로그
+  useEffect(() => {
+    console.log('PasswordGuard: Auth state changed', { isAuthenticated, loading });
+  }, [isAuthenticated, loading]);
+
   const checkAuth = async () => {
+    console.log('PasswordGuard: Checking authentication...');
+
     // 기존 방식 데이터 정리
     localStorage.removeItem(OLD_HASH_KEY);
     sessionStorage.removeItem('mindmap-auth-session');
     sessionStorage.removeItem('mindmap-auth-session-hash');
 
     const sessionData = localStorage.getItem(SESSION_KEY);
+    console.log('PasswordGuard: Session data found', !!sessionData);
+
     if (sessionData) {
       try {
         const { token, tokenHash, expiresAt } = JSON.parse(sessionData);
+        console.log('PasswordGuard: Session validation', {
+          hasToken: !!token,
+          hasTokenHash: !!tokenHash,
+          isExpired: Date.now() >= expiresAt,
+          expiresAt: new Date(expiresAt).toISOString()
+        });
+
         if (Date.now() < expiresAt) {
           const computedHash = await sha256(token);
           if (computedHash === tokenHash) {
+            console.log('PasswordGuard: Authentication successful');
             setIsAuthenticated(true);
+          } else {
+            console.log('PasswordGuard: Token hash mismatch');
+            localStorage.removeItem(SESSION_KEY);
           }
         } else {
+          console.log('PasswordGuard: Session expired');
           localStorage.removeItem(SESSION_KEY);
         }
-      } catch {
+      } catch (error) {
+        console.error('PasswordGuard: Error parsing session data', error);
         localStorage.removeItem(SESSION_KEY);
       }
+    } else {
+      console.log('PasswordGuard: No valid session found');
     }
+
     setLoading(false);
   };
 
@@ -81,7 +108,32 @@ const PasswordGuard = ({ children }) => {
   );
 
   if (loading) {
-    return null;
+    return (
+      <div className="lock-screen">
+        <div className="lock-card">
+          <div className="lock-icon">
+            <svg
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#4A90E2"
+              strokeWidth="1.5"
+            >
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+          </div>
+          <h2 className="lock-title">로딩 중...</h2>
+          <p className="lock-subtitle">
+            인증 정보를 확인하고 있습니다.
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: 20 }}>
+            <div className="loading-spinner" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {

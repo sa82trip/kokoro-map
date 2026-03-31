@@ -43,20 +43,29 @@ const useFileManagerStore = create((set, get) => ({
 
   // 초기화 (앱 시작 시 1회 호출)
   initialize: () => {
+    console.log('FileManagerStore: Initializing...');
     const { initialized } = get();
-    if (initialized) return;
+    if (initialized) {
+      console.log('FileManagerStore: Already initialized');
+      return;
+    }
 
     // 레거시 마이그레이션
     if (!StorageManager.hasIndex() && StorageManager.hasLegacyData()) {
+      console.log('FileManagerStore: Migrating legacy data...');
       get().migrateFromLegacy();
       set({ initialized: true });
+      console.log('FileManagerStore: Migration complete');
       return;
     }
 
     // 인덱스 로드
+    console.log('FileManagerStore: Loading index and folders...');
     const docs = StorageManager.loadIndex();
     const folders = StorageManager.loadFolders();
+    console.log('FileManagerStore: Data loaded', { docCount: docs.length, folderCount: folders.length });
     set({ documents: docs, folders, initialized: true });
+    console.log('FileManagerStore: Initialization complete');
   },
 
   // 레거시 데이터 마이그레이션
