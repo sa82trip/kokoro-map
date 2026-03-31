@@ -172,3 +172,20 @@
     border: 2px solid #000;
   }
 }
+
+/* iOS Safari 특정 스타일 */
+@supports (-webkit-touch-callout: none) {
+  .mindmap-container {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  /* iOS에서의 터치 피드백 제거 */
+  .node {
+    -webkit-tap-highlight-color: transparent;
+  }
+}

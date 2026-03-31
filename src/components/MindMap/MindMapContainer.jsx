@@ -7,6 +7,7 @@ import { DEFAULT_NODE_STYLE } from '../../types/NodeTypes';
 import { calculateAutoLayout } from '../../utils/LayoutEngine';
 import MobileToolbar from './MobileToolbar';
 import { useIsMobile, useTouchSupport } from '../../components/MobileDetector';
+import { IS_IOS } from '../../components/MobileDetector';
 import { useTouch } from '../../hooks/useTouch';
 
 const NODE_HEIGHT = 80;
@@ -363,6 +364,17 @@ const MindMapContainer = ({ data }) => {
 
   const { markerDefs, paths } = renderConnections(data, connectionConfig, zoomLevel);
 
+  // 디버깅: 컴포넌트 상태 로그
+  console.log('MindMapContainer rendering:', {
+    isMobile,
+    hasTouchSupport,
+    IS_IOS,
+    data: !!data,
+    viewport,
+    zoomLevel,
+    connectionConfig
+  });
+
   return (
     <div
       className="mindmap-container"
@@ -374,12 +386,23 @@ const MindMapContainer = ({ data }) => {
         background: 'linear-gradient(to bottom right, #f5f7fa, #c3cfe2)',
         paddingTop: isMobile ? 64 : 52,
         cursor: isPanning ? 'grabbing' : 'grab',
-        touchAction: hasTouchSupport ? 'none' : 'auto'
+        touchAction: hasTouchSupport ? 'manipulation' : 'auto',
+        WebkitTouchCallout: 'none',
+        WebkitUserSelect: 'none',
+        userSelect: 'none'
       }}
       onMouseDown={handleCanvasMouseDown}
       onClick={handleContainerClick}
-      onTouchStart={hasTouchSupport ? handleTouchStart : undefined}
-      onTouchMove={hasTouchSupport ? handleTouchMove : undefined}
+      onTouchStart={hasTouchSupport ? (e) => {
+        e.preventDefault();
+        handleTouchStart(e);
+      } : undefined}
+      onTouchMove={hasTouchSupport ? (e) => {
+        if (e.touches.length === 1) {
+          e.preventDefault();
+        }
+        handleTouchMove(e);
+      } : undefined}
       onTouchEnd={hasTouchSupport ? handleTouchEnd : undefined}
     >
       <div
@@ -412,7 +435,6 @@ const MindMapContainer = ({ data }) => {
         <div style={{ pointerEvents: 'auto' }}>
           {renderNodes(data)}
         </div>
-      </div>
       </div>
 
       {/* 모바일 툴바 */}

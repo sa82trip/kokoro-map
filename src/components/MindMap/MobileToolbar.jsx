@@ -203,7 +203,7 @@ const MobileToolbar = ({ mindMapData }) => {
   const buttonStyle = {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center,
+    justifyContent: 'center',
     width: 48,
     height: 48,
     borderRadius: 12,
@@ -225,8 +225,8 @@ const MobileToolbar = ({ mindMapData }) => {
     display: showQuickActions ? 'flex' : 'none',
     flexDirection: 'row',
     gap: 4,
-    padding: '8px'
-    z-index: 999
+    padding: '8px',
+    zIndex: 999
   };
 
   const settingsPanelStyle = {

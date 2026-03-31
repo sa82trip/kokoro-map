@@ -10,11 +10,17 @@ export const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [deviceType, setDeviceType] = useState('desktop'); // 'phone', 'tablet', 'desktop'
   const [screenSize, setScreenSize] = useState({ width: 0, height: 0 });
+  const [isIOS, setIsIOS] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
+
+      // iOS 감지
+      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+      const isIOSDevice = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
+      setIsIOS(isIOSDevice);
 
       setScreenSize({ width, height });
 
@@ -56,7 +62,8 @@ export const useIsMobile = () => {
     screenSize,
     isPhone: deviceType === 'phone',
     isTablet: deviceType === 'tablet',
-    isDesktop: deviceType === 'desktop'
+    isDesktop: deviceType === 'desktop',
+    isIOS
   };
 };
 
@@ -191,3 +198,6 @@ export const DeviceSpecific = ({ children, phone, tablet, desktop }) => {
 };
 
 export default MobileDetector;
+
+// iOS 감지 변수 (전역적으로 사용 가능)
+export const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent || navigator.vendor || window.opera) && !window.MSStream;

@@ -35,7 +35,10 @@ export const useTouch = (options = {}) => {
   const handleTouchStart = (e) => {
     if (!enabled) return;
 
-    e.preventDefault();
+    // iOS Safari에서 preventDefault가 필요한 경우에만 호출
+    if (e.touches.length === 1) {
+      e.preventDefault();
+    }
     const now = Date.now();
     const newTouches = {};
 
@@ -102,7 +105,10 @@ export const useTouch = (options = {}) => {
   const handleTouchMove = (e) => {
     if (!enabled) return;
 
-    e.preventDefault();
+    // iOS Safari에서 preventDefault가 필요한 경우에만 호출
+    if (e.touches.length === 1 && isDragging) {
+      e.preventDefault();
+    }
     const now = Date.now();
 
     // 드래그 중
@@ -325,10 +331,10 @@ export const useTouch = (options = {}) => {
     const element = options.element || window;
 
     if (enabled) {
-      element.addEventListener('touchstart', handleTouchStart, { passive: false });
-      element.addEventListener('touchmove', handleTouchMove, { passive: false });
-      element.addEventListener('touchend', handleTouchEnd, { passive: false });
-      element.addEventListener('touchcancel', handleTouchCancel, { passive: false });
+      element.addEventListener('touchstart', handleTouchStart);
+      element.addEventListener('touchmove', handleTouchMove);
+      element.addEventListener('touchend', handleTouchEnd);
+      element.addEventListener('touchcancel', handleTouchCancel);
     }
 
     return () => {
