@@ -6,6 +6,7 @@ import FilterDropdown from './FilterDropdown';
 import FolderTree from './FolderTree';
 import useFileManagerStore from '../../store/FileManagerStore';
 import { version } from '../../../package.json';
+import FloatingBranchButton from './FloatingBranchButton';
 import './HomeScreen.css';
 
 const HomeScreen = () => {
@@ -95,6 +96,9 @@ const HomeScreen = () => {
       <footer className="home-footer">
         <span className="version-text">v{version}</span>
       </footer>
+
+      {/* 개발 브랜치 플로팅 버튼 */}
+      <FloatingBranchButton />
     </div>
   );
 };

@@ -1,6 +1,6 @@
 {
   "name": "mindmap-app",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "React-based mind mapping application",
   "private": true,
   "dependencies": {
