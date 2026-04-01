@@ -1,7 +1,4 @@
 {
   "name": "kokoromap",
-  "framework": "nextjs",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
+  "framework": "nextjs"
 }
