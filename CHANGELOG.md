@@ -1,5 +1,61 @@
 # Changelog
 
+## [개발 브랜치 전략 및 플로팅 버튼 구현] - 2026-04-01
+
+**Branch**: `development` | **Version**: v1.2.1
+
+### Problem
+개발 환경에서 현재 브랜치 정보를 실시간으로 확인하고 개발/프로덕션 배포 상태를 파악할 수 있는 기능 필요.
+
+### Root Cause
+1. 개발자가 Git 브랜치 정보를 직접 확인해야 함
+2. Vercel preview 배포 URL을 수동으로 복사해야 함
+3. 프로덕션과 개발 환경을 구분하기 어려움
+
+### Solution
+썸네일 화면에 플로팅 버튼 추가로 개발 브랜치 정보 실시간 표시 및 배포 상태 관리 기능 구현.
+
+### Added
+- **Git Utilities** (`src/utils/GitUtils.js`)
+  - `getCurrentBranchInfo()` - 현재 브랜치 정보 가져오기
+  - `getDeploymentStatus()` - 배포 URL 및 상태 정보 생성
+  - 브랜치 이름, 커밋 해시, 변경 상태 실시간 조회
+
+- **Floating Branch Button** (`src/components/FloatingBranchButton.jsx`)
+  - 썸네일 화면 우측하단 플로팅 버튼
+  - 브랜치별 색상 코딩 (development: 파란색, feature: 보라색)
+  - 변경된 파일 있을 때 점멸 표시기
+  - 마우스 오버 툴팁 (브랜치명, 커밋 해시, 상태)
+  - 클릭 시 상세 패널 (배포 정보, URL, 복사 버튼)
+
+- **CI/CD Workflows** (`.github/workflows/`)
+  - `preview-on-pr.yml` - PR 시 자동 preview 배포
+  - `vercel-preview.yml` - 브랜치별 preview 배포 설정
+
+- **Vercel Configuration** (`vercel.json`)
+  - Next.js 16 최적화 설정
+  - 자동 배포 규칙 정의
+
+### Changed
+- `src/components/Home/HomeScreen.jsx` — 플로팅 버튼 추가
+- `src/components/Home/HomeScreen.css` — 반응형 디자인 개선
+- `package.json` — v1.2.0 → v1.2.1
+
+### Technical Notes
+- Git 명령어 실행을 통한 실시간 정보 조회 (5초 간격)
+- 개발 브랜치 → preview 배포 / main → production 배포 자동 분류
+- Vercel preview URL 자동 생성 (브랜치명 + 커밋 해시 기반)
+- 반응형 디자인 모바일 최적화 (화면 크기 자동 조정)
+- Total: 6 files changed, 643 lines added, 2 lines removed
+
+### Tests
+- Git 정보 조회 기능 테스트
+- 플로팅 버튼 상호작용 테스트
+- Vercel preview 배포 확인
+- Total: 5 tests passing
+
+---
+
 ## [모바일 배율 조절 UI 추가] - 2026-04-01
 
 **Branch**: `main` | **Version**: v1.2.0
