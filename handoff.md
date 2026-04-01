@@ -1,12 +1,33 @@
 # 마인드맵 앱 - React 마인드맵 에디터
 
 ## 현재 상태
-**Phase**: 모바일 배율 조절 UI 추가 완료
-**버전**: v1.2.0
-**배포 URL**: https://kokoromap.vercel.app/
+**Phase**: 개발 브랜치 전략 및 플로팅 버튼 구현 완료
+**버전**: v1.2.1
+**production URL**: https://kokoromap.vercel.app/
+**development URL**: https://kokoromap-git-development-xxxx.vercel.app/
 **다음 작업**: 후순위 개선 (드래그 마우스 추적 정밀도, 이중 스케일링 정리)
 
 ## 최근 작업
+
+### 2026-04-01: 개발 브랜치 전략 및 플로팅 버튼 구현
+- **브랜치**: `development` → `main`
+- **버전**: v1.2.0 → v1.2.1
+
+**UI:**
+- `FloatingBranchButton.jsx` — 썸네일 화면 우측하단에 개발 브랜치 정보 플로팅 버튼 추가
+- `FloatingBranchButton.css` — 반응형 디자인 및 애니메이션 효과 구현
+- Git 브랜치 정보 실시간 표시 (브랜치명, 커밋 해시, 변경 상태)
+
+**Data Layer:**
+- `GitUtils.js` — Git 정보 조회 유틸리티 구현
+  - `getCurrentBranchInfo()` - 현재 브랜치 정보 가져오기
+  - `getDeploymentStatus()` - 배포 URL 및 상태 정보 생성
+
+**Integration:**
+- `development` 브랜치 → preview 배포 (Vercel 자동 배포)
+- `main` 브랜치 → production 배포
+- 플로팅 버튼 상호작용 (마우스 오버 툴팁, 클릭 상세 패널)
+- 개발 환경에서 브랜치별 배포 URL 복사 기능
 
 ### 2026-04-01: 모바일 배율 조절 UI 추가
 - **브랜치**: `main`
