@@ -1,4 +1,7 @@
 {
   "name": "kokoromap",
-  "framework": "nextjs"
+  "framework": null,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install"
 }
